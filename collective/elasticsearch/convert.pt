@@ -1,0 +1,27 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+  xmlns:tal="http://xml.zope.org/namespaces/tal"
+  xmlns:metal="http://xml.zope.org/namespaces/metal"
+  xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+  lang="en"
+  metal:use-macro="context/main_template/macros/master"
+  i18n:domain="collective.elasticsearch">
+
+  <body>
+    <metal:core fill-slot="content-title">
+      <tal:core-macro metal:define-macro="content-title">
+        <h1 class="documentFirstHeading">Convert catalog to using elasticsearch</h1>
+      </tal:core-macro>
+    </metal:core>
+    <metal:core fill-slot="content-core">
+      <tal:core-macro metal:define-macro="content-core">
+        <form method="POST" tal:condition="not: view/converted">
+          <span tal:replace="structure context/@@authenticator/authenticator"/>
+          <input type="submit" name="submit" value="Convert catalog" />
+        </form>
+        <p tal:condition="view/converted">
+          This catalog has already been converted to elasticsearch.
+        </p>
+      </tal:core-macro>
+    </metal:core>
+  </body>
+</html>

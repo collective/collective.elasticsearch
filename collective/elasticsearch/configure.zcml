@@ -1,0 +1,41 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="collective.elasticsearch">
+
+  <five:registerPackage package="." initialize=".initialize" />
+
+  <include package="plone.app.layout" />
+  <adapter for="*
+                zope.publisher.interfaces.browser.IBrowserRequest
+                .brain.Brain"
+           factory="plone.app.layout.icons.icons.CatalogBrainContentIcon"
+           provides="plone.app.layout.icons.interfaces.IContentIcon" />
+
+  <browser:page
+    name="convert-to-elastic"
+    for=".interfaces.IElasticSearchCatalog"
+    class=".convert.ConvertToElastic"
+    template="convert.pt"
+    permission="cmf.ManagePortal"
+    />
+
+  <genericsetup:registerProfile
+    name="default"
+    title="Elastic Search"
+    directory="profiles/default"
+    description="Installs the Elastic Search plone integration package"
+    provides="Products.GenericSetup.interfaces.EXTENSION"
+    />
+
+  <browser:page
+    name="elastic-controlpanel"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    permission="cmf.ManagePortal"
+    class=".controlpanel.ElasticControlPanelView"
+    />
+  
+</configure>
