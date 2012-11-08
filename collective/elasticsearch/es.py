@@ -1,3 +1,4 @@
+from Acquisition import aq_base
 from zope.component import getUtility
 from plone.registry.interfaces import IRegistry
 from Products.ZCatalog.Lazy import LazyMap
@@ -29,11 +30,36 @@ info = logger.info
 CONVERTED_ATTR = '_elasticconverted'
 
 
+class PatchCaller(object):
+    """
+    Very odd I have to do this. If I don't,
+    I get very pecular errors trying to call
+    the original methods
+    """
+
+    def __init__(self, patched_object):
+        self._patched_object = patched_object
+
+    def __getattr__(self, name):
+        """
+        assuming original attribute has "__old_" prefix
+        """
+        if name[0] == '_':
+            return self.__dict__[name]
+        _type = type(aq_base(self._patched_object))
+        func = getattr(_type, '__old_' + name)
+        # "bind" it
+        def bound_func(*args, **kwargs):
+            return func(self._patched_object, *args, **kwargs)
+        return bound_func
+
+
 class ElasticSearch(object):
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
+        self.patched = PatchCaller(self.catalogtool)
 
         registry = getUtility(IRegistry)
         try:
@@ -72,7 +98,7 @@ class ElasticSearch(object):
                        update_metadata=1, pghandler=None):
         mode = self.mode
         if mode in (DISABLE_MODE, DUAL_MODE):
-            result = self.catalogtool.__old_catalog_object(
+            result = self.patched.catalog_object(
                 obj, uid, idxs, update_metadata, pghandler)
             if mode == DISABLE_MODE:
                 return result
@@ -116,7 +142,7 @@ class ElasticSearch(object):
     def uncatalog_object(self, obj, *args, **kwargs):
         mode = self.mode
         if mode in (DISABLE_MODE, DUAL_MODE):
-            result = self.catalogtool.__old_uncatalog_object(obj, *args, **kwargs)
+            result = self.patched.uncatalog_object(obj, *args, **kwargs)
             if mode == DISABLE_MODE:
                 return result
         conn = self.conn
@@ -127,7 +153,7 @@ class ElasticSearch(object):
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
         mode = self.mode
         if mode == DISABLE_MODE:
-            return self.catalogtool.__old_searchResults(REQUEST, **kw)
+            return self.patched.searchResults(REQUEST, **kw)
         if isinstance(REQUEST, dict):
             query = REQUEST.copy()
         else:

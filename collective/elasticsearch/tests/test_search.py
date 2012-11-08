@@ -11,14 +11,14 @@ class TestQueries(BaseTest):
 
     def test_field_index_query(self):
         event = createObject(self.portal, 'Event', 'event', title="Some Event")
-        cat_results = self.searchResults(self.catalog, portal_type="Event")
+        cat_results = self.searchResults(portal_type="Event")
         el_results = self.catalog(portal_type="Event")
         self.assertEquals(len(cat_results), len(el_results))
         self.assertEquals(len(cat_results), 1)
 
     def test_keyword_index_query(self):
         event = createObject(self.portal, 'Event', 'event', title="Some Event")
-        cat_results = self.searchResults(self.catalog, 
+        cat_results = self.searchResults(
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         el_results = self.catalog(
             object_provides=["Products.ATContentTypes.interfaces.event.IATEvent"])
@@ -28,7 +28,7 @@ class TestQueries(BaseTest):
     def test_multi_keyword_index_query(self):
         event = createObject(self.portal, 'Event', 'event', title="Some Event")
         page = createObject(self.portal, 'Document', 'page', title="Some page")
-        cat_results = self.searchResults(self.catalog, 
+        cat_results = self.searchResults(
             object_provides=["Products.ATContentTypes.interfaces.event.IATEvent",
                 "Products.ATContentTypes.interfaces.document.IATDocument"])
         el_results = self.catalog(
@@ -47,7 +47,7 @@ class TestQueries(BaseTest):
             events.append(event)
         end = DateTime()
         query = {'query':(start, end), 'range': 'min:max'}
-        cat_results = self.searchResults(self.catalog, created=query)
+        cat_results = self.searchResults(created=query)
         el_results = self.catalog(created=query)
         self.assertEquals(len(cat_results), len(el_results))
         self.assertEquals(len(cat_results), len(events))
@@ -62,13 +62,13 @@ class TestQueries(BaseTest):
             event = createObject(self.portal, 'Event',
                 'event%i' % idx, title="Some Event %i" % idx)
             events.append(event)
-        cat_results = self.searchResults(self.catalog, Title="Some Event")
+        cat_results = self.searchResults(Title="Some Event")
         el_results = self.catalog(Title="Some Event")
         self.assertEquals(len(cat_results), len(el_results))
         self.assertEquals(len(cat_results), len(events))
 
         # only find one
-        cat_results = self.searchResults(self.catalog, Title="Some Event 1",
+        cat_results = self.searchResults(Title="Some Event 1",
                                              sort_on="getObjPositionInParent")
         el_results = self.catalog(Title="Some Event 1",
                                   sort_on="getObjPositionInParent")
@@ -90,24 +90,24 @@ class TestQueries(BaseTest):
         createObject(folder3, 'Document', 'page6', title="Page 6")
         self.assertEquals(
             len(self.catalog(path={'depth': 0, 'query': '/plone/folder1'})),
-            len(self.searchResults(self.catalog,
+            len(self.searchResults(
                 path={'depth': 0, 'query': '/plone/folder1'})))
         self.assertEquals(
             len(self.catalog(path={'depth': 1, 'query': '/plone/folder1'})),
-            len(self.searchResults(self.catalog,
+            len(self.searchResults(
                     path={'depth': 1, 'query': '/plone/folder1'})))
         self.assertEquals(
             len(self.catalog(path={'depth': -1, 'query': '/plone/folder1'})),
-            len(self.searchResults(self.catalog,
+            len(self.searchResults(
                 path={'depth': -1, 'query': '/plone/folder1'})))
         self.assertEquals(
             len(self.catalog(path={'depth': 1, 'query': '/plone'})),
-            len(self.searchResults(self.catalog,
+            len(self.searchResults(
                     path={'depth': 1, 'query': '/plone'})))
         self.assertEquals(
             len(self.catalog(path={'query': '/plone/folder1', 'navtree_start': 2, 'navtree': 1},
                              is_default_page=False)),
-            len(self.searchResults(self.catalog,
+            len(self.searchResults(
                     path={'query': '/plone/folder1', 'navtree_start': 2, 'navtree': 1},
                     is_default_page=False)))
 
