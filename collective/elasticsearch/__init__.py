@@ -21,12 +21,12 @@ info = logger.info
 def catalog_object(self, object, uid=None, idxs=[],
                    update_metadata=1, pghandler=None):
     es = ElasticSearch(self)
-    return es.catalog(object, uid, idxs, update_metadata, pghandler)
+    return es.catalog_object(object, uid, idxs, update_metadata, pghandler)
 
 
 def uncatalog_object(self, object, *args, **kwargs):
     es = ElasticSearch(self)
-    return es.uncatalog(object, *args, **kwargs)
+    return es.uncatalog_object(object, *args, **kwargs)
 
 
 def searchResults(self, REQUEST=None, **kw):

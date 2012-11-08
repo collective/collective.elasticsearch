@@ -58,7 +58,7 @@ class ElasticSearch(object):
         try:
             dquery, sort = qassembler.normalize(query)
             equery = qassembler(dquery)
-            result = self.conn.search(equery, sid(self), self.catalogtool.getId(),
+            result = self.conn.search(equery, sid(self.catalogtool), self.catalogtool.getId(),
                                  sort=sort)
             factory = BrainFactory(self.catalog)
             count = result.count()
@@ -68,8 +68,8 @@ class ElasticSearch(object):
             """will happen on no result"""
             return LazyMap(BrainFactory(self.catalog), [], 0)
 
-    def catalog(self, obj, uid=None, idxs=[],
-                update_metadata=1, pghandler=None):
+    def catalog_object(self, obj, uid=None, idxs=[],
+                       update_metadata=1, pghandler=None):
         mode = self.mode
         if mode in (DISABLE_MODE, DUAL_MODE):
             result = self.catalogtool.__old_catalog_object(
@@ -80,9 +80,11 @@ class ElasticSearch(object):
         if not IIndexableObject.providedBy(obj):
             # This is the CMF 2.2 compatible approach, which should be used
             # going forward
-            wrapper = queryMultiAdapter((obj, self), IIndexableObject)
+            wrapper = queryMultiAdapter((obj, self.catalogtool), IIndexableObject)
             if wrapper is not None:
                 wrapped_object = wrapper
+        else:
+            wrapped_object = obj
         conn = self.conn
         catalog = self.catalog
         if not idxs:
@@ -111,7 +113,7 @@ class ElasticSearch(object):
         if self.registry.auto_flush:
             conn.refresh()
 
-    def uncatalog(self, obj, *args, **kwargs):
+    def uncatalog_object(self, obj, *args, **kwargs):
         mode = self.mode
         if mode in (DISABLE_MODE, DUAL_MODE):
             result = self.catalogtool.__old_uncatalog_object(obj, *args, **kwargs)

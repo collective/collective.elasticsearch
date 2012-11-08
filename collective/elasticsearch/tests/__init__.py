@@ -7,6 +7,7 @@ from collective.elasticsearch.testing import \
     ElasticSearch_FUNCTIONAL_TESTING
 import unittest2 as unittest
 from pyes import ES
+from collective.elasticsearch.es import ElasticSearch
 from collective.elasticsearch.convert import convert_to_elastic
 from collective.elasticsearch.utils import sid
 from collective.elasticsearch.interfaces import (
@@ -29,8 +30,11 @@ class BaseTest(unittest.TestCase):
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.convert_catalog()
+        # XXX WHY DO I NEED TO DO THIS!!!?
         from collective.elasticsearch import patched, CatalogTool
         self.searchResults = patched[CatalogTool]['searchResults']
+        CatalogTool._ElasticSearch__old_catalog_object = \
+            patched[CatalogTool]['catalog_object']
 
     def tearDown(self):
         conn = ES('127.0.0.1:9200')

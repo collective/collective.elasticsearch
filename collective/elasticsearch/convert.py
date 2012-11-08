@@ -1,15 +1,15 @@
 from zope.component import getMultiAdapter
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
-from collective.elasticsearch.settings import CONVERTED_ATTR
+from collective.elasticsearch.es import CONVERTED_ATTR
 from collective.elasticsearch.indexes import getIndex
-from pyes import ES
 from pyes.exceptions import IndexAlreadyExistsException
 from collective.elasticsearch.utils import sid
-from collective.elasticsearch.settings import Settings
+from collective.elasticsearch.es import ElasticSearch
 
 
 def convert_to_elastic(catalogtool):
+    es = ElasticSearch(catalogtool)
     catalog = catalogtool._catalog
     properties = {}
     for name in catalog.indexes.keys():
@@ -20,8 +20,7 @@ def convert_to_elastic(catalogtool):
             raise Exception("Can not locate index for %s" % (
                 name))
 
-    settings = Settings()
-    conn = ES(settings.registry.connection_string)
+    conn = es.conn
     try:
         conn.create_index(sid(catalogtool))
     except IndexAlreadyExistsException:
