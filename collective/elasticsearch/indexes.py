@@ -190,7 +190,8 @@ class EExtendedPathIndex(BaseIndex):
             'properties': {
                 'path': {
                     'type': 'string',
-                    'index': 'not_analyzed'
+                    'index': 'analyzed',
+                    'index_analyzer': 'keyword'
                 },
                 'depth': {
                     'type': 'integer'

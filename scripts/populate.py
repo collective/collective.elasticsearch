@@ -53,9 +53,9 @@ def importit(app):
     site = app[SITE_ID]
     setSite(site)
     #convert_to_elastic(site.portal_catalog)
-    per_folder = 500
-    num_folders = 50
-    max_depth = 5
+    per_folder = 100
+    num_folders = 10
+    max_depth = 3
     portal_types = ['Document', 'News Item', 'Event']
     data = Data()
 
@@ -74,6 +74,7 @@ def importit(app):
                              check_for_first=True, delete_first=False,
                              title="Page %i" % didx, text=data.next())
             count = populate(folder, count, depth + 1)
+        print 'commiting'
         transaction.commit()
         app._p_jar.cacheMinimize()
         return count

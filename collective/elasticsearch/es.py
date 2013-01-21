@@ -1,3 +1,4 @@
+import random
 from Acquisition import aq_base
 from zope.component import getUtility
 from plone.registry.interfaces import IRegistry
@@ -24,6 +25,7 @@ from logging import getLogger
 import traceback
 from collective.elasticsearch.indexes import getPath
 from pyes.exceptions import IndexAlreadyExistsException
+import transaction
 
 
 logger = getLogger(__name__)
@@ -31,6 +33,7 @@ info = logger.info
 warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
+ES_CATALOG_ID_ATTR = '_es_id'
 
 
 class PatchCaller(object):
@@ -70,6 +73,24 @@ class ElasticSearch(object):
         except:
             self.registry = None
 
+        current = transaction.get()
+        hooked = False
+        for hook in current.getAfterCommitHooks():
+            meth = hook[0]
+            if getattr(meth, 'im_class', None) == ElasticSearch:
+                self.tid = hook[1][0]
+                hooked = True
+                break
+        if not hooked:
+            self.tid = self.generateTransactionId()
+            current.addAfterCommitHook(self.afterCommit, (self.tid,))
+
+    def generateTransactionId(self):
+        return random.randint(0, 9999999999)
+
+    def afterCommit(self, success, tid):
+        pass
+
     @property
     def mode(self):
         if not getattr(self.catalogtool, CONVERTED_ATTR, False):
@@ -87,7 +108,7 @@ class ElasticSearch(object):
         try:
             dquery, sort = qassembler.normalize(query)
             equery = qassembler(dquery)
-            result = self.conn.search(equery, self.catalogsid, self.catalogtool.getId(), sort=sort)
+            result = self.conn.search(equery, self.catalogsid, self.catalogtype, sort=sort)
             factory = BrainFactory(self.catalog)
             count = result.count()
             result =  LazyMap(factory, result, count)
@@ -117,7 +138,8 @@ class ElasticSearch(object):
             wrapped_object = obj
         conn = self.conn
         catalog = self.catalog
-        if not idxs:
+        orig_idxs = idxs
+        if idxs == []:
             idxs = catalog.indexes.keys()
         index_data = {}
         for index_name in idxs:
@@ -129,25 +151,28 @@ class ElasticSearch(object):
                     value = None
                 index_data[index_name] = value
         # now get metadata
-        for meta_name in catalog.names:
-            if meta_name in index_data:
-                continue
-            attr = getattr(wrapped_object, meta_name, MV)
-            if (attr is not MV and safe_callable(attr)):
-                attr = attr()
-            if isinstance(attr, DateTime):
-                attr = attr.ISO8601()
-            elif attr in (MV, 'None'):
-                attr = None
-            index_data[meta_name] = attr
+        # only if we're indexing everything, re-cataloging...
+        if update_metadata:
+            for meta_name in catalog.names:
+                if meta_name in index_data:
+                    continue
+                attr = getattr(wrapped_object, meta_name, MV)
+                if (attr is not MV and safe_callable(attr)):
+                    attr = attr()
+                if isinstance(attr, DateTime):
+                    attr = attr.ISO8601()
+                elif attr in (MV, 'None'):
+                    attr = None
+                index_data[meta_name] = attr
 
-        if 'path' not in idxs and 'path' not in catalog.names:
+        # only if full indexing 
+        if orig_idxs == [] and 'path' not in index_data:
             if uid:
                 index_data['path'] = uid
             else:
                 index_data['path'] = getPath(wrapped_object)
 
-        conn.index(index_data, self.catalogsid, self.catalogtool.getId(), sid(obj))
+        conn.index(index_data, self.catalogsid, self.catalogtype, sid(obj))
         if self.registry.auto_flush:
             conn.refresh()
 
@@ -158,7 +183,7 @@ class ElasticSearch(object):
             if mode == DISABLE_MODE:
                 return result
         conn = self.conn
-        conn.delete(self.catalogsid, self.catalogtool.getId(), sid(obj))
+        conn.delete(self.catalogsid, self.catalogtype, sid(obj))
         if self.registry.auto_flush:
             conn.refresh()
 
@@ -263,10 +288,18 @@ class ElasticSearch(object):
             pass
 
         mapping = {'properties': properties}
-        conn.put_mapping(self.catalogtool.getId(), mapping,
-            [self.catalogsid])
+        conn.put_mapping(self.catalogtype, mapping, [self.catalogsid])
+        conn.put_mapping(self.trns_catalogtype, mapping, [self.catalogsid])
         conn.refresh()
 
     @property
     def catalogsid(self):
         return sid(self.catalogtool)
+
+    @property
+    def catalogtype(self):
+        return self.catalogtool.getId()
+
+    @property
+    def trns_catalogtype(self):
+        return self.catalogtype + '_trns'
