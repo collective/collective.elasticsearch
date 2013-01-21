@@ -9,6 +9,8 @@
   <five:registerPackage package="." initialize=".initialize" />
 
   <include package="plone.app.layout" />
+  <include package="five.globalrequest" />
+
   <adapter for="*
                 zope.publisher.interfaces.browser.IBrowserRequest
                 .brain.Brain"

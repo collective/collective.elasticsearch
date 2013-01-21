@@ -26,6 +26,7 @@ import traceback
 from collective.elasticsearch.indexes import getPath
 from pyes.exceptions import IndexAlreadyExistsException
 import transaction
+from zope.globalrequest import getRequest
 
 
 logger = getLogger(__name__)
@@ -33,7 +34,7 @@ info = logger.info
 warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
-ES_CATALOG_ID_ATTR = '_es_id'
+REQ_CONN_ATTR = 'elasticsearch.connection'
 
 
 class PatchCaller(object):
@@ -66,6 +67,10 @@ class ElasticSearch(object):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
         self.patched = PatchCaller(self.catalogtool)
+        try:
+            self.req = getRequest()
+        except:
+            self.req = None
 
         registry = getUtility(IRegistry)
         try:
@@ -101,7 +106,13 @@ class ElasticSearch(object):
 
     @property
     def conn(self):
-        return ES(self.registry.connection_string)
+        if self.req is not None:
+            if REQ_CONN_ATTR not in self.req.environ:
+                self.req.environ[REQ_CONN_ATTR] = \
+                    ES(self.registry.connection_string)
+            return self.req.environ[REQ_CONN_ATTR]
+        else:
+            return ES(self.registry.connection_string)
 
     def query(self, query):
         qassembler = QueryAssembler(self.catalogtool)
@@ -150,8 +161,6 @@ class ElasticSearch(object):
                     # yes, we'll index null data...
                     value = None
                 index_data[index_name] = value
-        # now get metadata
-        # only if we're indexing everything, re-cataloging...
         if update_metadata:
             for meta_name in catalog.names:
                 if meta_name in index_data:
@@ -215,6 +224,7 @@ class ElasticSearch(object):
             conn.delete_index(self.catalogsid)
         except IndexMissingException:
             pass
+        self.convertToElastic()
 
         if mode == DUAL_MODE:
             return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
@@ -284,13 +294,16 @@ class ElasticSearch(object):
         conn = self.conn
         try:
             conn.create_index(self.catalogsid)
+            # conn.create_index(self.trns_catalogtype)
         except IndexAlreadyExistsException:
             pass
 
         mapping = {'properties': properties}
-        conn.put_mapping(self.catalogtype, mapping, [self.catalogsid])
-        conn.put_mapping(self.trns_catalogtype, mapping, [self.catalogsid])
-        conn.refresh()
+        conn.indices.put_mapping(
+            doc_type=self.catalogtype,
+            mapping=mapping,
+            indices=[self.catalogsid])
+        # conn.indices.put_mapping(self.trns_catalogtype, mapping, [self.catalogsid])
 
     @property
     def catalogsid(self):
