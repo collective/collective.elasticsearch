@@ -1,20 +1,34 @@
+from Acquisition import aq_parent
 from zope.component import getMultiAdapter
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
-from collective.elasticsearch.es import ElasticSearch, CONVERTED_ATTR
+from collective.elasticsearch.es import ElasticSearch
 
 
 class ConvertToElastic(BrowserView):
 
-    def __call__(self):
+    def convert(self):
         if self.request.method == 'POST':
             authenticator = getMultiAdapter((self.context, self.request),
                                             name=u"authenticator")
             if not authenticator.verify():
                 raise Unauthorized
 
-            setattr(self.context, CONVERTED_ATTR, True)
-            self.context._p_changed = True
+            es = ElasticSearch(self.context)
+            es.convertToElastic()
+        site = aq_parent(self.context)
+        self.request.response.redirect('%s/@@elastic-controlpanel' % (
+            site.absolute_url()))
+
+    def rebuild(self):
+        if self.request.method == 'POST':
+            authenticator = getMultiAdapter((self.context, self.request),
+                                            name=u"authenticator")
+            if not authenticator.verify():
+                raise Unauthorized
+
             self.context.manage_catalogRebuild()
-            
-        return super(ConvertToElastic, self).__call__()
+
+        site = aq_parent(self.context)
+        self.request.response.redirect('%s/@@elastic-controlpanel' % (
+            site.absolute_url()))

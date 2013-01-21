@@ -97,8 +97,12 @@ class ElasticSearch(object):
         pass
 
     @property
+    def catalog_converted(self):
+        return getattr(self.catalogtool, CONVERTED_ATTR, False)
+
+    @property
     def mode(self):
-        if not getattr(self.catalogtool, CONVERTED_ATTR, False):
+        if not self.catalog_converted:
             return DISABLE_MODE
         if self.registry is None:
             return DISABLE_MODE

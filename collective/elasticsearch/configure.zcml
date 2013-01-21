@@ -17,14 +17,6 @@
            factory="plone.app.layout.icons.icons.CatalogBrainContentIcon"
            provides="plone.app.layout.icons.interfaces.IContentIcon" />
 
-  <browser:page
-    name="convert-to-elastic"
-    for=".interfaces.IElasticSearchCatalog"
-    class=".convert.ConvertToElastic"
-    template="convert.pt"
-    permission="cmf.ManagePortal"
-    />
-
   <genericsetup:registerProfile
     name="default"
     title="Elastic Search"
@@ -39,5 +31,22 @@
     permission="cmf.ManagePortal"
     class=".controlpanel.ElasticControlPanelView"
     />
+
+  <browser:page
+    name="elastic-convert"
+    for=".interfaces.IElasticSearchCatalog"
+    class=".convert.ConvertToElastic"
+    attribute="convert"
+    permission="cmf.ManagePortal"
+    />
+
+  <browser:page
+    name="elastic-rebuild"
+    for=".interfaces.IElasticSearchCatalog"
+    class=".convert.ConvertToElastic"
+    attribute="rebuild"
+    permission="cmf.ManagePortal"
+    />
+
   
 </configure>

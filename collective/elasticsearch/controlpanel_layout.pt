@@ -1,0 +1,91 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="here/prefs_main_template/macros/master"
+      i18n:domain="plone">
+
+<body>
+
+<div metal:fill-slot="prefs_configlet_main"
+    tal:define="status view/connection_status">
+
+    <style>
+      #status{
+
+      }
+    </style>
+
+    <a href=""
+       id="setup-link"
+       tal:attributes="href string:$portal_url/plone_control_panel"
+       i18n:translate="">
+        Site Setup
+    </a> &rsaquo;
+
+    <h1 class="documentFirstHeading" tal:content="view/label">View Title</h1>
+
+    <div metal:use-macro="context/global_statusmessage/macros/portal_message">
+      Portal status message
+    </div>
+
+    <dl class="portalMessage warning" tal:condition="python: not status or not status['ok']">
+        <dt>
+            Warning
+        </dt>
+        <dd>
+            Could not connect to specified elastic search server.
+        </dd>
+    </dl>
+    
+    <div id="layout-contents">
+        <span tal:replace="structure view/contents" />
+    </div>
+
+    <form method="POST">
+      <span tal:replace="structure context/@@authenticator/authenticator"/>
+      <input type="submit" name="convert" value="Convert Catalog" />
+    </form>
+
+    <form method="POST">
+      <span tal:replace="structure context/@@authenticator/authenticator"/>
+      <input type="submit" name="convert" value="Rebuild Catalog" />
+    </form>
+
+    <div tal:condition="status" id="status"
+      tal:define="shards status/_shards/total|python:0;">
+      <table class="listing">
+        <thead>
+          <th colspan="2">
+            Server status
+          </th>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Catalog converted</td>
+            <td tal:condition="view/es/catalog_converted">Yes</td>
+            <td tal:condition="not: view/es/catalog_converted">No</td>
+          </tr>
+          <tr>
+            <td>Shards</td>
+            <td tal:content="shards"></td>
+          </tr>
+          <tal:specific tal:define="psid view/es/catalogsid;
+                  idata python: status['indices'][psid];">
+            <tr>
+              <td>Number of docs</td>
+              <td tal:content="idata/docs/num_docs"></td>
+            </tr>
+            <tr>
+              <td>Size</td>
+              <td tal:content="idata/index/primary_size"></td>
+            </tr>
+          </tal:specific>
+        </tbody>
+      </table>
+    </div>
+    
+</div>
+</body>
+</html>

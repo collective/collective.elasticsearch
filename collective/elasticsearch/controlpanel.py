@@ -1,14 +1,36 @@
+from Products.CMFCore.utils import getToolByName
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from collective.elasticsearch.interfaces import IElasticSettings
 from plone.z3cform import layout
 from z3c.form import form
+
+from collective.elasticsearch.es import ElasticSearch
 
 
 class ElasticControlPanelForm(RegistryEditForm):
     form.extends(RegistryEditForm)
     schema = IElasticSettings
 
+    control_panel_view = "@@elastic-controlpanel"
+
+
+class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
+    index = ViewPageTemplateFile('controlpanel_layout.pt')
+
+    def __init__(self, *args, **kwargs):
+        super(ElasticControlPanelFormWrapper, self).__init__(*args, **kwargs)
+        self.portal_catalog = getToolByName(self.context, 'portal_catalog')
+        self.es = ElasticSearch(self.portal_catalog)
+
+    @property
+    def connection_status(self):
+        try:
+            return self.es.conn.status()
+        except:
+            return False
+
 ElasticControlPanelView = layout.wrap_form(ElasticControlPanelForm,
-                                           ControlPanelFormWrapper)
+                                           ElasticControlPanelFormWrapper)

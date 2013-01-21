@@ -21,7 +21,9 @@ class IElasticSettings(Interface):
 
     mode = schema.Choice(
         title=u'Mode',
-        description=u'Which mode elastic search should operation in',
+        description=u'Which mode elastic search should operate in. '
+                    u'Changing this setting might require you to '
+                    u'reindex the catalog. ',
         default=DISABLE_MODE,
         vocabulary=SimpleVocabulary([
             SimpleTerm(DISABLE_MODE, DISABLE_MODE, u'Disabled'),
