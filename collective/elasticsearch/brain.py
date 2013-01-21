@@ -71,6 +71,8 @@ class Brain(Implicit):
             return None
         if len(path) > 1:
             parent = self._catalog.unrestrictedTraverse(path[:-1])
+        else:
+            return ''
 
         return parent.restrictedTraverse(path[-1])
 

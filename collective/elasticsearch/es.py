@@ -22,10 +22,13 @@ from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from logging import getLogger
 import traceback
+from collective.elasticsearch.indexes import getPath
+from pyes.exceptions import IndexAlreadyExistsException
 
 
 logger = getLogger(__name__)
 info = logger.info
+warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
 
@@ -84,8 +87,7 @@ class ElasticSearch(object):
         try:
             dquery, sort = qassembler.normalize(query)
             equery = qassembler(dquery)
-            result = self.conn.search(equery, sid(self.catalogtool), self.catalogtool.getId(),
-                                 sort=sort)
+            result = self.conn.search(equery, self.catalogsid, self.catalogtool.getId(), sort=sort)
             factory = BrainFactory(self.catalog)
             count = result.count()
             result =  LazyMap(factory, result, count)
@@ -109,6 +111,8 @@ class ElasticSearch(object):
             wrapper = queryMultiAdapter((obj, self.catalogtool), IIndexableObject)
             if wrapper is not None:
                 wrapped_object = wrapper
+            else:
+                wrapped_object = obj
         else:
             wrapped_object = obj
         conn = self.conn
@@ -120,8 +124,10 @@ class ElasticSearch(object):
             index = getIndex(catalog, index_name)
             if index is not None:
                 value = index.get_value(wrapped_object)
-                if value not in (None, 'None'):
-                    index_data[index_name] = value
+                if value in (None, 'None'):
+                    # yes, we'll index null data...
+                    value = None
+                index_data[index_name] = value
         # now get metadata
         for meta_name in catalog.names:
             if meta_name in index_data:
@@ -132,10 +138,16 @@ class ElasticSearch(object):
             if isinstance(attr, DateTime):
                 attr = attr.ISO8601()
             elif attr in (MV, 'None'):
-                continue
+                attr = None
             index_data[meta_name] = attr
 
-        conn.index(index_data, sid(self.catalogtool), self.catalogtool.getId(), sid(obj))
+        if 'path' not in idxs and 'path' not in catalog.names:
+            if uid:
+                index_data['path'] = uid
+            else:
+                index_data['path'] = getPath(wrapped_object)
+
+        conn.index(index_data, self.catalogsid, self.catalogtool.getId(), sid(obj))
         if self.registry.auto_flush:
             conn.refresh()
 
@@ -146,9 +158,56 @@ class ElasticSearch(object):
             if mode == DISABLE_MODE:
                 return result
         conn = self.conn
-        conn.delete(sid(self.catalogtool), self.catalogtool.getId(), sid(obj))
+        conn.delete(self.catalogsid, self.catalogtool.getId(), sid(obj))
         if self.registry.auto_flush:
             conn.refresh()
+
+    def manage_catalogRebuild(self, REQUEST=None, RESPONSE=None):
+        mode = self.mode
+        if mode == DISABLE_MODE:
+            return self.patched.manage_catalogRebuild(REQUEST, RESPONSE)
+
+        conn = self.conn
+        try:
+            conn.delete_index(self.catalogsid)
+        except IndexMissingException:
+            pass
+        self.convertToElastic()
+
+        # should run catalog object
+        return self.patched.manage_catalogRebuild(REQUEST, RESPONSE)
+
+    def manage_catalogClear(self, REQUEST=None, RESPONSE=None, URL1=None):
+        """
+        XXX Implement
+        """
+        mode = self.mode
+        if mode == DISABLE_MODE:
+            return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
+
+        conn = self.conn
+        try:
+            conn.delete_index(self.catalogsid)
+        except IndexMissingException:
+            pass
+
+        if mode == DUAL_MODE:
+            return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
+
+    def refreshCatalog(self, clear=0, pghandler=None):
+        mode = self.mode
+        if mode == DISABLE_MODE:
+            return self.patched.refreshCatalog(clear, pghandler)
+
+        conn = self.conn
+        try:
+            conn.delete_index(self.catalogsid)
+        except IndexMissingException:
+            pass
+        self.convertToElastic()
+
+        # should run catalog object
+        return self.patched.refreshCatalog(clear, pghandler)
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
         mode = self.mode
@@ -171,11 +230,43 @@ class ElasticSearch(object):
             if not show_inactive and not _checkPermission(
                     AccessInactivePortalContent, self.catalogtool):
                 query['effectiveRange'] = DateTime()
-
+        orig_query = query.copy()
+        # info('Running query: %s' % repr(orig_query))
         try:
             return self.query(query)
         except:
             info("Error running Query: %s\n%s" %(
-                repr(query),
+                repr(orig_query),
                 traceback.format_exc()))
-            return LazyMap(BrainFactory(self._catalog), [], 0)
+            if mode == DUAL_MODE:
+                # fall back now...
+                return self.patched.searchResults(REQUEST, **kw)
+            else:
+                return LazyMap(BrainFactory(self.catalog), [], 0)
+
+    def convertToElastic(self):
+        setattr(self.catalogtool, CONVERTED_ATTR, True)
+        self.catalogtool._p_changed = True
+        properties = {}
+        for name in self.catalog.indexes.keys():
+            index = getIndex(self.catalog, name)
+            if index is not None:
+                properties[name] = index.create_mapping(name)
+            else:
+                raise Exception("Can not locate index for %s" % (
+                    name))
+
+        conn = self.conn
+        try:
+            conn.create_index(self.catalogsid)
+        except IndexAlreadyExistsException:
+            pass
+
+        mapping = {'properties': properties}
+        conn.put_mapping(self.catalogtool.getId(), mapping,
+            [self.catalogsid])
+        conn.refresh()
+
+    @property
+    def catalogsid(self):
+        return sid(self.catalogtool)

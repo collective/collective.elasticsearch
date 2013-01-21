@@ -15,6 +15,7 @@ def getUID(obj):
 
 
 def sid(obj):
+    # XXX NEED TO DO THIS A BETTER WAY!?
     obj = aq_base(obj)
     try:
         return str(u64(obj._p_oid))

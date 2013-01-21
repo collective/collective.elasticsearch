@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import random
 from plone.i18n.normalizer import idnormalizer
 from StringIO import StringIO
-from collective.elasticsearch.convert import convert_to_elastic
 from collective.elasticsearch.testing import createObject
 import os
 
@@ -35,7 +34,7 @@ def spoofRequest(app):
 # Enable Faux HTTP request object
 app = spoofRequest(app)
 
-_dir = os.path.join(os.getcwd(), 'src', 'collective.elasticsearch')
+_dir = os.path.join(os.getcwd(), 'src')
 
 class Data(object):
     def __init__(self):
@@ -53,7 +52,7 @@ def importit(app):
 
     site = app[SITE_ID]
     setSite(site)
-    convert_to_elastic(site.portal_catalog)
+    #convert_to_elastic(site.portal_catalog)
     per_folder = 500
     num_folders = 50
     max_depth = 5

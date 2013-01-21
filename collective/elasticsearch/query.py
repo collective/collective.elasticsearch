@@ -54,4 +54,7 @@ class QueryAssembler(object):
                 query = qq
             else:
                 filters.append(qq)
-        return FilteredQuery(query, ANDFilter(filters))
+        if len(filters) == 0:
+            return query
+        else:
+            return FilteredQuery(query, ANDFilter(filters))

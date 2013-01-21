@@ -1,37 +1,7 @@
 from zope.component import getMultiAdapter
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
-from collective.elasticsearch.es import CONVERTED_ATTR
-from collective.elasticsearch.indexes import getIndex
-from pyes.exceptions import IndexAlreadyExistsException
-from collective.elasticsearch.utils import sid
-from collective.elasticsearch.es import ElasticSearch
-
-
-def convert_to_elastic(catalogtool):
-    es = ElasticSearch(catalogtool)
-    catalog = catalogtool._catalog
-    properties = {}
-    for name in catalog.indexes.keys():
-        index = getIndex(catalog, name)
-        if index is not None:
-            properties[name] = index.create_mapping(name)
-        else:
-            raise Exception("Can not locate index for %s" % (
-                name))
-
-    conn = es.conn
-    try:
-        conn.create_index(sid(catalogtool))
-    except IndexAlreadyExistsException:
-        pass
-
-    mapping = {'properties': properties}
-    conn.put_mapping(catalogtool.getId(), mapping,
-        [sid(catalogtool)])
-    setattr(catalogtool, CONVERTED_ATTR, True)
-    catalogtool._p_changed = True
-    conn.refresh()
+from collective.elasticsearch.es import ElasticSearch, CONVERTED_ATTR
 
 
 class ConvertToElastic(BrowserView):
@@ -43,6 +13,8 @@ class ConvertToElastic(BrowserView):
             if not authenticator.verify():
                 raise Unauthorized
 
-            convert_to_elastic(self.context)
+            setattr(self.context, CONVERTED_ATTR, True)
+            self.context._p_changed = True
+            self.context.manage_catalogRebuild()
             
         return super(ConvertToElastic, self).__call__()

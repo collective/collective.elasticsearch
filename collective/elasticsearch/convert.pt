@@ -14,13 +14,10 @@
     </metal:core>
     <metal:core fill-slot="content-core">
       <tal:core-macro metal:define-macro="content-core">
-        <form method="POST" tal:condition="not: view/converted">
+        <form method="POST">
           <span tal:replace="structure context/@@authenticator/authenticator"/>
           <input type="submit" name="submit" value="Convert catalog" />
         </form>
-        <p tal:condition="view/converted">
-          This catalog has already been converted to elasticsearch.
-        </p>
       </tal:core-macro>
     </metal:core>
   </body>
