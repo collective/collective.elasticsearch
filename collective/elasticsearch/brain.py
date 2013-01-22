@@ -50,9 +50,15 @@ class Brain(Implicit):
 
     def getRawPath(self):
         try:
-            return self._data['_path']
+            # need to convert to string because we get
+            # unicode from elastic
+            path = self._data['_path']
+            newpath = []
+            for part in path:
+                newpath.append(str(part))
+            return tuple(newpath)
         except KeyError:
-            return ''
+            return ()
 
     def getURL(self, relative=0):
         request = aq_get(self._catalog, 'REQUEST', None)

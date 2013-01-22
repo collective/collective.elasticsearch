@@ -11,7 +11,7 @@ from collective.elasticsearch.interfaces import (
     IElasticSettings,
     DISABLE_MODE,
     DUAL_MODE)
-from collective.elasticsearch.utils import sid
+from collective.elasticsearch.utils import getUID
 from plone.indexer.interfaces import IIndexableObject
 from zope.component import queryMultiAdapter
 from collective.elasticsearch.indexes import getIndex
@@ -23,7 +23,9 @@ from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from logging import getLogger
 import traceback
-from pyes.exceptions import IndexAlreadyExistsException
+from pyes.exceptions import (
+    IndexAlreadyExistsException,
+    NotFoundException)
 import transaction
 from zope.globalrequest import getRequest
 from collective.elasticsearch.ejson import dumps
@@ -61,7 +63,29 @@ class PatchCaller(object):
         return bound_func
 
 
+def afterCommit(success, es):
+    # XXX implement
+    pass
+
+
 class ElasticSearch(object):
+
+    trns_mapping = {
+        'data': {
+            'type': 'string',
+            'index': 'not_analyzed'
+        },
+        'transaction_id': {
+            'type': 'integer'
+        },
+        'order': {
+            'type': 'integer'
+        },
+        'action': {
+            'type': 'string',
+            'index': 'not_analyzed'
+        }
+    }
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
@@ -82,20 +106,19 @@ class ElasticSearch(object):
         hooked = False
         for hook in current.getAfterCommitHooks():
             meth = hook[0]
-            if getattr(meth, 'im_class', None) == ElasticSearch:
-                self.tid = hook[1][0]
+            if meth == afterCommit:
+                es = hook[1][0]
+                self.tid = es.tid
+                self.trns_counter = es.trns_counter
                 hooked = True
                 break
         if not hooked:
             self.tid = self.generateTransactionId()
-            current.addAfterCommitHook(self.afterCommit, (self.tid,))
+            self.trns_counter = 0
+            current.addAfterCommitHook(afterCommit, (self,))
 
     def generateTransactionId(self):
         return random.randint(0, 9999999999)
-
-    def afterCommit(self, success, tid):
-        # XXX implement
-        pass
 
     @property
     def catalog_converted(self):
@@ -173,9 +196,26 @@ class ElasticSearch(object):
             metadata['_path'] = wrapped_object.getPhysicalPath()
             index_data['_metadata'] = dumps(metadata)
 
-        conn.index(index_data, self.catalogsid, self.catalogtype, sid(obj))
+        uid = getUID(obj)
+        try:
+            doc = conn.get(self.catalogsid, self.catalogtype, uid)
+            self.registerInTransaction(uid, 'modify', doc)
+        except NotFoundException:
+            self.registerInTransaction(uid, 'add')
+        conn.index(index_data, self.catalogsid, self.catalogtype, uid)
         if self.registry.auto_flush:
             conn.refresh()
+
+    def registerInTransaction(self, uid, action, doc={}):
+        conn = self.conn
+        data = {
+            'transaction_id': self.tid,
+            'data': dumps(doc),
+            'order': self.trns_counter,
+            'action': action
+        }
+        conn.index(data, self.catalogsid, self.trns_catalogtype)
+        self.trns_counter += 1
 
     def uncatalog_object(self, obj, *args, **kwargs):
         mode = self.mode
@@ -184,7 +224,11 @@ class ElasticSearch(object):
             if mode == DISABLE_MODE:
                 return result
         conn = self.conn
-        conn.delete(self.catalogsid, self.catalogtype, sid(obj))
+
+        uid = getUID(obj)
+        doc = conn.get(self.catalogsid, self.catalogtype, uid)
+        self.registerInTransaction(uid, 'delete', doc)
+        conn.delete(self.catalogsid, self.catalogtype, uid)
         if self.registry.auto_flush:
             conn.refresh()
 
@@ -218,7 +262,6 @@ class ElasticSearch(object):
         conn = self.conn
         try:
             conn.delete_index(self.catalogsid)
-            conn.delete_index(self.trns_catalogtype)
         except IndexMissingException:
             pass
         self.convertToElastic()
@@ -282,7 +325,6 @@ class ElasticSearch(object):
         conn = self.conn
         try:
             conn.create_index(self.catalogsid)
-            conn.create_index(self.trns_catalogtype)
         except IndexAlreadyExistsException:
             pass
 
@@ -293,12 +335,12 @@ class ElasticSearch(object):
             indices=[self.catalogsid])
         conn.indices.put_mapping(
             doc_type=self.trns_catalogtype,
-            mapping=mapping,
+            mapping=self.trns_mapping,
             indices=[self.catalogsid])
 
     @property
     def catalogsid(self):
-        return sid(self.catalogtool)
+        return '-'.join(self.catalogtool.getPhysicalPath()[1:])
 
     @property
     def catalogtype(self):

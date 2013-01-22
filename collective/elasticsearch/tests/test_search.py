@@ -1,8 +1,6 @@
 from collective.elasticsearch.tests import BaseTest
 from collective.elasticsearch.testing import createObject
 import unittest2 as unittest
-from collective.elasticsearch import (
-    simpleQuery)
 from DateTime import DateTime
 import time
 

@@ -52,7 +52,6 @@ def importit(app):
 
     site = app[SITE_ID]
     setSite(site)
-    #convert_to_elastic(site.portal_catalog)
     per_folder = 100
     num_folders = 10
     max_depth = 3

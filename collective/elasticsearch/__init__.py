@@ -4,17 +4,10 @@
 # 
 
 from logging import getLogger
-from collective.elasticsearch.utils import sid
 
-from Products.ZCatalog.Lazy import LazyMap
 from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from zope.interface import classImplements
-from collective.elasticsearch.brain import BrainFactory
-from collective.elasticsearch.query import QueryAssembler
 from collective.elasticsearch.es import ElasticSearch
-# from Products.Archetypes.ReferenceEngine import ReferenceCatalog
-# from Products.Archetypes.UIDCatalog import UIDCatalog
-
 
 logger = getLogger(__name__)
 info = logger.info
@@ -59,19 +52,6 @@ def refreshCatalog(self, clear=0, pghandler=None):
     return es.refreshCatalog(clear, pghandler)
 
 
-def simpleQuery(self, **query):
-    es = ElasticSearch(self)
-    conn = es.conn
-    qassembler = QueryAssembler(self)
-    equery = qassembler(query)
-    result = conn.search(equery, sid(self), self.getId())
-    catalog = self._catalog
-    factory = BrainFactory(catalog)
-    count = result.count()
-    result = LazyMap(factory, result, count)
-    return result
-
-
 default_patch_map = {
     'catalog_object': catalog_object,
     'uncatalog_object': uncatalog_object,
@@ -94,9 +74,7 @@ class Patch(object):
 
 from Products.CMFPlone.CatalogTool import CatalogTool
 patches = [
-    Patch(CatalogTool),
-#    Patch(ReferenceCatalog, unsafe_patch_map),
-    # Patch(UIDCatalog, unsafe_patch_map)
+    Patch(CatalogTool)
 ]
 
 patched = {}
