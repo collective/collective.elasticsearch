@@ -15,6 +15,20 @@
       #status{
 
       }
+      #actions form{
+        display: inline;
+      }
+      #actions{
+        margin-bottom: 10px;
+      }
+      hr{
+        margin-bottom: 10px;
+      }
+      #actions .rebuild{
+        padding: 5px;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+      }
     </style>
 
     <a href=""
@@ -43,15 +57,21 @@
         <span tal:replace="structure view/contents" />
     </div>
 
-    <form method="POST">
-      <span tal:replace="structure context/@@authenticator/authenticator"/>
-      <input type="submit" name="convert" value="Convert Catalog" />
-    </form>
-
-    <form method="POST">
-      <span tal:replace="structure context/@@authenticator/authenticator"/>
-      <input type="submit" name="convert" value="Rebuild Catalog" />
-    </form>
+    <div id="actions" tal:define="purl string:${view/portal_catalog/absolute_url}"
+          tal:condition="status">
+      <hr />
+      <form method="POST"
+            tal:attributes="action string:${purl}/@@elastic-convert">
+        <span tal:replace="structure context/@@authenticator/authenticator"/>
+        <input type="submit" name="convert" value="Convert Catalog" />
+      </form> | 
+      <form method="POST" class="rebuild"
+            tal:attributes="action string:${purl}/@@elastic-rebuild">
+        <span tal:replace="structure context/@@authenticator/authenticator"/>
+        <input type="submit" name="convert" value="Rebuild Catalog" />
+        <span>Could take a very long time. Use carefully.</span>
+      </form>
+    </div>
 
     <div tal:condition="status" id="status"
       tal:define="shards status/_shards/total|python:0;">
@@ -73,6 +93,10 @@
           </tr>
           <tal:specific tal:define="psid view/es/catalogsid;
                   idata python: status['indices'][psid];">
+            <tr>
+              <td>Elastic Catalog Index ID</td>
+              <td tal:content="psid"></td>
+            </tr>
             <tr>
               <td>Number of docs</td>
               <td tal:content="idata/docs/num_docs"></td>

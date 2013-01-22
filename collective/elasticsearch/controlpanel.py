@@ -14,6 +14,8 @@ class ElasticControlPanelForm(RegistryEditForm):
     form.extends(RegistryEditForm)
     schema = IElasticSettings
 
+    label = u'Elasic Search Settings'
+
     control_panel_view = "@@elastic-controlpanel"
 
 
