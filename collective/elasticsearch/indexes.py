@@ -50,7 +50,7 @@ class BaseIndex(object):
         return value
 
     def extract(self, name, data):
-        return data[name]
+        return data[name] or ''
 
     def _normalize_query(self, query):
         if isinstance(query, dict) and 'query' in query:
@@ -73,7 +73,8 @@ class BaseIndex(object):
 
 
 class EKeywordIndex(BaseIndex):
-    pass
+    def extract(self, name, data):
+        return data[name] or []
 
 
 class EFieldIndex(BaseIndex):

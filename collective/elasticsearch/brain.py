@@ -1,26 +1,16 @@
 from Products.ZCatalog.interfaces import ICatalogBrain
-from Acquisition import Implicit, aq_get, aq_parent, aq_base
-from pkg_resources import DistributionNotFound
-from pkg_resources import get_distribution
-from ZPublisher.BaseRequest import RequestContainer
+from Acquisition import Implicit, aq_get
 from zope.interface import implements
 from collective.elasticsearch.indexes import getIndex
-
-try:
-    get_distribution('five.globalrequest')
-except DistributionNotFound:
-    _GLOBALREQUEST_INSTALLED = False
-else:
-    _GLOBALREQUEST_INSTALLED = True
-
-if _GLOBALREQUEST_INSTALLED:
-    from zope.globalrequest import getRequest
+from zope.globalrequest import getRequest
+from Products.CMFPlone.utils import pretty_title_or_id
 
 _marker = []
 
 
 class Brain(Implicit):
     implements(ICatalogBrain)
+    __allow_access_to_unprotected_subobjects__ = True
 
     def __init__(self, data, catalog):
         self._data = data
@@ -30,10 +20,14 @@ class Brain(Implicit):
         return key in self._data
     __contains__ = has_key
 
+    @property
+    def pretty_title_or_id(self):
+        return pretty_title_or_id(self._catalog, self)
+
     def __getattr__(self, name, default=_marker):
         if name == 'REQUEST':
             request = aq_get(self._catalog, 'REQUEST', None)
-            if request is None and _GLOBALREQUEST_INSTALLED:
+            if request is None:
                 request = getRequest()
             return request
         elif name[0] == '_':
@@ -58,7 +52,7 @@ class Brain(Implicit):
 
     def getURL(self, relative=0):
         request = aq_get(self._catalog, 'REQUEST', None)
-        if request is None and _GLOBALREQUEST_INSTALLED:
+        if request is None:
             request = getRequest()
         return request.physicalPathToURL(self.getPath(), relative)
 
