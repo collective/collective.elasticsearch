@@ -94,6 +94,7 @@ class ElasticSearch(object):
         return random.randint(0, 9999999999)
 
     def afterCommit(self, success, tid):
+        # XXX implement
         pass
 
     @property
@@ -120,17 +121,13 @@ class ElasticSearch(object):
 
     def query(self, query):
         qassembler = QueryAssembler(self.catalogtool)
-        try:
-            dquery, sort = qassembler.normalize(query)
-            equery = qassembler(dquery)
-            result = self.conn.search(equery, self.catalogsid, self.catalogtype, sort=sort)
-            factory = BrainFactory(self.catalog)
-            count = result.count()
-            result =  LazyMap(factory, result, count)
-            return result
-        except IndexMissingException:
-            """will happen on no result"""
-            return LazyMap(BrainFactory(self.catalog), [], 0)
+        dquery, sort = qassembler.normalize(query)
+        equery = qassembler(dquery)
+        result = self.conn.search(equery, self.catalogsid, self.catalogtype, sort=sort)
+        factory = BrainFactory(self.catalog)
+        count = result.count()
+        result =  LazyMap(factory, result, count)
+        return result
 
     def catalog_object(self, obj, uid=None, idxs=[],
                        update_metadata=1, pghandler=None):
@@ -205,30 +202,16 @@ class ElasticSearch(object):
         if mode == DISABLE_MODE:
             return self.patched.manage_catalogRebuild(REQUEST, RESPONSE)
 
-        conn = self.conn
-        try:
-            conn.delete_index(self.catalogsid)
-        except IndexMissingException:
-            pass
-        self.convertToElastic()
+        self.recreateCatalog()
 
-        # should run catalog object
         return self.patched.manage_catalogRebuild(REQUEST, RESPONSE)
 
     def manage_catalogClear(self, REQUEST=None, RESPONSE=None, URL1=None):
-        """
-        XXX Implement
-        """
         mode = self.mode
         if mode == DISABLE_MODE:
             return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
 
-        conn = self.conn
-        try:
-            conn.delete_index(self.catalogsid)
-        except IndexMissingException:
-            pass
-        self.convertToElastic()
+        self.recreateIndex()
 
         if mode == DUAL_MODE:
             return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
@@ -238,15 +221,16 @@ class ElasticSearch(object):
         if mode == DISABLE_MODE:
             return self.patched.refreshCatalog(clear, pghandler)
 
+        return self.patched.refreshCatalog(clear, pghandler)
+
+    def recreateCatalog(self):
         conn = self.conn
         try:
             conn.delete_index(self.catalogsid)
+            conn.delete_index(self.trns_catalogtype)
         except IndexMissingException:
             pass
         self.convertToElastic()
-
-        # should run catalog object
-        return self.patched.refreshCatalog(clear, pghandler)
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
         mode = self.mode
@@ -298,7 +282,7 @@ class ElasticSearch(object):
         conn = self.conn
         try:
             conn.create_index(self.catalogsid)
-            # conn.create_index(self.trns_catalogtype)
+            conn.create_index(self.trns_catalogtype)
         except IndexAlreadyExistsException:
             pass
 
@@ -307,7 +291,10 @@ class ElasticSearch(object):
             doc_type=self.catalogtype,
             mapping=mapping,
             indices=[self.catalogsid])
-        # conn.indices.put_mapping(self.trns_catalogtype, mapping, [self.catalogsid])
+        conn.indices.put_mapping(
+            doc_type=self.trns_catalogtype,
+            mapping=mapping,
+            indices=[self.catalogsid])
 
     @property
     def catalogsid(self):
