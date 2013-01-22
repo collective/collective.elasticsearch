@@ -92,7 +92,8 @@
             <td tal:content="shards"></td>
           </tr>
           <tal:specific tal:define="psid view/es/catalogsid;
-                  idata python: status['indices'][psid];">
+                                    idata python: status['indices'][psid];"
+                        tal:on-error="nothing">
             <tr>
               <td>Elastic Catalog Index ID</td>
               <td tal:content="psid"></td>

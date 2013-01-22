@@ -1,9 +1,9 @@
 from Products.ZCatalog.interfaces import ICatalogBrain
 from Acquisition import Implicit, aq_get
 from zope.interface import implements
-from collective.elasticsearch.indexes import getIndex
 from zope.globalrequest import getRequest
 from Products.CMFPlone.utils import pretty_title_or_id
+from collective.elasticsearch.ejson import loads
 
 _marker = []
 
@@ -13,7 +13,8 @@ class Brain(Implicit):
     __allow_access_to_unprotected_subobjects__ = True
 
     def __init__(self, data, catalog):
-        self._data = data
+        self._idata = data
+        self._data = loads(self._idata['_metadata'])
         self._catalog = catalog
 
     def has_key(self, key):
@@ -38,17 +39,20 @@ class Brain(Implicit):
                     raise AttributeError(name)
                 else:
                     return default
-        index = getIndex(self._catalog, name)
-        if index is not None:
-            return index.extract(name, self._data)
-        elif name in self._data:
+        if name in self._data:
             return self._data[name]
         elif name.startswith('portal_'):
             # XXX really ugly...
             return aq_get(self._catalog, name)
 
     def getPath(self):
-        return str(self.path)
+        return '/'.join(self.getRawPath())
+
+    def getRawPath(self):
+        try:
+            return self._data['_path']
+        except KeyError:
+            return ''
 
     def getURL(self, relative=0):
         request = aq_get(self._catalog, 'REQUEST', None)
@@ -60,7 +64,7 @@ class Brain(Implicit):
         return self._catalog.unrestrictedTraverse(self.getPath())
 
     def getObject(self, REQUEST=None):
-        path = self.getPath().split('/')
+        path = self.getRawPath()
         if not path:
             return None
         if len(path) > 1:

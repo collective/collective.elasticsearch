@@ -23,10 +23,10 @@ from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from logging import getLogger
 import traceback
-from collective.elasticsearch.indexes import getPath
 from pyes.exceptions import IndexAlreadyExistsException
 import transaction
 from zope.globalrequest import getRequest
+from collective.elasticsearch.ejson import dumps
 
 
 logger = getLogger(__name__)
@@ -150,7 +150,6 @@ class ElasticSearch(object):
             wrapped_object = obj
         conn = self.conn
         catalog = self.catalog
-        orig_idxs = idxs
         if idxs == []:
             idxs = catalog.indexes.keys()
         index_data = {}
@@ -163,24 +162,16 @@ class ElasticSearch(object):
                     value = None
                 index_data[index_name] = value
         if update_metadata:
+            metadata = {}
             for meta_name in catalog.names:
-                if meta_name in index_data:
-                    continue
                 attr = getattr(wrapped_object, meta_name, MV)
                 if (attr is not MV and safe_callable(attr)):
                     attr = attr()
-                if isinstance(attr, DateTime):
-                    attr = attr.ISO8601()
-                elif attr in (MV, 'None'):
-                    attr = None
-                index_data[meta_name] = attr
-
-        # only if full indexing 
-        if orig_idxs == [] and 'path' not in index_data:
-            if uid:
-                index_data['path'] = uid
-            else:
-                index_data['path'] = getPath(wrapped_object)
+                metadata[meta_name] = attr
+            # XXX Also, always index path so we can use it with the brain
+            # to make urls
+            metadata['_path'] = wrapped_object.getPhysicalPath()
+            index_data['_metadata'] = dumps(metadata)
 
         conn.index(index_data, self.catalogsid, self.catalogtype, sid(obj))
         if self.registry.auto_flush:
@@ -211,7 +202,7 @@ class ElasticSearch(object):
         if mode == DISABLE_MODE:
             return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
 
-        self.recreateIndex()
+        self.recreateCatalog()
 
         if mode == DUAL_MODE:
             return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
@@ -278,6 +269,15 @@ class ElasticSearch(object):
             else:
                 raise Exception("Can not locate index for %s" % (
                     name))
+
+        # XXX then add an index specifically to hold metadata
+        # We don't store any of the other index data
+        # this will be json encoded
+        properties['_metadata'] = {
+            'type': 'string',
+            'index': 'not_analyzed',
+            'store': True
+        }
 
         conn = self.conn
         try:

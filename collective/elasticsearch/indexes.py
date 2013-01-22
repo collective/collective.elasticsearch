@@ -29,7 +29,8 @@ class BaseIndex(object):
         return {
             'type': 'string',
             'index': 'analyzed',
-            'analyzer': 'keyword'
+            'analyzer': 'keyword',
+            'store': False
         }
 
     def get_value(self, object):
@@ -89,7 +90,8 @@ class EDateIndex(BaseIndex):
 
     def create_mapping(self, name):
         return {
-            'type': 'date'
+            'type': 'date',
+            'store': False
         }
 
     def get_value(self, object):
@@ -140,7 +142,8 @@ class EZCTextIndex(BaseIndex):
     def create_mapping(self, name):
         return {
             'type': 'string',
-            'index': 'analyzed'
+            'index': 'analyzed',
+            'store': False
         }
 
     def get_value(self, object):
@@ -193,10 +196,12 @@ class EExtendedPathIndex(BaseIndex):
                 'path': {
                     'type': 'string',
                     'index': 'analyzed',
-                    'index_analyzer': 'keyword'
+                    'index_analyzer': 'keyword',
+                    'store': False
                 },
                 'depth': {
-                    'type': 'integer'
+                    'type': 'integer',
+                    'store': False
                 }
             }
         }
@@ -277,7 +282,8 @@ class EGopipIndex(BaseIndex):
     
     def create_mapping(self, name):
         return {
-            'type': 'integer'
+            'type': 'integer',
+            'store': False
         }
 
     def get_value(self, object):
@@ -291,8 +297,14 @@ class EDateRangeIndex(BaseIndex):
     def create_mapping(self, name):
         return {
             'properties': {
-                '%s1' % name: {'type': 'date'},
-                '%s2' % name: {'type': 'date'}
+                '%s1' % name: {
+                    'type': 'date',
+                    'store': False
+                },
+                '%s2' % name: {
+                    'type': 'date',
+                    'store': False
+                }
             }
         }
 
@@ -321,17 +333,6 @@ class EDateRangeIndex(BaseIndex):
             RangeFilter(ESRangeOp('%s.%s1' % (name, name), 'lte', date)),
             RangeFilter(ESRangeOp('%s.%s2' % (name, name), 'gte', date))
             ])
-
-
-class FakePathIndex(object):
-    indexed_attrs = 'getPhysicalPath'
-    id = 'path'
-FakePathIndexInst = FakePathIndex()
-
-
-def getPath(obj):
-    index = EExtendedPathIndex(None, FakePathIndexInst)
-    return index.get_value(obj)
 
 
 INDEX_MAPPING = {
