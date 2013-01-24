@@ -26,9 +26,8 @@ import traceback
 from pyes.exceptions import (
     IndexAlreadyExistsException,
     NotFoundException)
-import transaction
-from zope.globalrequest import getRequest
 from collective.elasticsearch.ejson import dumps
+from collective.elasticsearch import td
 
 
 logger = getLogger(__name__)
@@ -36,7 +35,6 @@ info = logger.info
 warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
-REQ_CONN_ATTR = 'elasticsearch.connection'
 
 
 class PatchCaller(object):
@@ -63,17 +61,13 @@ class PatchCaller(object):
         return bound_func
 
 
-def afterCommit(success, es):
-    # XXX implement
-    pass
-
-
 class ElasticSearch(object):
 
     trns_mapping = {
         'data': {
             'type': 'string',
-            'index': 'not_analyzed'
+            'index': 'not_analyzed',
+            'store': True
         },
         'transaction_id': {
             'type': 'integer'
@@ -83,7 +77,13 @@ class ElasticSearch(object):
         },
         'action': {
             'type': 'string',
-            'index': 'not_analyzed'
+            'index': 'not_analyzed',
+            'store': True
+        },
+        'uid': {
+            'type': 'string',
+            'index': 'not_analyzed',
+            'store': True
         }
     }
 
@@ -91,10 +91,6 @@ class ElasticSearch(object):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
         self.patched = PatchCaller(self.catalogtool)
-        try:
-            self.req = getRequest()
-        except:
-            self.req = None
 
         registry = getUtility(IRegistry)
         try:
@@ -102,23 +98,9 @@ class ElasticSearch(object):
         except:
             self.registry = None
 
-        current = transaction.get()
-        hooked = False
-        for hook in current.getAfterCommitHooks():
-            meth = hook[0]
-            if meth == afterCommit:
-                es = hook[1][0]
-                self.tid = es.tid
-                self.trns_counter = es.trns_counter
-                hooked = True
-                break
-        if not hooked:
-            self.tid = self.generateTransactionId()
-            self.trns_counter = 0
-            current.addAfterCommitHook(afterCommit, (self,))
-
-    def generateTransactionId(self):
-        return random.randint(0, 9999999999)
+        self.tdata = td.get()
+        if not self.tdata.registered:
+            self.tdata.register(self)
 
     @property
     def catalog_converted(self):
@@ -134,13 +116,10 @@ class ElasticSearch(object):
 
     @property
     def conn(self):
-        if self.req is not None:
-            if REQ_CONN_ATTR not in self.req.environ:
-                self.req.environ[REQ_CONN_ATTR] = \
-                    ES(self.registry.connection_string)
-            return self.req.environ[REQ_CONN_ATTR]
-        else:
-            return ES(self.registry.connection_string)
+        tdata = td.get()
+        if tdata.conn is None:
+            tdata.conn = ES(self.registry.connection_string)
+        return tdata.conn
 
     def query(self, query):
         qassembler = QueryAssembler(self.catalogtool)
@@ -199,9 +178,9 @@ class ElasticSearch(object):
         uid = getUID(obj)
         try:
             doc = conn.get(self.catalogsid, self.catalogtype, uid)
-            self.registerInTransaction(uid, 'modify', doc)
+            self.registerInTransaction(uid, td.Actions.modify, doc)
         except NotFoundException:
-            self.registerInTransaction(uid, 'add')
+            self.registerInTransaction(uid, td.Actions.add)
         conn.index(index_data, self.catalogsid, self.catalogtype, uid)
         if self.registry.auto_flush:
             conn.refresh()
@@ -209,25 +188,30 @@ class ElasticSearch(object):
     def registerInTransaction(self, uid, action, doc={}):
         conn = self.conn
         data = {
-            'transaction_id': self.tid,
+            'transaction_id': self.tdata.tid,
             'data': dumps(doc),
-            'order': self.trns_counter,
-            'action': action
+            'order': self.tdata.counter,
+            'action': action,
+            'uid': uid
         }
         conn.index(data, self.catalogsid, self.trns_catalogtype)
-        self.trns_counter += 1
+        self.tdata.counter += 1
 
-    def uncatalog_object(self, obj, *args, **kwargs):
+    def uncatalog_object(self, uid, obj=None, *args, **kwargs):
         mode = self.mode
         if mode in (DISABLE_MODE, DUAL_MODE):
-            result = self.patched.uncatalog_object(obj, *args, **kwargs)
+            if self.catalog.uids.get(uid, None) is not None:
+                result = self.patched.uncatalog_object(uid, *args, **kwargs)
             if mode == DISABLE_MODE:
                 return result
         conn = self.conn
 
         uid = getUID(obj)
-        doc = conn.get(self.catalogsid, self.catalogtype, uid)
-        self.registerInTransaction(uid, 'delete', doc)
+        try:
+            doc = conn.get(self.catalogsid, self.catalogtype, uid)
+            self.registerInTransaction(uid, td.Actions.delete, doc)
+        except NotFoundException:
+            pass
         conn.delete(self.catalogsid, self.catalogtype, uid)
         if self.registry.auto_flush:
             conn.refresh()

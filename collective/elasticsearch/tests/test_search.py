@@ -3,9 +3,15 @@ from collective.elasticsearch.testing import createObject
 import unittest2 as unittest
 from DateTime import DateTime
 import time
+from collective.elasticsearch.brain import Brain
 
 
 class TestQueries(BaseTest):
+
+    def test_brain_type(self):
+        createObject(self.portal, 'Event', 'event', title="Some Event")
+        results = self.catalog(portal_type="Event")
+        self.assertEquals(type(results[0].aq_base), Brain)
 
     def test_field_index_query(self):
         event = createObject(self.portal, 'Event', 'event', title="Some Event")

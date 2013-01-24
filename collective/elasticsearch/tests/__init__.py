@@ -10,6 +10,7 @@ from collective.elasticsearch.es import ElasticSearch, PatchCaller
 from collective.elasticsearch.interfaces import (
     IElasticSettings,
     DUAL_MODE)
+import transaction
 
 
 class BaseTest(unittest.TestCase):
@@ -29,6 +30,9 @@ class BaseTest(unittest.TestCase):
         self.es = ElasticSearch(self.catalog)
         self.es.convertToElastic()
         self.catalog.manage_catalogRebuild()
+        # need to commit here so all tests start with a baseline
+        # of elastic enabled
+        transaction.commit()
         patched = PatchCaller(self.catalog)
         self.searchResults = patched.searchResults
 

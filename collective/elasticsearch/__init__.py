@@ -2,12 +2,15 @@
 # elasticsearch integration with plone
 # this will essentially replace the portal_catalog
 # 
+from Acquisition import aq_base
 
 from logging import getLogger
 
 from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from zope.interface import classImplements
 from collective.elasticsearch.es import ElasticSearch
+from collective.elasticsearch import td
+from Products.Archetypes.utils import isFactoryContained
 
 logger = getLogger(__name__)
 info = logger.info
@@ -19,9 +22,9 @@ def catalog_object(self, object, uid=None, idxs=[],
     return es.catalog_object(object, uid, idxs, update_metadata, pghandler)
 
 
-def uncatalog_object(self, object, *args, **kwargs):
+def uncatalog_object(self, uid, obj=None, *args, **kwargs):
     es = ElasticSearch(self)
-    return es.uncatalog_object(object, *args, **kwargs)
+    return es.uncatalog_object(uid, obj, *args, **kwargs)
 
 
 def searchResults(self, REQUEST=None, **kw):
@@ -76,8 +79,25 @@ from Products.CMFPlone.CatalogTool import CatalogTool
 patches = [
     Patch(CatalogTool)
 ]
-
 patched = {}
+
+
+from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
+original_unindexObject = CatalogMultiplex.unindexObject
+
+# archetypes unindexObject
+def unindexObject(self):
+    if isFactoryContained(self):
+        return
+    catalogs = self.getCatalogs()
+    url = '/'.join(self.getPhysicalPath())
+    for catalog in catalogs:
+        # because we need the actual object for us to uncatalog...
+        if type(aq_base(catalog)) in patched:
+            catalog.uncatalog_object(url, self)
+        elif catalog._catalog.uids.get(url, None) is not None:
+            catalog.uncatalog_object(url)
+
 
 def patch():
     prefix = '__old_'
@@ -92,6 +112,10 @@ def patch():
                 setattr(klass, prefix + name, old)
                 setattr(klass, name, method)
                 info('patched %s', str(getattr(klass, name)))
+
+    
+    CatalogMultiplex.unindexObject = unindexObject
+    setattr(CatalogMultiplex, '__old_unindexObject', original_unindexObject)
 
 
 def initialize(context):
