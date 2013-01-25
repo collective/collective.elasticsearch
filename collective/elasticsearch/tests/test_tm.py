@@ -49,6 +49,8 @@ class TestTransactions(BaseTest):
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         self.assertEquals(len(cat_results), 1)
         self.assertEquals(tdata.counter, 0)
+        self.portal.manage_delObjects(['event'])
+        transaction.commit()
 
     def test_modifying_item_then_abort(self):
         event = createObject(self.portal, 'Event', 'event', title="Some Event")
@@ -69,6 +71,8 @@ class TestTransactions(BaseTest):
         cat_results = self.catalog(
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         self.assertEquals(cat_results[0].Title, 'Some Event')
+        self.portal.manage_delObjects(['event'])
+        transaction.commit()
 
     def test_adding_modifying_item_then_abort(self):
         event = createObject(self.portal, 'Event', 'event', title="Some Event")
@@ -101,6 +105,8 @@ class TestTransactions(BaseTest):
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         self.assertEquals(len(cat_results), 1)
         self.assertEquals(tdata.counter, 0)
+        self.portal.manage_delObjects(['event'])
+        transaction.commit()
 
 
 def test_suite():

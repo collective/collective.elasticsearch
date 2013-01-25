@@ -14,14 +14,14 @@ class TestQueries(BaseTest):
         self.assertEquals(type(results[0].aq_base), Brain)
 
     def test_field_index_query(self):
-        event = createObject(self.portal, 'Event', 'event', title="Some Event")
+        createObject(self.portal, 'Event', 'event', title="Some Event")
         cat_results = self.searchResults(portal_type="Event")
         el_results = self.catalog(portal_type="Event")
         self.assertEquals(len(cat_results), len(el_results))
         self.assertEquals(len(cat_results), 1)
 
     def test_keyword_index_query(self):
-        event = createObject(self.portal, 'Event', 'event', title="Some Event")
+        createObject(self.portal, 'Event', 'event', title="Some Event")
         cat_results = self.searchResults(
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         el_results = self.catalog(
@@ -30,8 +30,8 @@ class TestQueries(BaseTest):
         self.assertEquals(len(cat_results), 1)
 
     def test_multi_keyword_index_query(self):
-        event = createObject(self.portal, 'Event', 'event', title="Some Event")
-        page = createObject(self.portal, 'Document', 'page', title="Some page")
+        createObject(self.portal, 'Event', 'event', title="Some Event")
+        createObject(self.portal, 'Document', 'page', title="Some page")
         cat_results = self.searchResults(
             object_provides=["Products.ATContentTypes.interfaces.event.IATEvent",
                 "Products.ATContentTypes.interfaces.document.IATDocument"])
@@ -58,7 +58,7 @@ class TestQueries(BaseTest):
 
     def test_text_index_query(self):
         for idx in range(5):
-            page = createObject(self.portal, 'Document',
+            createObject(self.portal, 'Document',
                 'page%i' % idx, title="Page %i" % idx)
             # should not show up in results
         events = []
