@@ -1,16 +1,10 @@
 from zope.app.component.hooks import setSite
 import transaction
-from datetime import datetime, timedelta
 import random
-from plone.i18n.normalizer import idnormalizer
-from StringIO import StringIO
 from collective.elasticsearch.testing import createObject
 import os
 
-SITE_ID = 'Plone'
-NUM_GALLERIES = 20
-START_DATE = datetime(2012, 1, 1)
-MAX_GALLERY_SIZE = 100
+SITE_ID = 'Plone1'
 
 
 from Testing.makerequest import makerequest
@@ -52,9 +46,9 @@ def importit(app):
 
     site = app[SITE_ID]
     setSite(site)
-    per_folder = 100
-    num_folders = 10
-    max_depth = 3
+    per_folder = 20
+    num_folders = 3
+    max_depth = 2
     portal_types = ['Document', 'News Item', 'Event']
     data = Data()
 
