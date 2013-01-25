@@ -6,7 +6,6 @@ from Products.Archetypes.utils import isFactoryContained
 
 from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from collective.elasticsearch.es import ElasticSearch
-from collective.elasticsearch import td
 
 
 logger = getLogger(__name__)

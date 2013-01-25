@@ -6,7 +6,7 @@ from zope.component import getMultiAdapter
 from collective.elasticsearch.es import ElasticSearch
 
 
-class ConvertToElastic(BrowserView):
+class Utils(BrowserView):
 
     def convert(self):
         if self.request.method == 'POST':

@@ -99,8 +99,6 @@ class ElasticSearch(object):
             self.registry = None
 
         self.tdata = td.get()
-        if not self.tdata.registered:
-            self.tdata.register(self)
 
     @property
     def catalog_converted(self):
@@ -185,6 +183,8 @@ class ElasticSearch(object):
             conn.refresh()
 
     def registerInTransaction(self, uid, action, doc={}):
+        if not self.tdata.registered:
+            self.tdata.register(self)
         conn = self.conn
         data = {
             'transaction_id': self.tdata.tid,
@@ -211,7 +211,11 @@ class ElasticSearch(object):
             self.registerInTransaction(uid, td.Actions.delete, doc)
         except NotFoundException:
             pass
-        conn.delete(self.catalogsid, self.catalogtype, uid)
+        try:
+            conn.delete(self.catalogsid, self.catalogtype, uid)
+        except NotFoundException:
+            # already gone... Multiple calls?
+            pass
         if self.registry.auto_flush:
             conn.refresh()
 

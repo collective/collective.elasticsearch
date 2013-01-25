@@ -30,28 +30,6 @@ class Actions:
 tranaction_data = threading.local()
 
 
-class TransactionData(object):
-
-    def __init__(self):
-        self.tid = random.randint(0, 9999999999)
-        self.counter = 0
-        self.conn = None
-        self.es = None
-        self.registered = False
-
-    def register(self, es):
-        self.es = es
-        self.registered = True
-
-    def reset(self, hard=False):
-        self.tid = random.randint(0, 9999999999)
-        self.counter = 0
-        if hard:
-            self.es = None
-            self.registered = False
-            self.conn = None
-
-
 def get():
     try:
         return tranaction_data.data
@@ -112,7 +90,32 @@ class Synchronizer(object):
 
 
 synchronizer = Synchronizer()
-transaction.manager.registerSynch(synchronizer)
-# setup the current transaction also...
-if transaction.manager._txn is not None:
-    transaction.get()._synchronizers.add(synchronizer)
+
+
+class TransactionData(object):
+
+    def __init__(self):
+        self.tid = random.randint(0, 9999999999)
+        self.counter = 0
+        self.conn = None
+        self.es = None
+        self.registered = False
+
+    def register(self, es):
+        self.es = es
+        self.registered = True
+        # register synchronizer. For some reason
+        # doing this on startup does not work. Weird
+        # threading issues...
+        transaction.manager.registerSynch(synchronizer)
+        # setup the current transaction also...
+        if transaction.manager._txn is not None:
+            transaction.get()._synchronizers.add(synchronizer)
+
+    def reset(self, hard=False):
+        self.tid = random.randint(0, 9999999999)
+        self.counter = 0
+        if hard:
+            self.es = None
+            self.registered = False
+            self.conn = None

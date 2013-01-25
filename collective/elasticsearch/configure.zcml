@@ -35,7 +35,7 @@
   <browser:page
     name="elastic-convert"
     for=".interfaces.IElasticSearchCatalog"
-    class=".convert.ConvertToElastic"
+    class=".utilviews.Utils"
     attribute="convert"
     permission="cmf.ManagePortal"
     />
@@ -43,10 +43,9 @@
   <browser:page
     name="elastic-rebuild"
     for=".interfaces.IElasticSearchCatalog"
-    class=".convert.ConvertToElastic"
+    class=".utilviews.Utils"
     attribute="rebuild"
     permission="cmf.ManagePortal"
     />
 
-  
 </configure>
