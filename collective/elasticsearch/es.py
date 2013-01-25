@@ -327,11 +327,11 @@ class ElasticSearch(object):
 
     @property
     def catalogsid(self):
-        return '-'.join(self.catalogtool.getPhysicalPath()[1:])
+        return '-'.join(self.catalogtool.getPhysicalPath()[1:]).lower()
 
     @property
     def catalogtype(self):
-        return self.catalogtool.getId()
+        return self.catalogtool.getId().lower()
 
     @property
     def trns_catalogtype(self):
