@@ -1,31 +1,31 @@
-import random
+from logging import getLogger
+import traceback
+
 from Acquisition import aq_base
-from zope.component import getUtility
-from plone.registry.interfaces import IRegistry
-from Products.ZCatalog.Lazy import LazyMap
-from collective.elasticsearch.brain import BrainFactory
-from collective.elasticsearch.query import QueryAssembler
-from pyes.exceptions import IndexMissingException
-from pyes import ES
-from collective.elasticsearch.interfaces import (
-    IElasticSettings,
-    DISABLE_MODE,
-    DUAL_MODE)
-from collective.elasticsearch.utils import getUID
-from plone.indexer.interfaces import IIndexableObject
-from zope.component import queryMultiAdapter
-from collective.elasticsearch.indexes import getIndex
 from Missing import MV
-from Products.PluginIndexes.common import safe_callable
 from DateTime import DateTime
+from Products.ZCatalog.Lazy import LazyMap
+from Products.PluginIndexes.common import safe_callable
 from Products.CMFCore.utils import _getAuthenticatedUser
 from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
-from logging import getLogger
-import traceback
-from pyes.exceptions import (
-    IndexAlreadyExistsException,
-    NotFoundException)
+from zope.component import getUtility
+from zope.component import queryMultiAdapter
+
+from plone.registry.interfaces import IRegistry
+from plone.indexer.interfaces import IIndexableObject
+
+from pyes.exceptions import IndexMissingException
+from pyes import ES
+from pyes.exceptions import (IndexAlreadyExistsException,
+                             NotFoundException)
+
+from collective.elasticsearch.brain import BrainFactory
+from collective.elasticsearch.query import QueryAssembler
+from collective.elasticsearch.interfaces import (
+    IElasticSettings, DISABLE_MODE, DUAL_MODE)
+from collective.elasticsearch.utils import getUID
+from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.ejson import dumps
 from collective.elasticsearch import td
 
@@ -116,10 +116,9 @@ class ElasticSearch(object):
 
     @property
     def conn(self):
-        tdata = td.get()
-        if tdata.conn is None:
-            tdata.conn = ES(self.registry.connection_string)
-        return tdata.conn
+        if self.tdata.conn is None:
+            self.tdata.conn = ES(self.registry.connection_string)
+        return self.tdata.conn
 
     def query(self, query):
         qassembler = QueryAssembler(self.catalogtool)

@@ -1,5 +1,5 @@
-from Products.ZCatalog.interfaces import ICatalogBrain
 from Acquisition import Implicit, aq_get
+from Products.ZCatalog.interfaces import ICatalogBrain
 from zope.interface import implements
 from zope.globalrequest import getRequest
 from Products.CMFPlone.utils import pretty_title_or_id
@@ -9,6 +9,10 @@ _marker = []
 
 
 class Brain(Implicit):
+    """
+    A special brain implementation that uses the results
+    from elasticsearch to load the brain.
+    """
     implements(ICatalogBrain)
     __allow_access_to_unprotected_subobjects__ = True
 

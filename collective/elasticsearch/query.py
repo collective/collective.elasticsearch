@@ -1,7 +1,5 @@
-from pyes import MatchAllQuery
-from pyes import ANDFilter
 from collective.elasticsearch.indexes import getIndex
-from pyes import FilteredQuery
+from pyes import (MatchAllQuery, ANDFilter, FilteredQuery)
 
 
 class QueryAssembler(object):

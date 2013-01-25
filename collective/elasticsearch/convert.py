@@ -1,7 +1,8 @@
 from Acquisition import aq_parent
-from zope.component import getMultiAdapter
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
+from zope.component import getMultiAdapter
+
 from collective.elasticsearch.es import ElasticSearch
 
 

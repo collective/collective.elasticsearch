@@ -2,15 +2,15 @@ try:
     import json
 except ImportError:
     import simplejson as json
-
 from datetime import datetime
+import re
+
 from DateTime import DateTime
 from persistent.dict import PersistentDict
 from Persistence.mapping import PersistentMapping as PM1
 from persistent.mapping import PersistentMapping as PM2
 from persistent.list import PersistentList
 from BTrees.OOBTree import OOBTree
-import re
 from zope.dottedname.resolve import resolve
 from ZPublisher.HTTPRequest import record
 from Missing import MV
@@ -22,9 +22,11 @@ _date_re = re.compile('^[0-9]{4}\-[0-9]{2}\-[0-9]{2}.*$')
 class BaseTypeSerializer(object):
     klass = None
     toklass = None
+
     @classmethod
     def getTypeName(kls):
         return "%s.%s" % (kls.klass.__module__, kls.klass.__name__)
+
     @classmethod
     def serialize(kls, obj):
         if hasattr(obj, 'aq_base'):
@@ -35,12 +37,15 @@ class BaseTypeSerializer(object):
             'data': data
         }
         return _type_marker + dumps(results)
+
     @classmethod
     def _serialize(kls, obj):
         return kls.toklass(obj)
+
     @classmethod
     def deserialize(kls, data):
         return kls._deserialize(data)
+
     @classmethod
     def _deserialize(kls, data):
         return kls.klass(data)
@@ -77,12 +82,15 @@ class setSerializer(BaseTypeSerializer):
 
 class DateTimeSerializer(BaseTypeSerializer):
     klass = DateTime
+
     @classmethod
     def getTypeName(kls):
         return 'DateTime.DateTime'
+
     @classmethod
     def _serialize(kls, obj):
         return obj.ISO8601()
+
     @classmethod
     def _deserialize(kls, data):
         return DateTime(data)
@@ -90,9 +98,11 @@ class DateTimeSerializer(BaseTypeSerializer):
 
 class datetimeSerializer(BaseTypeSerializer):
     klass = datetime
+
     @classmethod
     def _serialize(kls, obj):
         return obj.isoformat()
+
     @classmethod
     def _deserialize(kls, data):
         return datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
@@ -101,6 +111,7 @@ class datetimeSerializer(BaseTypeSerializer):
 class recordSerializer(BaseTypeSerializer):
     klass = record
     toklass = dict
+
     @classmethod
     def _deserialize(kls, data):
         rec = record()

@@ -1,16 +1,18 @@
-from zope.interface import implements
 import random
 import threading
+from logging import getLogger
+import traceback
+
 import transaction
 from transaction.interfaces import ISynchronizer
 from transaction._transaction import Status
-from pyes import MatchAllQuery, TermFilter, FilteredQuery
-from collective.elasticsearch.ejson import loads
-from pyes.exceptions import ElasticSearchException
-from logging import getLogger
-from collective.elasticsearch.interfaces import DISABLE_MODE
-import traceback
+from zope.interface import implements
 
+from pyes import (MatchAllQuery, TermFilter, FilteredQuery)
+from pyes.exceptions import ElasticSearchException
+
+from collective.elasticsearch.ejson import loads
+from collective.elasticsearch.interfaces import DISABLE_MODE
 
 logger = getLogger(__name__)
 info = logger.info
@@ -25,7 +27,6 @@ class Actions:
 
 # let's use a thread local to store info on the elastic
 # transaction since each request is done in it's own thread
-
 tranaction_data = threading.local()
 
 

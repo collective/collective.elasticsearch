@@ -1,12 +1,11 @@
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
+from plone.z3cform import layout
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-
-from collective.elasticsearch.interfaces import IElasticSettings
-from plone.z3cform import layout
 from z3c.form import form
 
+from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.es import ElasticSearch
 
 

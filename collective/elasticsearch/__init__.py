@@ -1,16 +1,13 @@
-# 
-# elasticsearch integration with plone
-# this will essentially replace the portal_catalog
-# 
-from Acquisition import aq_base
-
 from logging import getLogger
 
-from collective.elasticsearch.interfaces import IElasticSearchCatalog
+from Acquisition import aq_base
 from zope.interface import classImplements
+from Products.Archetypes.utils import isFactoryContained
+
+from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from collective.elasticsearch.es import ElasticSearch
 from collective.elasticsearch import td
-from Products.Archetypes.utils import isFactoryContained
+
 
 logger = getLogger(__name__)
 info = logger.info

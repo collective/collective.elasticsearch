@@ -1,3 +1,9 @@
+from logging import getLogger
+
+from Missing import MV
+from Acquisition import aq_parent, aq_base
+from DateTime import DateTime
+from Products.PluginIndexes.common import safe_callable
 from Products.PluginIndexes.KeywordIndex.KeywordIndex import KeywordIndex
 from Products.PluginIndexes.FieldIndex.FieldIndex import FieldIndex
 from Products.PluginIndexes.DateIndex.DateIndex import DateIndex
@@ -5,16 +11,13 @@ from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
 from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
 from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
-from plone.app.folder.nogopip import GopipIndex
 from Products.PluginIndexes.DateRangeIndex.DateRangeIndex import DateRangeIndex
-from logging import getLogger
-from Missing import MV
-from Products.PluginIndexes.common import safe_callable
-from Acquisition import aq_parent, aq_base
-from DateTime import DateTime
+
+from plone.app.folder.nogopip import GopipIndex
+
 from pyes import (PrefixFilter, TermFilter, ORFilter, RangeFilter,
-                  ANDFilter, TextQuery)
-from pyes import ESRangeOp
+                  ANDFilter, TextQuery, ESRangeOp)
+
 logger = getLogger(__name__)
 info = logger.info
 
