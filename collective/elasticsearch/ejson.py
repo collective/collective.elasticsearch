@@ -105,7 +105,10 @@ class datetimeSerializer(BaseTypeSerializer):
 
     @classmethod
     def _deserialize(kls, data):
-        return datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
+        try:
+            return datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
+        except ValueError:
+            return datetime.strptime(data, '%Y-%m-%dT%H:%M:%S')
 
 
 class recordSerializer(BaseTypeSerializer):

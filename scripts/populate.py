@@ -46,9 +46,9 @@ def importit(app):
 
     site = app[SITE_ID]
     setSite(site)
-    per_folder = 20
-    num_folders = 3
-    max_depth = 2
+    per_folder = 50
+    num_folders = 7
+    max_depth = 4
     portal_types = ['Document', 'News Item', 'Event']
     data = Data()
 
