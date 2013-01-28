@@ -61,6 +61,72 @@ class PatchCaller(object):
         return bound_func
 
 
+class ResultWrapper(object):
+    """
+    To cache a group of results that rolls.
+    optimized for sequentially access
+    """
+
+    def __init__(self, rl, count=None, cache_size=1000, bulk_size=400):
+        self.rl = rl
+        if count is None:
+            count = self.rl.count()
+        if cache_size > count:
+            cache_size = count
+        if bulk_size > count:
+            bulk_size = count
+        if bulk_size > cache_size:
+            cache_size = min(bulk_size * 2, count)
+        self.cache_size = cache_size
+        self.bulk_size = bulk_size
+        self.iloc = lbound = 0
+        # fill up the cache to start...
+        self.cache = rl[lbound:self.cache_size]
+
+    def __getitem__(self, val):
+        lbound = self.iloc
+        rbound = lbound + self.cache_size
+        if isinstance(val, slice):
+            if lbound <= val.start and rbound >= val.end:
+                val.start = val.start - lbound
+                val.end = val.end - rbound
+                return self.cache[val]
+            else:
+                start = val.start
+                end = val.end
+        else:
+            if lbound <= val and rbound > val:
+                return self.cache[val - self.iloc]
+            else:
+                start = end = val
+        # grab a group, trimming off any that we need to...
+        if start > (rbound - 1) or end > (rbound - 1):
+            # in this case, we're adding to the end
+            # chop off front
+            self.cache = self.cache[self.bulk_size:]
+            self.iloc += self.bulk_size
+            additional = self.rl[rbound:rbound + self.bulk_size]
+            if len(additional) == 0:
+                raise IndexError
+            # add to end
+            self.cache.extend(additional)
+        elif self.iloc > 0:
+            # in this case, we're adding to front
+            end = start
+            start = min(self.iloc - self.bulk, 0)
+            rcache = self.cache[end:]
+            self.cache = self.rl[start:end]
+            if len(self.cache) == 0:
+                raise IndexError
+            self.cache.extend(rcache)
+        else:
+            raise Exception("Error finding data")
+        return self[val]
+
+    def __iter__(self):
+        return self
+
+
 class ElasticSearch(object):
 
     trns_mapping = {
@@ -143,16 +209,15 @@ class ElasticSearch(object):
         return self.tdata.conn
 
     def query(self, query):
-        import pdb; pdb.set_trace()
         qassembler = QueryAssembler(self.catalogtool)
         dquery, sort = qassembler.normalize(query)
         equery = qassembler(dquery)
         result = self.conn.search(equery, self.catalogsid, self.catalogtype,
             sort=sort, fields="_metadata")
-        factory = BrainFactory(self.catalog)
         count = result.count()
-        result =  LazyMap(factory, result, count)
-        return result
+        result = ResultWrapper(result, count=count)
+        factory = BrainFactory(self.catalog)
+        return LazyMap(factory, result, count)
 
     def catalog_object(self, obj, uid=None, idxs=[],
                        update_metadata=1, pghandler=None):
@@ -280,7 +345,6 @@ class ElasticSearch(object):
         self.convertToElastic()
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
-        import pdb; pdb.set_trace()
         mode = self.mode
         if mode == DISABLE_MODE:
             return self.patched.searchResults(REQUEST, **kw)
