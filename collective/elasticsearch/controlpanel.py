@@ -7,6 +7,7 @@ from z3c.form import form
 
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.es import ElasticSearch
+from collective.elasticsearch.interfaces import DISABLE_MODE
 
 
 class ElasticControlPanelForm(RegistryEditForm):
@@ -32,6 +33,10 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             return self.es.conn.status()
         except:
             return False
+
+    @property
+    def active(self):
+        return self.es.registry.mode != DISABLE_MODE
 
 ElasticControlPanelView = layout.wrap_form(ElasticControlPanelForm,
                                            ElasticControlPanelFormWrapper)
