@@ -40,3 +40,18 @@ class IElasticSettings(Interface):
                     u"If on, things are always updated immediately at "
                     u"a cost of performance.",
         default=True)
+
+    bulk_size = schema.Int(
+        title=u"Bulk Size",
+        description=u"bulk size for elastic queries",
+        default=400)
+
+    timeout = schema.Float(
+        title=u"Timeout",
+        description=u"how long before timeout connecting to elastic search",
+        default=30.0)
+
+    max_retries = schema.Int(
+        title=u"Max Retries",
+        description=u"Number of times to retry connecting to elastic search on failure",
+        default=3)

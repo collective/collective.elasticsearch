@@ -31,8 +31,7 @@ class BaseIndex(object):
     def create_mapping(self, name):
         return {
             'type': 'string',
-            'index': 'analyzed',
-            'analyzer': 'keyword',
+            'index': 'not_analyzed',
             'store': False
         }
 

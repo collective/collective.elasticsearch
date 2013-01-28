@@ -21,3 +21,12 @@ mode
 auto flush
     if after every index, flush should be performed.
     If on, things are always updated at a cost of performance.
+
+
+TODO
+----
+
+- optimize
+- elastic search results are returning all indexed data, not just metadata
+- lazy load brain data
+- paging...

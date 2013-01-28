@@ -18,11 +18,18 @@ class Brain(Implicit):
 
     def __init__(self, data, catalog):
         self._idata = data
-        self._data = loads(self._idata['_metadata'])
+        self._raw_data = self._idata['_metadata']
+        self._data = None
         self._catalog = catalog
 
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = loads(self._raw_data)
+        return self._data
+
     def has_key(self, key):
-        return key in self._data
+        return key in self.data
     __contains__ = has_key
 
     @property
@@ -43,8 +50,8 @@ class Brain(Implicit):
                     raise AttributeError(name)
                 else:
                     return default
-        if name in self._data:
-            return self._data[name]
+        if name in self.data:
+            return self.data[name]
         elif name.startswith('portal_'):
             # XXX really ugly...
             return aq_get(self._catalog, name)
@@ -56,7 +63,7 @@ class Brain(Implicit):
         try:
             # need to convert to string because we get
             # unicode from elastic
-            path = self._data['_path']
+            path = self.data['_path']
             newpath = []
             for part in path:
                 newpath.append(str(part))
@@ -86,7 +93,7 @@ class Brain(Implicit):
 
     def getRID(self):
         """Return the record ID for this object."""
-        return self._data.get_id()
+        return self.data.get_id()
 
 
 def BrainFactory(catalog):

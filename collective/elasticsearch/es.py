@@ -113,16 +113,42 @@ class ElasticSearch(object):
         return self.registry.mode
 
     @property
+    def bulk_size(self):
+        try:
+            return self.registry.bulk_size
+        except:
+            return 400
+
+    @property
+    def max_retries(self):
+        try:
+            return self.registry.max_retries
+        except:
+            return 3
+
+    @property
+    def timeout(self):
+        try:
+            return self.registry.timeout
+        except:
+            return 30.0
+
+    @property
     def conn(self):
         if self.tdata.conn is None:
-            self.tdata.conn = ES(self.registry.connection_string)
+            self.tdata.conn = ES(self.registry.connection_string,
+                bulk_size=self.bulk_size,
+                max_retries=self.max_retries,
+                timeout=self.timeout)
         return self.tdata.conn
 
     def query(self, query):
+        import pdb; pdb.set_trace()
         qassembler = QueryAssembler(self.catalogtool)
         dquery, sort = qassembler.normalize(query)
         equery = qassembler(dquery)
-        result = self.conn.search(equery, self.catalogsid, self.catalogtype, sort=sort)
+        result = self.conn.search(equery, self.catalogsid, self.catalogtype,
+            sort=sort, fields="_metadata")
         factory = BrainFactory(self.catalog)
         count = result.count()
         result =  LazyMap(factory, result, count)
@@ -254,6 +280,7 @@ class ElasticSearch(object):
         self.convertToElastic()
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
+        import pdb; pdb.set_trace()
         mode = self.mode
         if mode == DISABLE_MODE:
             return self.patched.searchResults(REQUEST, **kw)
