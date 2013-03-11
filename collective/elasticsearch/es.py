@@ -11,6 +11,7 @@ from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from zope.component import getUtility
 from zope.component import queryMultiAdapter
+from zope.component import ComponentLookupError
 
 from plone.registry.interfaces import IRegistry
 from plone.indexer.interfaces import IIndexableObject
@@ -158,10 +159,13 @@ class ElasticSearch(object):
         self.catalog = catalogtool._catalog
         self.patched = PatchCaller(self.catalogtool)
 
-        registry = getUtility(IRegistry)
         try:
-            self.registry = registry.forInterface(IElasticSettings)
-        except:
+            registry = getUtility(IRegistry)
+            try:
+                self.registry = registry.forInterface(IElasticSettings)
+            except:
+                self.registry = None
+        except ComponentLookupError:
             self.registry = None
 
         self.tdata = td.get()
