@@ -1,17 +1,16 @@
-import random
 import threading
 from logging import getLogger
-import traceback
 
-import transaction
-from transaction.interfaces import ISynchronizer
-from transaction._transaction import Status
-from zope.interface import implements
+from zope.interface import implementer
+from transaction.interfaces import ISavepointDataManager, IDataManagerSavepoint
 
-from pyes import (MatchAllQuery, TermFilter, FilteredQuery)
+
+from ZPublisher.interfaces import IPubAfterTraversal
+from zope.component import adapter
+import transaction as transaction_manager
+
 from pyes.exceptions import ElasticSearchException
 
-from collective.elasticsearch.ejson import loads
 from collective.elasticsearch.interfaces import DISABLE_MODE
 
 logger = getLogger(__name__)
@@ -38,84 +37,132 @@ def get():
         return tranaction_data.data
 
 
-class Synchronizer(object):
-    implements(ISynchronizer)
 
-    def beforeCompletion(self, transaction):
+@implementer(ISavepointDataManager)
+class DataManager(object):
+
+    def __init__(self, td):
+        self.td = td
+        self.savepoints = []
+
+    def abort(self, trans):
         pass
 
-    def afterCompletion(self, transaction):
-        tdata = get()
-        if not tdata.registered:
-            return
-        es = tdata.es
-        if es.mode == DISABLE_MODE:
-            tdata.reset()
-            return
+    def commit(self, trans):
+        pass
 
-        success = transaction.status == Status.COMMITTED
-        query = FilteredQuery(MatchAllQuery(),
-            TermFilter('transaction_id', tdata.tid))
-        
-        conn = es.conn
-        # NEED to refresh here otherwise we'll have inconsistencies
-        conn.refresh()
+    def tpc_begin(self, trans):
+        pass
+
+    def tpc_vote(self, trans):
+        pass
+
+    def tpc_finish(self, trans):
+        self.td.reset(True)
+
+    def tpc_abort(self, trans):
         try:
-            docs = conn.search(query, es.catalogsid, es.trns_catalogtype,
-                               sort='order:desc')
-            docs.count() # force executing
-        except ElasticSearchException:
-            # XXX uh oh, nasty, we have a problem. Let's log it.
-            warn("Error trying to abort transaction: %s" %(
-                traceback.format_exc()))
-            tdata.reset()
-            return
+            self._tpc_abort(trans)
+        except:
+            # XXX log this better
+            warn("Error aborting transaction")
 
-        for doc in docs:
-            conn.delete(es.catalogsid, es.trns_catalogtype, doc.get_id())
-            if not success:
-                if doc.action == Actions.add:
+    def _tpc_abort(self, trans):
+        import pdb; pdb.set_trace()
+        if self._active:
+            td = self.td
+            if len(td.docs) > 0:
+                td.conn.refresh()
+                self._revert(td.docs)
+                td.conn.refresh()
+
+    @property
+    def _active(self):
+        td = self.td
+        if not td.registered:
+            return False
+        es = td.es
+        if es.mode == DISABLE_MODE:
+            return False
+        if not td.conn:
+            return False
+        return True
+
+    def _revert(self, docs):
+        conn = self.td.conn
+        es = self.td.es
+        for action, uid, doc in reversed(docs):
+            try:
+                if action == Actions.add:
                     # if it was an add action, remove delete
-                    conn.delete(es.catalogsid, es.catalogtype, doc.uid)
-                elif doc.action in (Actions.modify, Actions.delete):
+                    conn.delete(es.catalogsid, es.catalogtype, uid)
+                elif action in (Actions.modify, Actions.delete):
                     # if it was a modify or delete, restore the doc
-                    restored_doc = loads(doc.data)
-                    conn.index(restored_doc, es.catalogsid, es.catalogtype, doc.uid)
-        # NEED to refresh here otherwise we'll have inconsistencies
-        conn.refresh()
-        tdata.reset()
+                    conn.index(doc, es.catalogsid, es.catalogtype, uid)
+            except ElasticSearchException, ex:
+                # XXX log this better
+                warn('There was an error cleaning up elastic transactions. '
+                        'There could be inconsistencies')
 
-    def newTransaction(self, transaction):
-        get().reset(True)
+    @property
+    def savepoint(self):
+        return self._savepoint
+
+    def _savepoint(self):
+        sp = Savepoint(self)
+        self.savepoints.append(sp)
+        return sp
+
+    def should_retry(self, error):
+        print 'should_retry'
+
+    def sortKey(self):
+        # Sort normally
+        return "collective.elasticsearch"
 
 
-synchronizer = Synchronizer()
+@implementer(IDataManagerSavepoint)
+class Savepoint:
+
+    def __init__(self, dm):
+        self.dm = dm
+        self.index = len(dm.td.docs)
+
+    def rollback(self):
+        if not self.dm._active:
+            return
+        td = self.dm.td
+        docs = td.docs[self.index:]
+        td.conn.refresh()
+        self.dm._revert(docs)
+        td.conn.refresh()
+        del td.docs[self.index:]
 
 
 class TransactionData(object):
 
     def __init__(self):
-        self.tid = random.randint(0, 9999999999)
-        self.counter = 0
         self.conn = None
         self.es = None
         self.registered = False
+        self.docs = []
 
     def register(self, es):
         self.es = es
         self.registered = True
-        # register synchronizer. For some reason
-        # doing this on startup does not work. Weird
-        # threading issues...
-        transaction.manager.registerSynch(synchronizer)
-        # setup the current transaction also...
-        if transaction.manager._txn is not None:
-            transaction.get()._synchronizers.add(synchronizer)
 
     def reset(self, hard=False):
-        self.tid = random.randint(0, 9999999999)
-        self.counter = 0
+        self.docs = []
         if hard:
             self.es = None
             self.registered = False
             self.conn = None
+
+
+@adapter(IPubAfterTraversal)
+def transactionJoiner(event):
+    td = get()
+    td.reset(True)
+    transaction = transaction_manager.get()
+    transaction.join(DataManager(td))
+

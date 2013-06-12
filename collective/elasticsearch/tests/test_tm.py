@@ -10,10 +10,10 @@ class TestTransactions(BaseTest):
     def test_transaction_counter(self):
         tdata = td.get()
         createObject(self.portal, 'Event', 'event', title="Some Event")
-        assert tdata.counter > 0
-        prev = tdata.counter
+        assert len(tdata.docs) > 0
+        prev = len(tdata.docs)
         createObject(self.portal, 'Event', 'event2', title="Some Event")
-        assert tdata.counter > prev
+        assert len(tdata.docs) > prev
 
     def test_abort_td(self):
         tdata = td.get()
@@ -26,7 +26,7 @@ class TestTransactions(BaseTest):
         cat_results = self.catalog(
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         self.assertEquals(len(cat_results), 0)
-        self.assertEquals(tdata.counter, 0)
+        self.assertEquals(len(tdata.docs), 0)
 
     def test_abort_deleting_item(self):
         tdata = td.get()
@@ -48,7 +48,7 @@ class TestTransactions(BaseTest):
         cat_results = self.catalog(
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         self.assertEquals(len(cat_results), 1)
-        self.assertEquals(tdata.counter, 0)
+        self.assertEquals(len(tdata.docs), 0)
         self.portal.manage_delObjects(['event'])
         transaction.commit()
 
@@ -104,7 +104,7 @@ class TestTransactions(BaseTest):
         cat_results = self.catalog(
             object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
         self.assertEquals(len(cat_results), 1)
-        self.assertEquals(tdata.counter, 0)
+        self.assertEquals(len(tdata.docs), 0)
         self.portal.manage_delObjects(['event'])
         transaction.commit()
 

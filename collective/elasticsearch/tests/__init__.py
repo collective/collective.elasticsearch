@@ -11,9 +11,7 @@ from collective.elasticsearch.interfaces import (
     IElasticSettings,
     DUAL_MODE)
 import transaction
-from pyes.exceptions import ElasticSearchException
 from collective.elasticsearch import td
-from pyes import MatchAllQuery
 
 
 class BaseTest(unittest.TestCase):
@@ -38,20 +36,9 @@ class BaseTest(unittest.TestCase):
         transaction.commit()
         patched = PatchCaller(self.catalog)
         self.searchResults = patched.searchResults
-
-    def getAllElasticsTransactions(self):
-        return self.es.conn.search(MatchAllQuery(), self.es.catalogsid,
-                                   self.es.trns_catalogtype)
+        td.transactionJoiner(None)
 
     def clearTransactionEntries(self):
-        conn = self.es.conn
-        try:
-            docs = self.getAllElasticsTransactions()
-            docs.count()
-        except ElasticSearchException:
-            docs = []
-        for doc in docs:
-            conn.delete(self.es.catalogsid, self.es.trns_catalogtype, doc.get_id())
         tdata = td.get()
         tdata.reset(True)
 

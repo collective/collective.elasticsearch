@@ -3,15 +3,9 @@ from collective.elasticsearch.testing import createObject
 import unittest2 as unittest
 from DateTime import DateTime
 import time
-from collective.elasticsearch.brain import Brain
 
 
 class TestQueries(BaseTest):
-
-    def test_brain_type(self):
-        createObject(self.portal, 'Event', 'event', title="Some Event")
-        results = self.catalog(portal_type="Event")
-        self.assertEquals(type(results[0].aq_base), Brain)
 
     def test_field_index_query(self):
         createObject(self.portal, 'Event', 'event', title="Some Event")
@@ -76,8 +70,10 @@ class TestQueries(BaseTest):
                                              sort_on="getObjPositionInParent")
         el_results = self.catalog(Title="Some Event 1",
                                   sort_on="getObjPositionInParent")
-        self.assertEquals(el_results[0].Title, "Some Event 1")
+        self.assertTrue("Some Event 1" in [
+            b.Title for b in el_results])
         self.assertEquals(cat_results[0].Title, "Some Event 1")
+
 
     def test_path_index_query(self):
         folder1 = createObject(self.portal, 'Folder', 'folder1',

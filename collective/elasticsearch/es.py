@@ -2,10 +2,8 @@ from logging import getLogger
 import traceback
 
 from Acquisition import aq_base
-from Missing import MV
 from DateTime import DateTime
 from Products.ZCatalog.Lazy import LazyMap
-from Products.PluginIndexes.common import safe_callable
 from Products.CMFCore.utils import _getAuthenticatedUser
 from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
@@ -27,7 +25,6 @@ from collective.elasticsearch.interfaces import (
     IElasticSettings, DISABLE_MODE, DUAL_MODE)
 from collective.elasticsearch.utils import getUID
 from collective.elasticsearch.indexes import getIndex
-from collective.elasticsearch.ejson import dumps
 from collective.elasticsearch import td
 
 
@@ -130,30 +127,6 @@ class ResultWrapper(object):
 
 class ElasticSearch(object):
 
-    trns_mapping = {
-        'data': {
-            'type': 'string',
-            'index': 'not_analyzed',
-            'store': True
-        },
-        'transaction_id': {
-            'type': 'integer'
-        },
-        'order': {
-            'type': 'integer'
-        },
-        'action': {
-            'type': 'string',
-            'index': 'not_analyzed',
-            'store': True
-        },
-        'uid': {
-            'type': 'string',
-            'index': 'not_analyzed',
-            'store': True
-        }
-    }
-
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
@@ -217,7 +190,7 @@ class ElasticSearch(object):
         dquery, sort = qassembler.normalize(query)
         equery = qassembler(dquery)
         result = self.conn.search(equery, self.catalogsid, self.catalogtype,
-            sort=sort, fields="_metadata")
+            sort=sort, fields="path")
         count = result.count()
         result = ResultWrapper(result, count=count)
         factory = BrainFactory(self.catalog)
@@ -256,16 +229,14 @@ class ElasticSearch(object):
                     value = None
                 index_data[index_name] = value
         if update_metadata:
-            metadata = {}
-            for meta_name in catalog.names:
-                attr = getattr(wrapped_object, meta_name, MV)
-                if (attr is not MV and safe_callable(attr)):
-                    attr = attr()
-                metadata[meta_name] = attr
-            # XXX Also, always index path so we can use it with the brain
-            # to make urls
-            metadata['_path'] = wrapped_object.getPhysicalPath()
-            index_data['_metadata'] = dumps(metadata)
+            index = self.catalog.uids.get(uid, None)
+            if index is None:  # we are inserting new data
+                index = self.catalog.updateMetadata(obj, uid, None)
+                self.catalog._length.change(1)
+                self.catalog.uids[uid] = index
+                self.catalog.paths[index] = uid
+            # need to match elasticsearch result with brain
+            self.catalog.updateMetadata(obj, uid, index)
 
         uid = getUID(obj)
         try:
@@ -280,16 +251,9 @@ class ElasticSearch(object):
     def registerInTransaction(self, uid, action, doc={}):
         if not self.tdata.registered:
             self.tdata.register(self)
-        conn = self.conn
-        data = {
-            'transaction_id': self.tdata.tid,
-            'data': dumps(doc),
-            'order': self.tdata.counter,
-            'action': action,
-            'uid': uid
-        }
-        conn.index(data, self.catalogsid, self.trns_catalogtype)
-        self.tdata.counter += 1
+        self.tdata.docs.append(
+            (action, uid, doc)
+        )
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
         mode = self.mode
@@ -395,15 +359,6 @@ class ElasticSearch(object):
                 raise Exception("Can not locate index for %s" % (
                     name))
 
-        # XXX then add an index specifically to hold metadata
-        # We don't store any of the other index data
-        # this will be json encoded
-        properties['_metadata'] = {
-            'type': 'string',
-            'index': 'not_analyzed',
-            'store': True
-        }
-
         conn = self.conn
         try:
             conn.create_index(self.catalogsid)
@@ -415,10 +370,6 @@ class ElasticSearch(object):
             doc_type=self.catalogtype,
             mapping=mapping,
             indices=[self.catalogsid])
-        conn.indices.put_mapping(
-            doc_type=self.trns_catalogtype,
-            mapping=self.trns_mapping,
-            indices=[self.catalogsid])
 
     @property
     def catalogsid(self):
@@ -428,6 +379,3 @@ class ElasticSearch(object):
     def catalogtype(self):
         return self.catalogtool.getId().lower()
 
-    @property
-    def trns_catalogtype(self):
-        return self.catalogtype + '_trns'

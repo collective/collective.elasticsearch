@@ -11,12 +11,6 @@
   <include package="plone.app.layout" />
   <include package="five.globalrequest" />
 
-  <adapter for="*
-                zope.publisher.interfaces.browser.IBrowserRequest
-                .brain.Brain"
-           factory="plone.app.layout.icons.icons.CatalogBrainContentIcon"
-           provides="plone.app.layout.icons.interfaces.IContentIcon" />
-
   <genericsetup:registerProfile
     name="default"
     title="Elastic Search"
@@ -47,5 +41,7 @@
     attribute="rebuild"
     permission="cmf.ManagePortal"
     />
+
+  <subscriber handler=".td.transactionJoiner" />
 
 </configure>
