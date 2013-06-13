@@ -26,7 +26,4 @@ auto flush
 TODO
 ----
 
-- optimize
-- elastic search results are returning all indexed data, not just metadata
-- lazy load brain data
-- paging...
+- optimize?

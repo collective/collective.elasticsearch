@@ -36,10 +36,6 @@ class BaseTest(unittest.TestCase):
         transaction.commit()
         patched = PatchCaller(self.catalog)
         self.searchResults = patched.searchResults
-        self.joinTransaction()
-
-    def joinTransaction(self):
-        pass
 
     def clearTransactionEntries(self):
         tdata = td.get()

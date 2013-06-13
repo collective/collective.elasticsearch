@@ -4,9 +4,6 @@ from logging import getLogger
 from zope.interface import implementer
 from transaction.interfaces import ISavepointDataManager, IDataManagerSavepoint
 
-
-from ZPublisher.interfaces import IPubAfterTraversal
-from zope.component import adapter
 import transaction as transaction_manager
 
 from pyes.exceptions import ElasticSearchException
