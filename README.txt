@@ -19,7 +19,7 @@ Step by Step for Ubuntu:
     - bin/elasticsearch -f &
 
 Does it work?
-    - telnet http://localhost:9200/
+    - curl http://localhost:9200/
     - Do you see the Hudsucker Proxy reference? "You Know, for Search"
 
 Use Elastic Search in Plone:
