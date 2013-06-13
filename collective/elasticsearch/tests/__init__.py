@@ -36,11 +36,14 @@ class BaseTest(unittest.TestCase):
         transaction.commit()
         patched = PatchCaller(self.catalog)
         self.searchResults = patched.searchResults
-        td.transactionJoiner(None)
+        self.joinTransaction()
+
+    def joinTransaction(self):
+        pass
 
     def clearTransactionEntries(self):
         tdata = td.get()
-        tdata.reset(True)
+        tdata.reset()
 
     def tearDown(self):
         self.es.conn.delete_index(self.es.catalogsid)

@@ -45,11 +45,8 @@ class DataManager(object):
         self.td = td
         self.savepoints = []
 
-    def abort(self, trans):
-        pass
-
     def commit(self, trans):
-        pass
+        self.td.reset()
 
     def tpc_begin(self, trans):
         pass
@@ -58,23 +55,26 @@ class DataManager(object):
         pass
 
     def tpc_finish(self, trans):
-        self.td.reset(True)
+        self.td.reset()
 
     def tpc_abort(self, trans):
+        pass
+
+    def abort(self, trans):
         try:
-            self._tpc_abort(trans)
+            self._abort(trans)
         except:
             # XXX log this better
             warn("Error aborting transaction")
 
-    def _tpc_abort(self, trans):
-        import pdb; pdb.set_trace()
+    def _abort(self, trans):
         if self._active:
             td = self.td
             if len(td.docs) > 0:
                 td.conn.refresh()
                 self._revert(td.docs)
                 td.conn.refresh()
+                td.docs = []
 
     @property
     def _active(self):
@@ -150,19 +150,21 @@ class TransactionData(object):
     def register(self, es):
         self.es = es
         self.registered = True
+        # see if a transaction manager is not registered yet.
+        transaction = transaction_manager.get()
+        found = False
+        for resource in transaction._resources:
+            if isinstance(resource, DataManager):
+                found = True
+                break
+        if not found:
+            transaction.join(DataManager(self))
 
-    def reset(self, hard=False):
+    def reset(self):
         self.docs = []
-        if hard:
-            self.es = None
-            self.registered = False
-            self.conn = None
+        self.es = None
+        self.registered = False
+        self.conn = None
 
 
-@adapter(IPubAfterTraversal)
-def transactionJoiner(event):
-    td = get()
-    td.reset(True)
-    transaction = transaction_manager.get()
-    transaction.join(DataManager(td))
 
