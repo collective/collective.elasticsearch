@@ -22,6 +22,16 @@ logger = getLogger(__name__)
 info = logger.info
 
 
+def _one(val):
+    """
+    if list, return first
+    otherwise, return value
+    """
+    if type(val) in (list, set, tuple):
+        return val[0]
+    return val
+
+
 class BaseIndex(object):
 
     def __init__(self, catalog, index):
@@ -120,11 +130,11 @@ class EDateIndex(BaseIndex):
         if range_ is None:
             if type(query) in (list, tuple):
                 range_ = 'min'
-        
+
         if range_ == 'min':
-            return RangeFilter(ESRangeOp(name, 'lte', query.ISO8601()))
+            return RangeFilter(ESRangeOp(name, 'lte', _one(query).ISO8601()))
         elif range_ == 'max':
-            return RangeFilter(ESRangeOp(name, 'gte', query.ISO8601()))
+            return RangeFilter(ESRangeOp(name, 'gte', _one(query).ISO8601()))
         elif range_ == 'min:max' and type(query) in (list, tuple) and \
                 len(query) == 2:
             return ANDFilter([

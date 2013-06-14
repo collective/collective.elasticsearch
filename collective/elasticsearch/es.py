@@ -85,13 +85,13 @@ class ResultWrapper(object):
         lbound = self.iloc
         rbound = lbound + self.cache_size
         if isinstance(val, slice):
-            if lbound <= val.start and rbound >= val.end:
-                val.start = val.start - lbound
-                val.end = val.end - rbound
-                return self.cache[val]
+            if lbound <= val.start and rbound >= val.stop:
+                start = val.start - lbound
+                stop = val.stop - rbound
+                return self.cache[start:stop]
             else:
                 start = val.start
-                end = val.end
+                end = val.stop
         else:
             if lbound <= val and rbound > val:
                 return self.cache[val - self.iloc]
@@ -120,6 +120,9 @@ class ResultWrapper(object):
         else:
             raise Exception("Error finding data")
         return self[val]
+
+    def __len__(self):
+        return len(self.rl)
 
     def __iter__(self):
         return self
