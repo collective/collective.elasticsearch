@@ -242,7 +242,7 @@ class ElasticSearch(object):
                 self.catalog.uids[uid] = index
                 self.catalog.paths[index] = uid
             # need to match elasticsearch result with brain
-            self.catalog.updateMetadata(obj, uid, index)
+            self.catalog.updateMetadata(wrapped_object, uid, index)
 
         uid = getUID(obj)
         try:
