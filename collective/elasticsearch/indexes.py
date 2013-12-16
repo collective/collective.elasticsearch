@@ -12,9 +12,8 @@ from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
 from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.DateRangeIndex.DateRangeIndex import DateRangeIndex
-
 from plone.app.folder.nogopip import GopipIndex
-
+from datetime import datetime
 from pyes import (PrefixFilter, TermFilter, ORFilter, RangeFilter,
                   ANDFilter, TextQuery, ESRangeOp)
 
@@ -29,6 +28,12 @@ def _one(val):
     """
     if type(val) in (list, set, tuple):
         return val[0]
+    return val
+
+
+def _zdt(val):
+    if type(val) == datetime:
+        val = DateTime(val)
     return val
 
 
@@ -131,15 +136,16 @@ class EDateIndex(BaseIndex):
             if type(query) in (list, tuple):
                 range_ = 'min'
 
+        first = _zdt(_one(query)).ISO8601()
         if range_ == 'min':
-            return RangeFilter(ESRangeOp(name, 'lte', _one(query).ISO8601()))
+            return RangeFilter(ESRangeOp(name, 'lte', first))
         elif range_ == 'max':
-            return RangeFilter(ESRangeOp(name, 'gte', _one(query).ISO8601()))
+            return RangeFilter(ESRangeOp(name, 'gte', first))
         elif range_ == 'min:max' and type(query) in (list, tuple) and \
                 len(query) == 2:
             return ANDFilter([
-                RangeFilter(ESRangeOp(name, 'gte', query[0].ISO8601())),
-                RangeFilter(ESRangeOp(name, 'lte', query[1].ISO8601()))
+                RangeFilter(ESRangeOp(name, 'gte', first)),
+                RangeFilter(ESRangeOp(name, 'lte', _zdt(query[1]).ISO8601()))
                 ])
 
     def extract(self, name, data):
@@ -150,7 +156,7 @@ class EDateIndex(BaseIndex):
 
 
 class EZCTextIndex(BaseIndex):
-    
+
     def create_mapping(self, name):
         return {
             'type': 'string',
@@ -347,6 +353,10 @@ class EDateRangeIndex(BaseIndex):
             ])
 
 
+class ERecurringIndex(EDateIndex):
+    pass
+
+
 INDEX_MAPPING = {
     KeywordIndex: EKeywordIndex,
     FieldIndex: EFieldIndex,
@@ -358,6 +368,12 @@ INDEX_MAPPING = {
     GopipIndex: EGopipIndex,
     DateRangeIndex: EDateRangeIndex
 }
+
+try:
+    from Products.DateRecurringIndex.index import DateRecurringIndex
+    INDEX_MAPPING[DateRecurringIndex] = ERecurringIndex
+except ImportError:
+    pass
 
 
 def getIndex(catalog, name):

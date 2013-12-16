@@ -381,4 +381,3 @@ class ElasticSearch(object):
     @property
     def catalogtype(self):
         return self.catalogtool.getId().lower()
-
