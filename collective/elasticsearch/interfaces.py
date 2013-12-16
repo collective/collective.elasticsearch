@@ -28,7 +28,8 @@ class IElasticSettings(Interface):
         vocabulary=SimpleVocabulary([
             SimpleTerm(DISABLE_MODE, DISABLE_MODE, u'Disabled'),
             SimpleTerm(REPLACEMENT_MODE, REPLACEMENT_MODE, u'Replace catalog'),
-            SimpleTerm(DUAL_MODE, DUAL_MODE,
+            SimpleTerm(
+                DUAL_MODE, DUAL_MODE,
                 u'Index plone and elastic search but still '
                 u'search with elastic'),
         ]))
@@ -53,5 +54,6 @@ class IElasticSettings(Interface):
 
     max_retries = schema.Int(
         title=u"Max Retries",
-        description=u"Number of times to retry connecting to elastic search on failure",
+        description=u"Number of times to retry connecting to elastic search "
+                    u"on failure",
         default=3)

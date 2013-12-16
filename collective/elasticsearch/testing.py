@@ -19,7 +19,7 @@ class ElasticSearch(PloneSandboxLayer):
         # load ZCML
         import collective.elasticsearch
         xmlconfig.file('configure.zcml', collective.elasticsearch,
-            context=configurationContext)
+                       context=configurationContext)
         z2.installProduct(app, 'collective.elasticsearch')
 
     def setUpPloneSite(self, portal):

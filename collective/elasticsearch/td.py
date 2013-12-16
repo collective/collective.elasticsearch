@@ -34,7 +34,6 @@ def get():
         return tranaction_data.data
 
 
-
 @implementer(ISavepointDataManager)
 class DataManager(object):
 
@@ -96,10 +95,10 @@ class DataManager(object):
                 elif action in (Actions.modify, Actions.delete):
                     # if it was a modify or delete, restore the doc
                     conn.index(doc, es.catalogsid, es.catalogtype, uid)
-            except ElasticSearchException, ex:
+            except ElasticSearchException:
                 # XXX log this better
                 warn('There was an error cleaning up elastic transactions. '
-                        'There could be inconsistencies')
+                     'There could be inconsistencies')
 
     @property
     def savepoint(self):
@@ -162,6 +161,3 @@ class TransactionData(object):
         self.es = None
         self.registered = False
         self.conn = None
-
-
-

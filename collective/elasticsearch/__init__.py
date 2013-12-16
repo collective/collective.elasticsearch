@@ -81,6 +81,7 @@ patched = {}
 from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 original_unindexObject = CatalogMultiplex.unindexObject
 
+
 # archetypes unindexObject
 def unindexObject(self):
     if isFactoryContained(self):
@@ -109,7 +110,6 @@ def patch():
                 setattr(klass, name, method)
                 info('patched %s', str(getattr(klass, name)))
 
-    
     CatalogMultiplex.unindexObject = unindexObject
     setattr(CatalogMultiplex, '__old_unindexObject', original_unindexObject)
 

@@ -62,7 +62,7 @@ class BaseIndex(object):
             value = self.index._get_object_datum(object, attr)
         else:
             info('catalogObject was passed bad index '
-                      'object %s.' % str(self.index))
+                 'object %s.' % str(self.index))
         if value == MV:
             return None
         return value
@@ -168,7 +168,7 @@ class EZCTextIndex(BaseIndex):
         try:
             fields = self.index._indexed_attrs
         except:
-            fields  = [ self.index._fieldname ]
+            fields = [self.index._fieldname]
 
         all_texts = []
         for attr in fields:
@@ -186,8 +186,8 @@ class EZCTextIndex(BaseIndex):
                     all_texts.append(text)
 
         # Check that we're sending only strings
-        all_texts = filter(lambda text: isinstance(text, basestring), \
-                           all_texts)
+        all_texts = filter(
+            lambda text: isinstance(text, basestring), all_texts)
         if all_texts:
             return '\n'.join(all_texts)
 
@@ -273,11 +273,11 @@ class EExtendedPathIndex(BaseIndex):
             if navtree:
                 start = start + navtree_start
                 end = navtree_start + depth
-            else:                
+            else:
                 end = start + depth
             if navtree or depth == -1:
                 gtcompare = 'gte'
-            
+
             filters = []
             if depth == 0:
                 andfilters.append(TermFilter(name + '.path', path))
@@ -297,7 +297,7 @@ class EExtendedPathIndex(BaseIndex):
 
 
 class EGopipIndex(BaseIndex):
-    
+
     def create_mapping(self, name):
         return {
             'type': 'integer',

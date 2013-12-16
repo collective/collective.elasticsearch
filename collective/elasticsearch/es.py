@@ -53,6 +53,7 @@ class PatchCaller(object):
             return self.__dict__[name]
         _type = type(aq_base(self._patched_object))
         func = getattr(_type, '__old_' + name)
+
         # "bind" it
         def bound_func(*args, **kwargs):
             return func(self._patched_object, *args, **kwargs)
@@ -182,7 +183,8 @@ class ElasticSearch(object):
     @property
     def conn(self):
         if self.tdata.conn is None:
-            self.tdata.conn = ES(self.registry.connection_string,
+            self.tdata.conn = ES(
+                self.registry.connection_string,
                 bulk_size=self.bulk_size,
                 max_retries=self.max_retries,
                 timeout=self.timeout)
@@ -193,7 +195,7 @@ class ElasticSearch(object):
         dquery, sort = qassembler.normalize(query)
         equery = qassembler(dquery)
         result = self.conn.search(equery, self.catalogsid, self.catalogtype,
-            sort=sort, fields="path")
+                                  sort=sort, fields="path")
         count = result.count()
         result = ResultWrapper(result, count=count)
         factory = BrainFactory(self.catalog)
@@ -211,7 +213,8 @@ class ElasticSearch(object):
         if not IIndexableObject.providedBy(obj):
             # This is the CMF 2.2 compatible approach, which should be used
             # going forward
-            wrapper = queryMultiAdapter((obj, self.catalogtool), IIndexableObject)
+            wrapper = queryMultiAdapter((obj, self.catalogtool),
+                                        IIndexableObject)
             if wrapper is not None:
                 wrapped_object = wrapper
             else:
@@ -331,7 +334,8 @@ class ElasticSearch(object):
                 show_inactive = 'show_inactive' in REQUEST
 
             user = _getAuthenticatedUser(self.catalogtool)
-            query['allowedRolesAndUsers'] = self.catalogtool._listAllowedRolesAndUsers(user)
+            query['allowedRolesAndUsers'] = \
+                self.catalogtool._listAllowedRolesAndUsers(user)
 
             if not show_inactive and not _checkPermission(
                     AccessInactivePortalContent, self.catalogtool):
@@ -341,7 +345,7 @@ class ElasticSearch(object):
         try:
             return self.query(query)
         except:
-            info("Error running Query: %s\n%s" %(
+            info("Error running Query: %s\n%s" % (
                 repr(orig_query),
                 traceback.format_exc()))
             if mode == DUAL_MODE:
