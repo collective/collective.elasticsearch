@@ -33,16 +33,16 @@ def safeSearchResults(self, REQUEST=None, **kw):
     return es.searchResults(REQUEST, check_perms=True, **kw)
 
 
-def manage_catalogRebuild(self, REQUEST=None, RESPONSE=None):
+def manage_catalogRebuild(self, *args, **kwargs):
     """ need to be publishable """
     es = ElasticSearch(self)
-    return es.manage_catalogRebuild(REQUEST, RESPONSE)
+    return es.manage_catalogRebuild(**kwargs)
 
 
-def manage_catalogClear(self, REQUEST=None, RESPONSE=None, URL1=None):
+def manage_catalogClear(self, *args, **kwargs):
     """ need to be publishable """
     es = ElasticSearch(self)
-    return es.manage_catalogClear(REQUEST, RESPONSE, URL1)
+    return es.manage_catalogClear(*args, **kwargs)
 
 
 def refreshCatalog(self, clear=0, pghandler=None):

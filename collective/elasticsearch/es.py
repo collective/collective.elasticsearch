@@ -112,7 +112,7 @@ class ResultWrapper(object):
         elif self.iloc > 0:
             # in this case, we're adding to front
             end = start
-            start = min(self.iloc - self.bulk, 0)
+            start = min(self.iloc - self.bulk_size, 0)
             rcache = self.cache[end:]
             self.cache = self.rl[start:end]
             if len(self.cache) == 0:
@@ -197,7 +197,8 @@ class ElasticSearch(object):
         result = self.conn.search(equery, self.catalogsid, self.catalogtype,
                                   sort=sort, fields="path")
         count = result.count()
-        result = ResultWrapper(result, count=count)
+        # disable this for now. some issues...
+        #result = ResultWrapper(result, count=count)
         factory = BrainFactory(self.catalog)
         return LazyMap(factory, result, count)
 
@@ -284,24 +285,24 @@ class ElasticSearch(object):
         if self.registry.auto_flush:
             conn.refresh()
 
-    def manage_catalogRebuild(self, REQUEST=None, RESPONSE=None):
+    def manage_catalogRebuild(self, *args, **kwargs):
         mode = self.mode
         if mode == DISABLE_MODE:
-            return self.patched.manage_catalogRebuild(REQUEST, RESPONSE)
+            return self.patched.manage_catalogRebuild(*args, **kwargs)
 
         self.recreateCatalog()
 
-        return self.patched.manage_catalogRebuild(REQUEST, RESPONSE)
+        return self.patched.manage_catalogRebuild(*args, **kwargs)
 
-    def manage_catalogClear(self, REQUEST=None, RESPONSE=None, URL1=None):
+    def manage_catalogClear(self, *args, **kwargs):
         mode = self.mode
         if mode == DISABLE_MODE:
-            return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
+            return self.patched.manage_catalogClear(*args, **kwargs)
 
         self.recreateCatalog()
 
         if mode == DUAL_MODE:
-            return self.patched.manage_catalogClear(REQUEST, RESPONSE, URL1)
+            return self.patched.manage_catalogClear(*args, **kwargs)
 
     def refreshCatalog(self, clear=0, pghandler=None):
         mode = self.mode
