@@ -193,7 +193,7 @@ class EZCTextIndex(BaseIndex):
 
     def get_query(self, name, value):
         value = self._normalize_query(value)
-        return TextQuery(name, value), True
+        return TextQuery(name, value, type='phrase_prefix'), True
 
 
 class EBooleanIndex(BaseIndex):
