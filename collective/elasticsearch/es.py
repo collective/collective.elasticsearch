@@ -277,6 +277,9 @@ class ElasticSearch(object):
             self.registerInTransaction(uid, td.Actions.delete, doc)
         except NotFoundException:
             pass
+        except:
+            import pdb; pdb.set_trace()
+            raise
         try:
             conn.delete(self.catalogsid, self.catalogtype, uid)
         except NotFoundException:

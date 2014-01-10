@@ -95,8 +95,24 @@ def unindexObject(self):
         elif catalog._catalog.uids.get(url, None) is not None:
             catalog.uncatalog_object(url)
 
+from Products.CMFCore.CatalogTool import CatalogTool as CMFCatalogTool
+original_unindexObjectCMF = CMFCatalogTool.unindexObject
+
+
+def unindexObjectCMF(self, ob):
+    # same reason as the patch above, we need the actual object passed along
+    # this handle dexterity types
+    path = '/'.join(ob.getPhysicalPath())
+    return self.uncatalog_object(path, obj=ob)
+
 
 def patch():
+    CMFCatalogTool.unindexObject = unindexObjectCMF
+    setattr(CMFCatalogTool, '__old_unindexObject', original_unindexObjectCMF)
+
+    CatalogMultiplex.unindexObject = unindexObject
+    setattr(CatalogMultiplex, '__old_unindexObject', original_unindexObject)
+
     prefix = '__old_'
     for patch in patches:
         klass = patch.kls
@@ -109,9 +125,6 @@ def patch():
                 setattr(klass, prefix + name, old)
                 setattr(klass, name, method)
                 info('patched %s', str(getattr(klass, name)))
-
-    CatalogMultiplex.unindexObject = unindexObject
-    setattr(CatalogMultiplex, '__old_unindexObject', original_unindexObject)
 
 
 def initialize(context):
