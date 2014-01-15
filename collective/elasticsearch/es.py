@@ -320,11 +320,12 @@ class ElasticSearch(object):
         try:
             doc = conn.get(self.catalogsid, self.catalogtype, uid)
             self.registerInTransaction(uid, td.Actions.modify, doc)
+            doc = doc.copy()  # we copy so we can update safely
+            doc.update(index_data)
         except NotFoundException:
             self.registerInTransaction(uid, td.Actions.add)
-        conn.index(index_data, self.catalogsid, self.catalogtype, uid)
-        if self.registry.auto_flush:
-            conn.refresh()
+            doc = index_data
+        conn.index(doc, self.catalogsid, self.catalogtype, uid)
 
     def registerInTransaction(self, uid, action, doc={}):
         if not self.tdata.registered:

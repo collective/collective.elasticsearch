@@ -42,6 +42,8 @@ class DataManager(object):
         self.savepoints = []
 
     def commit(self, trans):
+        if self.td.es.registry.auto_flush:
+            self.td.conn.refresh()
         self.td.reset()
 
     def tpc_begin(self, trans):

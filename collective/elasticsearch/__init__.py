@@ -1,4 +1,5 @@
 from logging import getLogger
+import inspect
 
 from Acquisition import aq_base
 from zope.interface import classImplements
@@ -106,12 +107,61 @@ def unindexObjectCMF(self, ob):
     return self.uncatalog_object(path, obj=ob)
 
 
+from plone.folder.default import DefaultOrdering
+original_moveObjectsByDelta = DefaultOrdering.moveObjectsByDelta
+
+
+def indexPositions(context, ids):
+    for id in ids:
+        if id.startswith('portal_'):
+            continue
+        ob = context[id]
+        if not hasattr(ob, 'reindexObject'):
+            continue
+        if len(inspect.getargspec(ob.reindexObject).args) == 2:
+            ob.reindexObject(idxs=['getObjPositionInParent'])
+
+
+def moveObjectsByDelta(self, ids, delta, subset_ids=None,
+                       suppress_events=False):
+    res = original_moveObjectsByDelta(self, ids, delta, subset_ids=subset_ids,
+                                      suppress_events=suppress_events)
+    if subset_ids is None:
+        subset_ids = self.idsInOrder()
+    indexPositions(self.context, subset_ids)
+    return res
+
+
+from Products.CMFPlone.Portal import PloneSite
+original_PloneSite_moveObjectsByDelta = PloneSite.moveObjectsByDelta
+
+
+def PloneSite_moveObjectsByDelta(self, ids, delta, subset_ids=None,
+                                 suppress_events=False):
+    res = original_PloneSite_moveObjectsByDelta(
+        self, ids, delta, subset_ids=subset_ids,
+        suppress_events=suppress_events)
+    if subset_ids is None:
+        objects = list(self._objects)
+        subset_ids = self.getIdsSubset(objects)
+    indexPositions(self, subset_ids)
+    return res
+
+
 def patch():
     CMFCatalogTool.unindexObject = unindexObjectCMF
     setattr(CMFCatalogTool, '__old_unindexObject', original_unindexObjectCMF)
 
     CatalogMultiplex.unindexObject = unindexObject
     setattr(CatalogMultiplex, '__old_unindexObject', original_unindexObject)
+
+    DefaultOrdering.moveObjectsByDelta = moveObjectsByDelta
+    setattr(DefaultOrdering, '__old_moveObjectsByDelta',
+            original_moveObjectsByDelta)
+
+    PloneSite.moveObjectsByDelta = PloneSite_moveObjectsByDelta
+    setattr(PloneSite, '__old_moveObjectsByDelta',
+            original_PloneSite_moveObjectsByDelta)
 
     prefix = '__old_'
     for patch in patches:
