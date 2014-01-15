@@ -14,10 +14,17 @@ from zope.component import ComponentLookupError
 from plone.registry.interfaces import IRegistry
 from plone.indexer.interfaces import IIndexableObject
 
-from pyes.exceptions import IndexMissingException
 from pyes import ES
-from pyes.exceptions import (IndexAlreadyExistsException,
-                             NotFoundException)
+from pyes.exceptions import (
+    IndexAlreadyExistsException,
+    NotFoundException,
+    IndexMissingException
+)
+from pyes.es import (
+    ResultSet as BaseResultSet,
+    ElasticSearchModel as BaseElasticSearchModel,
+    DotDict
+)
 
 from collective.elasticsearch.brain import BrainFactory
 from collective.elasticsearch.query import QueryAssembler
@@ -33,6 +40,112 @@ info = logger.info
 warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
+
+
+class ElasticSearchModel(BaseElasticSearchModel):
+    """
+    overriding this because the original pops values off
+    the original item dict which screws up additional calls
+    to the model constructor
+    """
+    def __init__(self, *args, **kwargs):
+        self._meta = DotDict()
+        self.__initialised = True
+        if len(args) == 2 and isinstance(args[0], ES):
+            item = args[1]
+            self.update(item.get("_source", DotDict()))
+            self.update(item.get("fields", {}))
+            self._meta = DotDict([(k.lstrip("_"), v) for k, v in item.items()])
+            self._meta.parent = self.pop("_parent", None)
+            self._meta.connection = args[0]
+        else:
+            self.update(dict(*args, **kwargs))
+
+
+class ResultSet(BaseResultSet):
+    """
+    override because the original sucks and does a call for every
+    result object. Yikes
+    """
+    def __init__(self, connection, query, indices=None, doc_types=None,
+                 query_params=None, auto_fix_keys=False,
+                 auto_clean_highlight=False, model=ElasticSearchModel):
+        """
+        override...
+        """
+        self.connection = connection
+        self.indices = indices
+        self.doc_types = doc_types
+        self.query_params = query_params or {}
+        self.scroller_parameters = {}
+        self.scroller_id = None
+        self._results = None
+        self.model = model or self.connection.model
+        self._total = None
+        self.valid = False
+        self._facets = {}
+        self.auto_fix_keys = auto_fix_keys
+        self.auto_clean_highlight = auto_clean_highlight
+
+        from pyes.query import Search
+
+        if not isinstance(query, Search):
+            self.query = Search(query)
+        else:
+            self.query = query
+
+        self.iterpos = 0  # keep track of iterator position
+        self.start = self.query.start or query_params.get("start", 0)
+        self._max_item = self.query.size
+        self._current_item = 0
+        self.chuck_size = 400
+
+    def __getitem__(self, val):
+        if not isinstance(val, (int, long, slice)):
+            raise TypeError('%s indices must be integers, not %s' % (
+                self.__class__.__name__, val.__class__.__name__))
+
+        def get_start_end(val):
+            if isinstance(val, slice):
+                start = val.start
+                if not start:
+                    start = 0
+                end = val.stop or self.total
+                if end < 0:
+                    end = self.total + end
+                if self._max_item is not None and end > self._max_item:
+                    end = self._max_item
+                return start, end
+            return val, val + 1
+
+        start, end = get_start_end(val)
+        model = self.model
+
+        if self._results:
+            if start >= 0 and end < self.start + self.chuck_size and \
+                    len(self._results['hits']['hits']) > 0:
+                if not isinstance(val, slice):
+                    return model(
+                        self.connection,
+                        self._results['hits']['hits'][val - self.start])
+                else:
+                    return [model(self.connection, hit)
+                            for hit in
+                            self._results['hits']['hits'][start:end]]
+
+        query = self.query.serialize()
+        query['from'] = start+self.start
+        query['size'] = end - start
+
+        results = self.connection.search_raw(query, indices=self.indices,
+                                             doc_types=self.doc_types,
+                                             **self.query_params)
+        hits = results['hits']['hits']
+        if not isinstance(val, slice):
+            if len(hits) == 1:
+                return model(self.connection, hits[0])
+            raise IndexError
+        return [model(self.connection, hit) for hit in hits]
 
 
 class PatchCaller(object):
@@ -58,75 +171,6 @@ class PatchCaller(object):
         def bound_func(*args, **kwargs):
             return func(self._patched_object, *args, **kwargs)
         return bound_func
-
-
-class ResultWrapper(object):
-    """
-    To cache a group of results that rolls.
-    optimized for sequentially access
-    """
-
-    def __init__(self, rl, count=None, cache_size=1000, bulk_size=400):
-        self.rl = rl
-        if count is None:
-            count = self.rl.count()
-        if cache_size > count:
-            cache_size = count
-        if bulk_size > count:
-            bulk_size = count
-        if bulk_size > cache_size:
-            cache_size = min(bulk_size * 2, count)
-        self.cache_size = cache_size
-        self.bulk_size = bulk_size
-        self.iloc = lbound = 0
-        # fill up the cache to start...
-        self.cache = rl[lbound:self.cache_size]
-
-    def __getitem__(self, val):
-        lbound = self.iloc
-        rbound = lbound + self.cache_size
-        if isinstance(val, slice):
-            if lbound <= val.start and rbound >= val.stop:
-                start = val.start - lbound
-                stop = val.stop - rbound
-                return self.cache[start:stop]
-            else:
-                start = val.start
-                end = val.stop
-        else:
-            if lbound <= val and rbound > val:
-                return self.cache[val - self.iloc]
-            else:
-                start = end = val
-        # grab a group, trimming off any that we need to...
-        if start > (rbound - 1) or end > (rbound - 1):
-            # in this case, we're adding to the end
-            # chop off front
-            self.cache = self.cache[self.bulk_size:]
-            self.iloc += self.bulk_size
-            additional = self.rl[rbound:rbound + self.bulk_size]
-            if len(additional) == 0:
-                raise IndexError
-            # add to end
-            self.cache.extend(additional)
-        elif self.iloc > 0:
-            # in this case, we're adding to front
-            end = start
-            start = min(self.iloc - self.bulk_size, 0)
-            rcache = self.cache[end:]
-            self.cache = self.rl[start:end]
-            if len(self.cache) == 0:
-                raise IndexError
-            self.cache.extend(rcache)
-        else:
-            raise Exception("Error finding data")
-        return self[val]
-
-    def __len__(self):
-        return len(self.rl)
-
-    def __iter__(self):
-        return self
 
 
 class ElasticSearch(object):
@@ -187,15 +231,42 @@ class ElasticSearch(object):
                 self.registry.connection_string,
                 bulk_size=self.bulk_size,
                 max_retries=self.max_retries,
-                timeout=self.timeout)
+                timeout=self.timeout,
+                model=ElasticSearchModel)
         return self.tdata.conn
+
+    def _es_search(self, query, **query_params):
+        """
+        override default es search to use our own ResultSet class that works
+        """
+        indices = self.conn._validate_indices(self.catalogsid)
+        if hasattr(query, 'search'):
+            query = query.search()
+
+        #propage the start and size in the query object
+        from pyes.query import Search
+        if "start" in query_params:
+            start = query_params.pop("start")
+            if isinstance(query, dict):
+                query["from"] = start
+            elif isinstance(query, Search):
+                query.start = start
+        if "size" in query_params:
+            size = query_params.pop("size")
+            if isinstance(query, dict):
+                query["size"] = size
+            elif isinstance(query, Search):
+                query.size = size
+
+        return ResultSet(connection=self.conn, query=query, indices=indices,
+                         doc_types=self.catalogtype, query_params=query_params,
+                         model=self.conn.model)
 
     def query(self, query):
         qassembler = QueryAssembler(self.catalogtool)
         dquery, sort = qassembler.normalize(query)
         equery = qassembler(dquery)
-        result = self.conn.search(equery, self.catalogsid, self.catalogtype,
-                                  sort=sort, fields="path")
+        result = self._es_search(equery, sort=sort, fields="path")
         count = result.count()
         # disable this for now. some issues...
         #result = ResultWrapper(result, count=count)
@@ -277,9 +348,6 @@ class ElasticSearch(object):
             self.registerInTransaction(uid, td.Actions.delete, doc)
         except NotFoundException:
             pass
-        except:
-            import pdb; pdb.set_trace()
-            raise
         try:
             conn.delete(self.catalogsid, self.catalogtype, uid)
         except NotFoundException:

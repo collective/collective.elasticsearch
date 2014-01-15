@@ -5,6 +5,10 @@ from DateTime import DateTime
 import time
 
 
+EVENT_KLASS = "Products.ATContentTypes.interfaces.event.IATEvent"
+DOCUMENT_KLASS = "Products.ATContentTypes.interfaces.document.IATDocument"
+
+
 class TestQueries(BaseTest):
 
     def test_field_index_query(self):
@@ -16,10 +20,8 @@ class TestQueries(BaseTest):
 
     def test_keyword_index_query(self):
         createObject(self.portal, 'Event', 'event', title="Some Event")
-        cat_results = self.searchResults(
-            object_provides="Products.ATContentTypes.interfaces.event.IATEvent")
-        el_results = self.catalog(
-            object_provides=["Products.ATContentTypes.interfaces.event.IATEvent"])
+        cat_results = self.searchResults(object_provides=EVENT_KLASS)
+        el_results = self.catalog(object_provides=[EVENT_KLASS])
         self.assertEquals(len(cat_results), len(el_results))
         self.assertEquals(len(cat_results), 1)
 
@@ -27,11 +29,9 @@ class TestQueries(BaseTest):
         createObject(self.portal, 'Event', 'event', title="Some Event")
         createObject(self.portal, 'Document', 'page', title="Some page")
         cat_results = self.searchResults(
-            object_provides=["Products.ATContentTypes.interfaces.event.IATEvent",
-                "Products.ATContentTypes.interfaces.document.IATDocument"])
+            object_provides=[EVENT_KLASS, DOCUMENT_KLASS])
         el_results = self.catalog(
-            object_provides=["Products.ATContentTypes.interfaces.event.IATEvent",
-                "Products.ATContentTypes.interfaces.document.IATDocument"])
+            object_provides=[EVENT_KLASS, DOCUMENT_KLASS])
         self.assertEquals(len(cat_results), len(el_results))
         self.assertEquals(len(cat_results), 2)
 
@@ -40,11 +40,12 @@ class TestQueries(BaseTest):
         time.sleep(1)
         events = []
         for idx in range(5):
-            event = createObject(self.portal, 'Event',
+            event = createObject(
+                self.portal, 'Event',
                 'event%i' % idx, title="Some Event %i" % idx)
             events.append(event)
         end = DateTime()
-        query = {'query':(start, end), 'range': 'min:max'}
+        query = {'query': (start, end), 'range': 'min:max'}
         cat_results = self.searchResults(created=query)
         el_results = self.catalog(created=query)
         self.assertEquals(len(cat_results), len(el_results))
@@ -52,12 +53,14 @@ class TestQueries(BaseTest):
 
     def test_text_index_query(self):
         for idx in range(5):
-            createObject(self.portal, 'Document',
+            createObject(
+                self.portal, 'Document',
                 'page%i' % idx, title="Page %i" % idx)
             # should not show up in results
         events = []
         for idx in range(5):
-            event = createObject(self.portal, 'Event',
+            event = createObject(
+                self.portal, 'Event',
                 'event%i' % idx, title="Some Event %i" % idx)
             events.append(event)
         cat_results = self.searchResults(Title="Some Event")
@@ -67,24 +70,23 @@ class TestQueries(BaseTest):
 
         # only find one
         cat_results = self.searchResults(Title="Some Event 1",
-                                             sort_on="getObjPositionInParent")
+                                         sort_on="getObjPositionInParent")
         el_results = self.catalog(Title="Some Event 1",
                                   sort_on="getObjPositionInParent")
         self.assertTrue("Some Event 1" in [
             b.Title for b in el_results])
         self.assertEquals(cat_results[0].Title, "Some Event 1")
 
-
     def test_path_index_query(self):
         folder1 = createObject(self.portal, 'Folder', 'folder1',
-            title="Folder 1")
+                               title="Folder 1")
         createObject(folder1, 'Document', 'page1', title="Page 1")
         createObject(folder1, 'Document', 'page2', title="Page 2")
         createObject(folder1, 'Document', 'page3', title="Page 3")
         folder2 = createObject(folder1, 'Folder', 'folder2',
-            title="Folder 2")
+                               title="Folder 2")
         folder3 = createObject(folder2, 'Folder', 'folder3',
-            title="Folder 3")
+                               title="Folder 3")
         createObject(folder3, 'Document', 'page4', title="Page 4")
         createObject(folder3, 'Document', 'page5', title="Page 5")
         createObject(folder3, 'Document', 'page6', title="Page 6")
@@ -94,22 +96,24 @@ class TestQueries(BaseTest):
                 path={'depth': 0, 'query': '/plone/folder1'})))
         self.assertEquals(
             len(self.catalog(path={'depth': 1, 'query': '/plone/folder1'})),
-            len(self.searchResults(
-                    path={'depth': 1, 'query': '/plone/folder1'})))
+            len(self.searchResults(path={'depth': 1,
+                                         'query': '/plone/folder1'})))
         self.assertEquals(
-            len(self.catalog(path={'depth': -1, 'query': '/plone/folder1'})),
-            len(self.searchResults(
-                path={'depth': -1, 'query': '/plone/folder1'})))
+            len(self.catalog(path={'depth': -1,
+                                   'query': '/plone/folder1'})),
+            len(self.searchResults(path={'depth': -1,
+                                         'query': '/plone/folder1'})))
         self.assertEquals(
             len(self.catalog(path={'depth': 1, 'query': '/plone'})),
-            len(self.searchResults(
-                    path={'depth': 1, 'query': '/plone'})))
+            len(self.searchResults(path={'depth': 1,
+                                         'query': '/plone'})))
         self.assertEquals(
-            len(self.catalog(path={'query': '/plone/folder1', 'navtree_start': 2, 'navtree': 1},
+            len(self.catalog(path={'query': '/plone/folder1',
+                                   'navtree_start': 2, 'navtree': 1},
                              is_default_page=False)),
-            len(self.searchResults(
-                    path={'query': '/plone/folder1', 'navtree_start': 2, 'navtree': 1},
-                    is_default_page=False)))
+            len(self.searchResults(path={'query': '/plone/folder1',
+                                         'navtree_start': 2, 'navtree': 1},
+                                   is_default_page=False)))
 
     def test_combined_query(self):
         createObject(self.portal, 'Folder', 'folder1', title="Folder 1")
