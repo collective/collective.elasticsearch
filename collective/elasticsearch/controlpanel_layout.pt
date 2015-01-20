@@ -44,7 +44,7 @@
       Portal status message
     </div>
 
-    <dl class="portalMessage warning" tal:condition="python: not status or not status['ok']">
+    <dl class="portalMessage warning" tal:condition="python: not status">
         <dt>
             Warning
         </dt>

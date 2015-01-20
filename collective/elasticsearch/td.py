@@ -6,7 +6,7 @@ from transaction.interfaces import ISavepointDataManager, IDataManagerSavepoint
 
 import transaction as transaction_manager
 
-from pyes.exceptions import ElasticSearchException
+from elasticsearch.exceptions import ElasticsearchException
 
 from collective.elasticsearch.interfaces import DISABLE_MODE
 
@@ -43,7 +43,7 @@ class DataManager(object):
 
     def commit(self, trans):
         if self.td.es.registry.auto_flush:
-            self.td.conn.refresh()
+            self.td.conn.indices.refresh(index=self.td.es.catalogsid)
         self.td.reset()
 
     def tpc_begin(self, trans):
@@ -69,9 +69,9 @@ class DataManager(object):
         if self._active:
             td = self.td
             if len(td.docs) > 0:
-                td.conn.refresh()
+                td.conn.indices.refresh(index=self.td.es.catalogsid)
                 self._revert(td.docs)
-                td.conn.refresh()
+                td.conn.indices.refresh(index=self.td.es.catalogsid)
                 td.docs = []
 
     @property
@@ -93,11 +93,12 @@ class DataManager(object):
             try:
                 if action == Actions.add:
                     # if it was an add action, remove delete
-                    conn.delete(es.catalogsid, es.catalogtype, uid)
+                    conn.delete(index=es.catalogsid, doc_type=es.catalogtype, id=uid)
                 elif action in (Actions.modify, Actions.delete):
                     # if it was a modify or delete, restore the doc
-                    conn.index(doc, es.catalogsid, es.catalogtype, uid)
-            except ElasticSearchException:
+                    conn.index(body=doc, index=es.catalogsid, doc_type=es.catalogtype,
+                               id=uid)
+            except ElasticsearchException:
                 # XXX log this better
                 warn('There was an error cleaning up elastic transactions. '
                      'There could be inconsistencies')
@@ -131,9 +132,9 @@ class Savepoint:
             return
         td = self.dm.td
         docs = td.docs[self.index:]
-        td.conn.refresh()
+        td.conn.indices.refresh(index=self.td.es.catalogsid)
         self.dm._revert(docs)
-        td.conn.refresh()
+        td.conn.indices.refresh(index=self.td.es.catalogsid)
         del td.docs[self.index:]
 
 

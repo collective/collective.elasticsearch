@@ -1,5 +1,4 @@
 from collective.elasticsearch.indexes import getIndex
-from pyes import (MatchAllQuery, ANDFilter, FilteredQuery)
 
 
 class QueryAssembler(object):
@@ -34,7 +33,7 @@ class QueryAssembler(object):
         filters = []
         catalog = self.catalogtool._catalog
         idxs = catalog.indexes.keys()
-        query = MatchAllQuery()
+        query = {'match_all': {}}
         for key, value in dquery.items():
             if key not in idxs:
                 continue
@@ -55,4 +54,11 @@ class QueryAssembler(object):
         if len(filters) == 0:
             return query
         else:
-            return FilteredQuery(query, ANDFilter(filters))
+            return {
+                'filtered': {
+                    'filter': {
+                        'and': filters
+                    },
+                    'query': query
+                }
+            }

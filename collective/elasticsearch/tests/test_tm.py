@@ -5,7 +5,7 @@ import unittest2 as unittest
 import transaction
 
 
-EVENT_KLASS = "Products.ATContentTypes.interfaces.event.IATEvent"
+EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 
 
 class TestTransactions(BaseTest):

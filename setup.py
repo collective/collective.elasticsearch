@@ -25,7 +25,7 @@ setup(name='collective.elasticsearch',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'pyes',
+          'elasticsearch>=1.0.0,<2.0.0',
           'plone.app.registry',
           'five.globalrequest'
       ],

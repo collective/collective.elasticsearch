@@ -17,6 +17,15 @@ class ElasticSearch(PloneSandboxLayer):
 
     def setUpZope(self, app, configurationContext):
         # load ZCML
+        import plone.app.contenttypes
+        xmlconfig.file('configure.zcml', plone.app.contenttypes,
+                       context=configurationContext)
+        z2.installProduct(app, 'plone.app.contenttypes')
+
+        import plone.app.event.dx
+        self.loadZCML(package=plone.app.event.dx,
+                      context=configurationContext)
+
         import collective.elasticsearch
         xmlconfig.file('configure.zcml', collective.elasticsearch,
                        context=configurationContext)
@@ -24,10 +33,14 @@ class ElasticSearch(PloneSandboxLayer):
 
     def setUpPloneSite(self, portal):
         # install into the Plone site
+        applyProfile(portal, 'plone.app.contenttypes:default')
         applyProfile(portal, 'collective.elasticsearch:default')
         setRoles(portal, TEST_USER_ID, ('Member', 'Manager'))
         workflowTool = getToolByName(portal, 'portal_workflow')
         workflowTool.setDefaultChain('plone_workflow')
+
+    def tearDownPloneSite(self, portal):
+        applyProfile(portal, 'plone.app.contenttypes:uninstall')
 
 
 ElasticSearch_FIXTURE = ElasticSearch()

@@ -42,7 +42,7 @@ class BaseTest(unittest.TestCase):
         tdata.reset()
 
     def tearDown(self):
-        self.es.conn.delete_index(self.es.catalogsid)
+        self.es.conn.indices.delete(index=self.es.catalogsid)
         self.clearTransactionEntries()
 
 

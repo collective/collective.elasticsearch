@@ -15,9 +15,11 @@ class IElasticSearchCatalog(Interface):
 
 class IElasticSettings(Interface):
 
-    connection_string = schema.TextLine(
-        title=u'Connection string',
-        default=u'127.0.0.1:9200')
+    hosts = schema.List(
+        title=u'Hosts',
+        default=[u'127.0.0.1'],
+        unique=True,
+        value_type=schema.TextLine(title=u'Host'))
 
     mode = schema.Choice(
         title=u'Mode',
@@ -34,6 +36,27 @@ class IElasticSettings(Interface):
                 u'search with elastic'),
         ]))
 
+    sniff_on_start = schema.Bool(
+        title=u'Sniff on start',
+        default=False)
+
+    sniff_on_connection_fail = schema.Bool(
+        title=u'Sniff on connection fail',
+        default=False)
+
+    sniffer_timeout = schema.Float(
+        title=u'Sniffer timeout',
+        default=0.1)
+
+    retry_on_timeout = schema.Bool(
+        title=u'Retry on timeout',
+        default=False)
+
+    timeout = schema.Float(
+        title=u"Timeout",
+        description=u"how long before timeout connecting to elastic search",
+        default=0.5)
+
     auto_flush = schema.Bool(
         title=u'Auto flush',
         description=u"Should indexing operations in elastic search "
@@ -46,14 +69,3 @@ class IElasticSettings(Interface):
         title=u"Bulk Size",
         description=u"bulk size for elastic queries",
         default=400)
-
-    timeout = schema.Float(
-        title=u"Timeout",
-        description=u"how long before timeout connecting to elastic search",
-        default=30.0)
-
-    max_retries = schema.Int(
-        title=u"Max Retries",
-        description=u"Number of times to retry connecting to elastic search "
-                    u"on failure",
-        default=3)

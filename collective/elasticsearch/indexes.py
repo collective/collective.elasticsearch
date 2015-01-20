@@ -14,8 +14,6 @@ from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.DateRangeIndex.DateRangeIndex import DateRangeIndex
 from plone.app.folder.nogopip import GopipIndex
 from datetime import datetime
-from pyes import (PrefixFilter, TermFilter, ORFilter, RangeFilter,
-                  ANDFilter, TextQuery, ESRangeOp)
 
 logger = getLogger(__name__)
 info = logger.info
@@ -84,10 +82,12 @@ class BaseIndex(object):
                 return
             queries = []
             for val in value:
-                queries.append(TermFilter(name, val))
-            return ORFilter(queries)
+                queries.append({'term': {name: val}})
+            return {
+                'or': queries
+            }
         else:
-            return TermFilter(name, value)
+            return {'term': {name: value}}
 
 
 class EKeywordIndex(BaseIndex):
@@ -138,15 +138,17 @@ class EDateIndex(BaseIndex):
 
         first = _zdt(_one(query)).ISO8601()
         if range_ == 'min':
-            return RangeFilter(ESRangeOp(name, 'lte', first))
+            return {'range': {name: {'lte': first}}}
         elif range_ == 'max':
-            return RangeFilter(ESRangeOp(name, 'gte', first))
+            return {'range': {name: {'gte': first}}}
         elif range_ == 'min:max' and type(query) in (list, tuple) and \
                 len(query) == 2:
-            return ANDFilter([
-                RangeFilter(ESRangeOp(name, 'gte', first)),
-                RangeFilter(ESRangeOp(name, 'lte', _zdt(query[1]).ISO8601()))
-                ])
+            return {
+                'and': [
+                    {'range': {name: {'gte': first}}},
+                    {'range': {name: {'lte': _zdt(query[1]).ISO8601()}}}
+                ]
+            }
 
     def extract(self, name, data):
         try:
@@ -193,7 +195,15 @@ class EZCTextIndex(BaseIndex):
 
     def get_query(self, name, value):
         value = self._normalize_query(value)
-        return TextQuery(name, value, type='phrase_prefix'), True
+        return {
+            'text': {
+                name: {
+                    'operator': 'or',
+                    'query': value,
+                    'type': 'phrase_prefix'
+                }
+            }
+        }, True
 
 
 class EBooleanIndex(BaseIndex):
@@ -280,18 +290,25 @@ class EExtendedPathIndex(BaseIndex):
 
             filters = []
             if depth == 0:
-                andfilters.append(TermFilter(name + '.path', path))
+                andfilters.append({
+                    'term': {
+                        name + '.path': path
+                    }
+                })
                 continue
             else:
                 filters = [
-                    PrefixFilter(name + '.path', path),
-                    RangeFilter(ESRangeOp(name + '.depth', gtcompare, start))]
+                    {'prefix': {name + '.path': path}},
+                    {'range': {name + '.depth': {gtcompare: start}}}
+                ]
             if depth != -1:
                 filters.append(
-                    RangeFilter(ESRangeOp(name + '.depth', 'lte', end)))
-            andfilters.append(ANDFilter(filters))
+                    {'range': {name + '.depth': {'lte': end}}})
+            andfilters.append({'and': filters})
         if len(andfilters) > 1:
-            return ORFilter(andfilters)
+            return {
+                'or': andfilters
+            }
         else:
             return andfilters[0]
 
@@ -347,10 +364,12 @@ class EDateRangeIndex(BaseIndex):
     def get_query(self, name, value):
         value = self._normalize_query(value)
         date = value.ISO8601()
-        return ANDFilter([
-            RangeFilter(ESRangeOp('%s.%s1' % (name, name), 'lte', date)),
-            RangeFilter(ESRangeOp('%s.%s2' % (name, name), 'gte', date))
-            ])
+        return {
+            'and': [
+                {'range': {'%s.%s1' % (name, name): {'lte': date}}},
+                {'range': {'%s.%s2' % (name, name): {'gte': date}}}
+            ]
+        }
 
 
 class ERecurringIndex(EDateIndex):

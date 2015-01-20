@@ -5,8 +5,8 @@ from DateTime import DateTime
 import time
 
 
-EVENT_KLASS = "Products.ATContentTypes.interfaces.event.IATEvent"
-DOCUMENT_KLASS = "Products.ATContentTypes.interfaces.document.IATDocument"
+EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
+DOCUMENT_KLASS = "plone.app.contenttypes.interfaces.IDocument"
 
 
 class TestQueries(BaseTest):
