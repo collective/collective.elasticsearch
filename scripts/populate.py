@@ -1,10 +1,16 @@
-from zope.app.component.hooks import setSite
+from zope.component.hooks import setSite
 import transaction
 import random
 from collective.elasticsearch.testing import createObject
 import os
+from lxml.etree import iterparse
+from lxml.html import fromstring, tostring
+from DateTime import DateTime
+from plone.app.textfield.value import RichTextValue
+import requests
 
-SITE_ID = 'Plone1'
+
+SITE_ID = 'Plone'
 
 
 from Testing.makerequest import makerequest
@@ -26,20 +32,34 @@ def spoofRequest(app):
     return makerequest(app)
 
 # Enable Faux HTTP request object
-app = spoofRequest(app)
+app = spoofRequest(app)  # noqa
 
 _dir = os.path.join(os.getcwd(), 'src')
 
-class Data(object):
+
+class DataReader(object):
     def __init__(self):
-        self.data_file = open(os.path.join(_dir, 'shortabstract_en.nt'))
-    def next(self):
-        try:
-            return unicode(self.data_file.next().strip(
-                '"@en .').split('#comment> "')[1], 'latin1')
-        except:
-            print 'can not find data..'
-            return self.next()
+        self.data_file = open('wiki_data.xml')
+
+    def __iter__(self):
+        for event, elem in iterparse(self.data_file):
+            if elem.tag == '{http://www.mediawiki.org/xml/export-0.8/}page':
+                rev = elem.find(
+                    '{http://www.mediawiki.org/xml/export-0.8/}revision')
+                title = elem.find(
+                    '{http://www.mediawiki.org/xml/export-0.8/}title').text
+                resp = requests.get('http://en.wikipedia.org/wiki/' + title)
+                html = fromstring(resp.content)
+                yield {
+                    'title': title,
+                    'text': RichTextValue(
+                        tostring(html.cssselect('#bodyContent')[0]),
+                        mimeType='text/html',
+                        outputMimeType='text/x-html-safe'),
+                    'creation_date': DateTime(
+                        rev.find(
+                            '{http://www.mediawiki.org/xml/export-0.8/}timestamp').text),
+                }
 
 
 def importit(app):
@@ -50,7 +70,7 @@ def importit(app):
     num_folders = 7
     max_depth = 4
     portal_types = ['Document', 'News Item', 'Event']
-    data = Data()
+    data = iter(DataReader())
 
     def populate(parent, count=0, depth=0):
         if depth >= max_depth:
@@ -62,10 +82,13 @@ def importit(app):
                                   title="Folder %i" % fidx)
             for didx in range(per_folder):
                 count += 1
-                print 'created ', count
-                createObject(folder, random.choice(portal_types), 'page%i' % didx,
-                             check_for_first=True, delete_first=False,
-                             title="Page %i" % didx, text=data.next())
+                try:
+                    createObject(folder, random.choice(portal_types), 'page%i' % didx,
+                                 check_for_first=True, delete_first=False,
+                                 **data.next())
+                    print 'created ', count
+                except:
+                    print 'error ', count
             count = populate(folder, count, depth + 1)
         print 'commiting'
         transaction.commit()

@@ -50,10 +50,10 @@ class IElasticSettings(Interface):
 
     retry_on_timeout = schema.Bool(
         title=u'Retry on timeout',
-        default=False)
+        default=True)
 
     timeout = schema.Float(
-        title=u"Timeout",
+        title=u"Read timeout",
         description=u"how long before timeout connecting to elastic search",
         default=0.5)
 
@@ -68,4 +68,4 @@ class IElasticSettings(Interface):
     bulk_size = schema.Int(
         title=u"Bulk Size",
         description=u"bulk size for elastic queries",
-        default=400)
+        default=50)

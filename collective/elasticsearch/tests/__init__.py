@@ -28,6 +28,7 @@ class BaseTest(unittest.TestCase):
         settings.mode = DUAL_MODE
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
+        self.catalog._elasticcustomindex = 'plone-test-index'
         self.es = ElasticSearch(self.catalog)
         self.es.convertToElastic()
         self.catalog.manage_catalogRebuild()
@@ -42,7 +43,7 @@ class BaseTest(unittest.TestCase):
         tdata.reset()
 
     def tearDown(self):
-        self.es.conn.indices.delete(index=self.es.catalogsid)
+        self.es.conn.indices.delete(index=self.es.index_name)
         self.clearTransactionEntries()
 
 

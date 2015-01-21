@@ -43,7 +43,7 @@ class DataManager(object):
 
     def commit(self, trans):
         if self.td.es.registry.auto_flush:
-            self.td.conn.indices.refresh(index=self.td.es.catalogsid)
+            self.td.conn.indices.refresh(index=self.td.es.index_name)
         self.td.reset()
 
     def tpc_begin(self, trans):
@@ -69,9 +69,9 @@ class DataManager(object):
         if self._active:
             td = self.td
             if len(td.docs) > 0:
-                td.conn.indices.refresh(index=self.td.es.catalogsid)
+                td.conn.indices.refresh(index=self.td.es.index_name)
                 self._revert(td.docs)
-                td.conn.indices.refresh(index=self.td.es.catalogsid)
+                td.conn.indices.refresh(index=self.td.es.index_name)
                 td.docs = []
 
     @property
@@ -93,10 +93,10 @@ class DataManager(object):
             try:
                 if action == Actions.add:
                     # if it was an add action, remove delete
-                    conn.delete(index=es.catalogsid, doc_type=es.catalogtype, id=uid)
+                    conn.delete(index=es.index_name, doc_type=es.doc_type, id=uid)
                 elif action in (Actions.modify, Actions.delete):
                     # if it was a modify or delete, restore the doc
-                    conn.index(body=doc, index=es.catalogsid, doc_type=es.catalogtype,
+                    conn.index(body=doc, index=es.index_name, doc_type=es.doc_type,
                                id=uid)
             except ElasticsearchException:
                 # XXX log this better
@@ -132,9 +132,9 @@ class Savepoint:
             return
         td = self.dm.td
         docs = td.docs[self.index:]
-        td.conn.indices.refresh(index=self.td.es.catalogsid)
+        td.conn.indices.refresh(index=self.td.es.index_name)
         self.dm._revert(docs)
-        td.conn.indices.refresh(index=self.td.es.catalogsid)
+        td.conn.indices.refresh(index=self.td.es.index_name)
         del td.docs[self.index:]
 
 

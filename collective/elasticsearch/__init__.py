@@ -57,13 +57,11 @@ default_patch_map = {
     'uncatalog_object': uncatalog_object,
     'searchResults': safeSearchResults,
     '__call__': safeSearchResults,
+    'unrestrictedSearchResults': searchResults,
     'manage_catalogRebuild': manage_catalogRebuild,
     'manage_catalogClear': manage_catalogClear,
     'refreshCatalog': refreshCatalog
 }
-unsafe_patch_map = default_patch_map.copy()
-del unsafe_patch_map['__call__']
-unsafe_patch_map['searchResults'] = searchResults
 
 
 class Patch(object):
@@ -169,12 +167,13 @@ def patch():
         if not IElasticSearchCatalog.implementedBy(klass):
             patched[klass] = {}
             for name, method in patch.method_map.items():
-                classImplements(klass, IElasticSearchCatalog)
-                old = getattr(klass, name, method)
-                patched[klass][name] = old
-                setattr(klass, prefix + name, old)
-                setattr(klass, name, method)
-                info('patched %s', str(getattr(klass, name)))
+                if not hasattr(klass, prefix + name):
+                    classImplements(klass, IElasticSearchCatalog)
+                    old = getattr(klass, name, method)
+                    patched[klass][name] = old
+                    setattr(klass, prefix + name, old)
+                    setattr(klass, name, method)
+                    info('patched %s', str(getattr(klass, name)))
 
 
 def initialize(context):

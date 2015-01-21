@@ -92,7 +92,7 @@
               <td>Shards</td>
               <td tal:content="shards"></td>
             </tr>
-            <tal:specific tal:define="psid view/es/catalogsid;
+            <tal:specific tal:define="psid view/es/index_name;
                                       idata python: status['indices'][psid];"
                           tal:on-error="nothing">
               <tr>

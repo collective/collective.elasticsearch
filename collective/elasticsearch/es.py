@@ -31,6 +31,7 @@ info = logger.info
 warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
+CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 
 
 class PatchCaller(object):
@@ -56,6 +57,43 @@ class PatchCaller(object):
         def bound_func(*args, **kwargs):
             return func(self._patched_object, *args, **kwargs)
         return bound_func
+
+
+class ElasticResult(object):
+
+    def __init__(self, es, query):
+        self.es = es
+        self.bulk_size = es.get_setting('bulk_size', 50)
+        qassembler = QueryAssembler(es.catalogtool)
+        dquery, sort = qassembler.normalize(query)
+        equery = qassembler(dquery)
+
+        # results are stored in a dictionary, keyed
+        # but the start index of the bulk size for the
+        # results it holds. This way we can skip around
+        # for result data in a result object
+        result = es._es_search(equery, sort=sort)['hits']
+        self.results = {
+            0: result['hits']
+        }
+        self.count = result['total']
+        self.query = equery
+        self.sort = sort
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return [self[i] for i in range(key.start, key.end)]
+        else:
+            if key >= self.count:
+                raise IndexError
+            result_key = (key / self.bulk_size) * self.bulk_size
+            if result_key not in self.results:
+                self.results[result_key] = self.es._es_search(
+                    self.query,
+                    sort=self.sort,
+                    start=result_key * self.bulk_size)
+            result_index = key % self.bulk_size
+            return self.results[result_key][result_index]
 
 
 class ElasticSearch(object):
@@ -111,20 +149,17 @@ class ElasticSearch(object):
         if "start" in query_params:
             query_params['from_'] = query_params.pop("start")
         query_params['fields'] = 'path.path'
+        query_params['size'] = self.get_setting('bulk_size', 50)
 
-        return self.conn.search(index=self.catalogsid,
-                                doc_type=self.catalogtype,
+        return self.conn.search(index=self.index_name,
+                                doc_type=self.doc_type,
                                 body={'query': query},
                                 **query_params)
 
     def query(self, query):
-        qassembler = QueryAssembler(self.catalogtool)
-        dquery, sort = qassembler.normalize(query)
-        equery = qassembler(dquery)
-        result = self._es_search(equery, sort=sort)['hits']
-        count = result['total']
+        result = ElasticResult(self, query)
         factory = BrainFactory(self.catalog)
-        return LazyMap(factory, result['hits'], count)
+        return LazyMap(factory, result, result.count)
 
     def catalog_object(self, obj, uid=None, idxs=[],
                        update_metadata=1, pghandler=None):
@@ -154,7 +189,13 @@ class ElasticSearch(object):
         for index_name in idxs:
             index = getIndex(catalog, index_name)
             if index is not None:
-                value = index.get_value(wrapped_object)
+                try:
+                    value = index.get_value(wrapped_object)
+                except:
+                    info("Error indexing value: %s: %s" % (
+                        '/'.join(obj.getPhysicalPath()),
+                        index))
+                    value = None
                 if value in (None, 'None'):
                     # yes, we'll index null data...
                     value = None
@@ -171,17 +212,17 @@ class ElasticSearch(object):
 
         uid = getUID(obj)
         try:
-            doc = conn.get(index=self.catalogsid, doc_type=self.catalogtype, id=uid)
+            doc = conn.get(index=self.index_name, doc_type=self.doc_type, id=uid)
             self.registerInTransaction(uid, td.Actions.modify, doc['_source'])
             doc = doc.copy()  # we copy so we can update safely
             doc.update(index_data)
         except NotFoundError:
             self.registerInTransaction(uid, td.Actions.add)
             doc = index_data
-        conn.index(body=doc, index=self.catalogsid, doc_type=self.catalogtype, id=uid)
+        conn.index(body=doc, index=self.index_name, doc_type=self.doc_type, id=uid)
 
         if self.registry.auto_flush:
-            conn.indices.refresh(index=self.catalogsid)
+            conn.indices.refresh(index=self.index_name)
 
     def registerInTransaction(self, uid, action, doc={}):
         if not self.tdata.registered:
@@ -192,26 +233,27 @@ class ElasticSearch(object):
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
         mode = self.mode
-        if mode in (DISABLE_MODE, DUAL_MODE):
-            if self.catalog.uids.get(uid, None) is not None:
-                result = self.patched.uncatalog_object(uid, *args, **kwargs)
-            if mode == DISABLE_MODE:
-                return result
+        # always need to uncatalog to remove brains, etc
+        result = self.patched.uncatalog_object(uid, *args, **kwargs)
+        if mode == DISABLE_MODE:
+            return result
         conn = self.conn
 
         uid = getUID(obj)
         try:
-            doc = conn.get(index=self.catalogsid, doc_type=self.catalogtype, id=uid)
+            doc = conn.get(index=self.index_name, doc_type=self.doc_type, id=uid)
             self.registerInTransaction(uid, td.Actions.delete, doc['_source'])
         except NotFoundError:
             pass
         try:
-            conn.delete(index=self.catalogsid, doc_type=self.catalogtype, id=uid)
+            conn.delete(index=self.index_name, doc_type=self.doc_type, id=uid)
         except NotFoundError:
             # already gone... Multiple calls?
             pass
         if self.registry.auto_flush:
-            conn.indices.refresh(index=self.catalogsid)
+            conn.indices.refresh(index=self.index_name)
+
+        return result
 
     def manage_catalogRebuild(self, *args, **kwargs):
         mode = self.mode
@@ -242,7 +284,7 @@ class ElasticSearch(object):
     def recreateCatalog(self):
         conn = self.conn
         try:
-            conn.indices.delete(index=self.catalogsid)
+            conn.indices.delete(index=self.index_name)
         except NotFoundError:
             pass
         self.convertToElastic()
@@ -297,20 +339,22 @@ class ElasticSearch(object):
 
         conn = self.conn
         try:
-            conn.indices.create(self.catalogsid)
+            conn.indices.create(self.index_name)
         except ElasticsearchException:
             pass
 
         mapping = {'properties': properties}
         conn.indices.put_mapping(
-            doc_type=self.catalogtype,
+            doc_type=self.doc_type,
             body=mapping,
-            index=self.catalogsid)
+            index=self.index_name)
 
     @property
-    def catalogsid(self):
+    def index_name(self):
+        if hasattr(self.catalogtool, CUSTOM_INDEX_NAME_ATTR):
+            return getattr(self.catalogtool, CUSTOM_INDEX_NAME_ATTR)
         return '-'.join(self.catalogtool.getPhysicalPath()[1:]).lower()
 
     @property
-    def catalogtype(self):
+    def doc_type(self):
         return self.catalogtool.getId().lower()
