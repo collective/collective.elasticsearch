@@ -192,9 +192,10 @@ class ElasticSearch(object):
                 try:
                     value = index.get_value(wrapped_object)
                 except:
-                    info("Error indexing value: %s: %s" % (
+                    info("Error indexing value: %s: %s\n%s" % (
                         '/'.join(obj.getPhysicalPath()),
-                        index))
+                        index,
+                        traceback.format_exc()))
                     value = None
                 if value in (None, 'None'):
                     # yes, we'll index null data...
