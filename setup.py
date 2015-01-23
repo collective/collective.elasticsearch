@@ -26,8 +26,7 @@ setup(name='collective.elasticsearch',
       install_requires=[
           'setuptools',
           'elasticsearch>=1.0.0,<2.0.0',
-          'plone.app.registry',
-          'five.globalrequest'
+          'plone.app.registry'
       ],
       entry_points="""
       # -*- Entry points: -*-
