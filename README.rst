@@ -70,3 +70,10 @@ TODO
 - Spellcheck
 - Custom Similarity
 - Faceting
+
+Travis
+------
+
+.. image:: https://travis-ci.org/collective/collective.elasticsearch.png
+   :target: https://travis-ci.org/collective/collective.elasticsearch
+   :alt: Travis CI
