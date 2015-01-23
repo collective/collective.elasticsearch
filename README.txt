@@ -59,7 +59,6 @@ auto flush
     If on, things are always updated at a cost of performance.
 
 
-
 TODO
 ----
 
@@ -69,9 +68,5 @@ TODO
 - savepoints are expensive, hold lots of data
 
 - Spellcheck
-- Result highlighting
 - Custom Similarity
 - Faceting
-- get it to work with SaAS provider, e.g. searchbox.io so people dont have to install eleasticsearch locally to evaluate
-- Push Queries/Percolation
-
