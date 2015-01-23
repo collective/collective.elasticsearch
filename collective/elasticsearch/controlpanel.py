@@ -7,6 +7,7 @@ from plone.z3cform import layout
 from z3c.form import form
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+import math
 
 
 class ElasticControlPanelForm(RegistryEditForm):
@@ -34,6 +35,23 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             return self.es.connection.cluster.health()['status'] in ('green', 'yellow')
         except:
             return False
+
+    @property
+    def es_info(self):
+        try:
+            info = self.es.connection.info()
+            status = self.es.connection.indices.status(
+                index=self.es.index_name)['indices'][self.es.index_name]
+            return [
+                ('Cluster Name', info['cluster_name']),
+                ('Elastic Search Version', info['version']['number']),
+                ('Number of docs', status['docs']['num_docs']),
+                ('Deleted docs', status['docs']['deleted_docs']),
+                ('Size', str(int(math.ceil(
+                    status['index']['size_in_bytes'] / 1024.0 / 1024.0))) + 'MB')
+            ]
+        except Exception:
+            return []
 
     @property
     def active(self):

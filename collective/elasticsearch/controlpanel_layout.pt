@@ -83,31 +83,10 @@
             </th>
           </thead>
           <tbody>
-            <tr>
-              <td>Catalog converted</td>
-              <td tal:condition="view/es/catalog_converted">Yes</td>
-              <td tal:condition="not: view/es/catalog_converted">No</td>
+            <tr tal:repeat="data view/es_info">
+              <td tal:content="python: data[0]" />
+              <td tal:content="python: data[1]" />
             </tr>
-            <tr>
-              <td>Shards</td>
-              <td tal:content="shards"></td>
-            </tr>
-            <tal:specific tal:define="psid view/es/index_name;
-                                      idata python: status['indices'][psid];"
-                          tal:on-error="nothing">
-              <tr>
-                <td>Elastic Catalog Index ID</td>
-                <td tal:content="psid"></td>
-              </tr>
-              <tr>
-                <td>Number of docs</td>
-                <td tal:content="idata/docs/num_docs"></td>
-              </tr>
-              <tr>
-                <td>Size</td>
-                <td tal:content="idata/index/primary_size"></td>
-              </tr>
-            </tal:specific>
           </tbody>
         </table>
       </div>
