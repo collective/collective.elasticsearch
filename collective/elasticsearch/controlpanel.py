@@ -6,7 +6,7 @@ from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from z3c.form import form
 
 from collective.elasticsearch.interfaces import IElasticSettings
-from collective.elasticsearch.es import ElasticSearch
+from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import DISABLE_MODE
 
 
@@ -25,14 +25,14 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def __init__(self, *args, **kwargs):
         super(ElasticControlPanelFormWrapper, self).__init__(*args, **kwargs)
         self.portal_catalog = getToolByName(self.context, 'portal_catalog')
-        self.es = ElasticSearch(self.portal_catalog)
+        self.es = ElasticSearchCatalog(self.portal_catalog)
 
     @property
     def connection_status(self):
         try:
-            return self.es.conn.status()['ok']
+            return self.es.connection.status()['ok']
         except AttributeError:
-            return self.es.conn.cluster.health()['status'] in ('green', 'yellow')
+            return self.es.connection.cluster.health()['status'] in ('green', 'yellow')
         except:
             return False
 

@@ -58,10 +58,15 @@ auto flush
     if after every index, flush should be performed.
     If on, things are always updated at a cost of performance.
 
+
+
 TODO
 ----
 
 - optimize?
+
+- fix reindexing to not destroy the whole catalog
+- savepoints are expensive, hold lots of data
 
 - Spellcheck
 - Result highlighting

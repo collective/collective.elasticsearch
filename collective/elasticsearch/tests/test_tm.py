@@ -1,6 +1,6 @@
 from collective.elasticsearch.tests import BaseTest
 from collective.elasticsearch.testing import createObject
-from collective.elasticsearch import td
+from collective.elasticsearch import datamanager
 import unittest2 as unittest
 import transaction
 
@@ -11,15 +11,14 @@ EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 class TestTransactions(BaseTest):
 
     def test_transaction_counter(self):
-        tdata = td.get()
         createObject(self.portal, 'Event', 'event', title="Some Event")
-        assert len(tdata.docs) > 0
-        prev = len(tdata.docs)
+        dm = datamanager.get_data_manager()
+        assert len(dm) > 0
+        prev = len(dm)
         createObject(self.portal, 'Event', 'event2', title="Some Event")
-        assert len(tdata.docs) > prev
+        assert len(dm) > prev
 
-    def test_abort_td(self):
-        tdata = td.get()
+    def test_abort_dm(self):
         createObject(self.portal, 'Event', 'event', title="Some Event")
         # query for it...
         cat_results = self.catalog(object_provides=EVENT_KLASS)
@@ -28,10 +27,11 @@ class TestTransactions(BaseTest):
         transaction.abort()
         cat_results = self.catalog(object_provides=EVENT_KLASS)
         self.assertEquals(len(cat_results), 0)
-        self.assertEquals(len(tdata.docs), 0)
+
+        dm = datamanager.get_data_manager()
+        self.assertEquals(len(dm), 0)
 
     def test_abort_deleting_item(self):
-        tdata = td.get()
         createObject(self.portal, 'Event', 'event', title="Some Event")
         transaction.commit()
         # query for it...
@@ -47,7 +47,9 @@ class TestTransactions(BaseTest):
         transaction.abort()
         cat_results = self.catalog(object_provides=EVENT_KLASS)
         self.assertEquals(len(cat_results), 1)
-        self.assertEquals(len(tdata.docs), 0)
+
+        dm = datamanager.get_data_manager()
+        self.assertEquals(len(dm), 0)
         self.portal.manage_delObjects(['event'])
         transaction.commit()
 
@@ -87,7 +89,6 @@ class TestTransactions(BaseTest):
         self.assertEquals(len(cat_results), 0)
 
     def test_commit(self):
-        tdata = td.get()
         createObject(self.portal, 'Event', 'event', title="Some Event")
         # query for it...
         cat_results = self.catalog(object_provides=EVENT_KLASS)
@@ -95,7 +96,9 @@ class TestTransactions(BaseTest):
         transaction.commit()
         cat_results = self.catalog(object_provides=EVENT_KLASS)
         self.assertEquals(len(cat_results), 1)
-        self.assertEquals(len(tdata.docs), 0)
+
+        dm = datamanager.get_data_manager()
+        self.assertEquals(len(dm), 0)
         self.portal.manage_delObjects(['event'])
         transaction.commit()
 

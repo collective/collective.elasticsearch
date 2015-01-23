@@ -36,6 +36,7 @@ def _zdt(val):
 
 
 class BaseIndex(object):
+    filter_query = True
 
     def __init__(self, catalog, index):
         self.catalog = catalog
@@ -158,6 +159,7 @@ class EDateIndex(BaseIndex):
 
 
 class EZCTextIndex(BaseIndex):
+    filter_query = False
 
     def create_mapping(self, name):
         return {
@@ -196,14 +198,10 @@ class EZCTextIndex(BaseIndex):
     def get_query(self, name, value):
         value = self._normalize_query(value)
         return {
-            'text': {
-                name: {
-                    'operator': 'or',
-                    'query': value,
-                    'type': 'phrase_prefix'
-                }
+            'match': {
+                name: value
             }
-        }, True
+        }
 
 
 class EBooleanIndex(BaseIndex):

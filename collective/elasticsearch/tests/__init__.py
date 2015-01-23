@@ -6,12 +6,12 @@ from collective.elasticsearch.testing import \
     ElasticSearch_INTEGRATION_TESTING, \
     ElasticSearch_FUNCTIONAL_TESTING
 import unittest2 as unittest
-from collective.elasticsearch.es import ElasticSearch, PatchCaller
+from collective.elasticsearch.es import ElasticSearchCatalog, PatchCaller
 from collective.elasticsearch.interfaces import (
     IElasticSettings,
     DUAL_MODE)
 import transaction
-from collective.elasticsearch import td
+from collective.elasticsearch import datamanager
 
 
 class BaseTest(unittest.TestCase):
@@ -29,7 +29,7 @@ class BaseTest(unittest.TestCase):
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.catalog._elasticcustomindex = 'plone-test-index'
-        self.es = ElasticSearch(self.catalog)
+        self.es = ElasticSearchCatalog(self.catalog)
         self.es.convertToElastic()
         self.catalog.manage_catalogRebuild()
         # need to commit here so all tests start with a baseline
@@ -39,11 +39,12 @@ class BaseTest(unittest.TestCase):
         self.searchResults = patched.searchResults
 
     def clearTransactionEntries(self):
-        tdata = td.get()
-        tdata.reset()
+        dm = datamanager.get_data_manager()
+        if dm:
+            dm.reset()
 
     def tearDown(self):
-        self.es.conn.indices.delete(index=self.es.index_name)
+        self.es.connection.indices.delete(index=self.es.index_name)
         self.clearTransactionEntries()
 
 

@@ -43,14 +43,11 @@ class QueryAssembler(object):
             qq = index.get_query(key, value)
             if qq is None:
                 continue
-            if type(qq) == tuple:
-                qq, is_query = qq
-            else:
-                is_query = False
-            if is_query:
-                query = qq
-            else:
+
+            if index.filter_query:
                 filters.append(qq)
+            else:
+                query = qq
         if len(filters) == 0:
             return query
         else:
