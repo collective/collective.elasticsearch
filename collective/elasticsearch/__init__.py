@@ -1,12 +1,21 @@
+from Acquisition import aq_base
+from collective.elasticsearch.es import ElasticSearchCatalog
+from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from logging import getLogger
+from plone.folder.default import DefaultOrdering
+from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
+from Products.Archetypes.utils import isFactoryContained
+from Products.CMFCore.CatalogTool import CatalogTool as CMFCatalogTool
+from Products.CMFPlone.CatalogTool import CatalogTool
+from Products.CMFPlone.Portal import PloneSite
+from zope.interface import classImplements
+
 import inspect
 
-from Acquisition import aq_base
-from zope.interface import classImplements
-from Products.Archetypes.utils import isFactoryContained
-
-from collective.elasticsearch.interfaces import IElasticSearchCatalog
-from collective.elasticsearch.es import ElasticSearchCatalog
+original_PloneSite_moveObjectsByDelta = PloneSite.moveObjectsByDelta
+original_unindexObjectCMF = CMFCatalogTool.unindexObject
+original_unindexObject = CatalogMultiplex.unindexObject
+original_moveObjectsByDelta = DefaultOrdering.moveObjectsByDelta
 
 
 logger = getLogger(__name__)
@@ -70,15 +79,10 @@ class Patch(object):
         self.method_map = method_map
 
 
-from Products.CMFPlone.CatalogTool import CatalogTool
 patches = [
     Patch(CatalogTool)
 ]
 patched = {}
-
-
-from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
-original_unindexObject = CatalogMultiplex.unindexObject
 
 
 # archetypes unindexObject
@@ -94,19 +98,12 @@ def unindexObject(self):
         elif catalog._catalog.uids.get(url, None) is not None:
             catalog.uncatalog_object(url)
 
-from Products.CMFCore.CatalogTool import CatalogTool as CMFCatalogTool
-original_unindexObjectCMF = CMFCatalogTool.unindexObject
-
 
 def unindexObjectCMF(self, ob):
     # same reason as the patch above, we need the actual object passed along
     # this handle dexterity types
     path = '/'.join(ob.getPhysicalPath())
     return self.uncatalog_object(path, obj=ob)
-
-
-from plone.folder.default import DefaultOrdering
-original_moveObjectsByDelta = DefaultOrdering.moveObjectsByDelta
 
 
 def indexPositions(context, ids):
@@ -128,10 +125,6 @@ def moveObjectsByDelta(self, ids, delta, subset_ids=None,
         subset_ids = self.idsInOrder()
     indexPositions(self.context, subset_ids)
     return res
-
-
-from Products.CMFPlone.Portal import PloneSite
-original_PloneSite_moveObjectsByDelta = PloneSite.moveObjectsByDelta
 
 
 def PloneSite_moveObjectsByDelta(self, ids, delta, subset_ids=None,

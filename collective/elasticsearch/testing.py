@@ -45,9 +45,9 @@ class ElasticSearch(PloneSandboxLayer):
 
 ElasticSearch_FIXTURE = ElasticSearch()
 ElasticSearch_INTEGRATION_TESTING = IntegrationTesting(
-    bases=(ElasticSearch_FIXTURE,), name="ElasticSearch:Integration")
+    bases=(ElasticSearch_FIXTURE,), name='ElasticSearch:Integration')
 ElasticSearch_FUNCTIONAL_TESTING = FunctionalTesting(
-    bases=(ElasticSearch_FIXTURE,), name="ElasticSearch:Functional")
+    bases=(ElasticSearch_FIXTURE,), name='ElasticSearch:Functional')
 
 
 def browserLogin(portal, browser, username=None, password=None):

@@ -46,9 +46,9 @@ class Action(object):
     modify = _index
 
     def commit(self):
-        """
+        '''
         bulk op, on commit
-        """
+        '''
         doc = self.doc
         if 'transaction_id' in doc:
             del doc['transaction_id']
@@ -74,10 +74,10 @@ class AddAction(Action):
 class ModifyAction(Action):
 
     def initial(self, index_data=None):
-        """
+        '''
         On initial, the doc will just be the index data because
         we haven't actually retrieved the whole doc
-        """
+        '''
         es = self.dm.es
         conn = es.connection
         doc = conn.get(index=es.index_name, doc_type=es.doc_type, id=self.uid)['_source']
@@ -143,9 +143,9 @@ class ElasticDataManager(object):
         return list(set(uids))
 
     def __len__(self):
-        """
+        '''
         how many current active objects
-        """
+        '''
         return len(self.keys())
 
     def _get_closest_action(self, uid):
@@ -190,9 +190,8 @@ class ElasticDataManager(object):
                     index=self.es.index_name,
                     doc_type=self.es.doc_type,
                     body={'query': {'filtered': {'filter': {
-                        'and': [{'term': {'transaction': True}},
-                                {'term': {'transaction_id': self.transaction_id}}]
-                        },
+                          'and': [{'term': {'transaction': True}},
+                                  {'term': {'transaction_id': self.transaction_id}}]},
                         'query': {'match_all': {}}}}
                     })
             except NotFoundError:
@@ -203,9 +202,9 @@ class ElasticDataManager(object):
         self.es = None
 
     def commit(self, trans):
-        """
+        '''
         needs to commit ALL current transaction data AND savepoint data
-        """
+        '''
         if not self._active or len(self) == 0:
             return self.reset()
 
@@ -243,7 +242,7 @@ class ElasticDataManager(object):
             self._abort(trans)
         except:
             # XXX log this better
-            warn("Error aborting transaction:\n%s" % traceback.format_exc())
+            warn('Error aborting transaction:\n%s' % traceback.format_exc())
 
     def _abort(self, trans):
         if self._active and len(self) > 0:
@@ -270,7 +269,7 @@ class ElasticDataManager(object):
 
     def sortKey(self):  # noqa
         # Sort normally
-        return "collective.elasticsearch"
+        return 'collective.elasticsearch'
 
 
 @implementer(IDataManagerSavepoint)
@@ -320,7 +319,7 @@ class Savepoint:
                         '_id': _gen_trans_uid(uid, self.dm.transaction_id)
                     }
                 }, {
-                    "doc": dict(sp_action['doc'], {
+                    'doc': dict(sp_action['doc'], {
                         'transaction': True,
                         'transaction_id': self.dm.transaction_id
                     })

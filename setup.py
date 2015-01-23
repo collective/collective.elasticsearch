@@ -28,6 +28,13 @@ setup(name='collective.elasticsearch',
           'elasticsearch>=1.0.0,<2.0.0',
           'plone.app.registry'
       ],
+      extras_require={
+          'test': [
+              'plone.app.testing',
+              'plone.testing',
+              'unittest2',
+          ],
+      },
       entry_points="""
       # -*- Entry points: -*-
 

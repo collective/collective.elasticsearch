@@ -52,7 +52,7 @@
             Could not connect to specified elastic search server.
         </dd>
     </dl>
-    
+
     <div id="layout-contents">
         <span tal:replace="structure view/contents" />
     </div>
@@ -65,7 +65,7 @@
               tal:attributes="action string:${purl}/@@elastic-convert">
           <span tal:replace="structure context/@@authenticator/authenticator"/>
           <input type="submit" name="convert" value="Convert Catalog" />
-        </form> | 
+        </form> |
         <form method="POST" class="rebuild"
               tal:attributes="action string:${purl}/@@elastic-rebuild">
           <span tal:replace="structure context/@@authenticator/authenticator"/>
@@ -112,7 +112,7 @@
         </table>
       </div>
     </tal:el>
-    
+
 </div>
 </body>
 </html>

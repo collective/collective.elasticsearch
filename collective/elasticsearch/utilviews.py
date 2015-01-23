@@ -11,7 +11,7 @@ class Utils(BrowserView):
     def convert(self):
         if self.request.method == 'POST':
             authenticator = getMultiAdapter((self.context, self.request),
-                                            name=u"authenticator")
+                                            name=u'authenticator')
             if not authenticator.verify():
                 raise Unauthorized
 
@@ -24,7 +24,7 @@ class Utils(BrowserView):
     def rebuild(self):
         if self.request.method == 'POST':
             authenticator = getMultiAdapter((self.context, self.request),
-                                            name=u"authenticator")
+                                            name=u'authenticator')
             if not authenticator.verify():
                 raise Unauthorized
 

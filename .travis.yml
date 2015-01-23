@@ -7,11 +7,10 @@ services:
 install:
   - sed -ie "s#travis-4.x.cfg#travis-$PLONE_VERSION.x.cfg#" travis.cfg
   - mkdir -p buildout-cache/downloads
-  - python bootstrap.py -c travis.cfg
+  - python bootstrap.py -c travis.cfg -v 2.2.5 --setuptools-version=7.0
   - bin/buildout -c travis.cfg annotate
   - bin/buildout -c travis.cfg -N -q
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 script: bin/code-analysis && bin/test
-after_success: test $QA && bin/coverage.sh && pip install -q coveralls && coveralls || true

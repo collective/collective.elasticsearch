@@ -1,13 +1,12 @@
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.CMFCore.utils import getToolByName
-from plone.z3cform import layout
-from plone.app.registry.browser.controlpanel import RegistryEditForm
-from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
-from z3c.form import form
-
-from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import DISABLE_MODE
+from collective.elasticsearch.interfaces import IElasticSettings
+from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
+from plone.app.registry.browser.controlpanel import RegistryEditForm
+from plone.z3cform import layout
+from z3c.form import form
+from Products.CMFCore.utils import getToolByName
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 
 class ElasticControlPanelForm(RegistryEditForm):
@@ -16,7 +15,7 @@ class ElasticControlPanelForm(RegistryEditForm):
 
     label = u'Elasic Search Settings'
 
-    control_panel_view = "@@elastic-controlpanel"
+    control_panel_view = '@@elastic-controlpanel'
 
 
 class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):

@@ -36,25 +36,25 @@ CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 
 
 class PatchCaller(object):
-    """
+    '''
     Very odd I have to do this. If I don't,
     I get very pecular errors trying to call
     the original methods
-    """
+    '''
 
     def __init__(self, patched_object):
         self._patched_object = patched_object
 
     def __getattr__(self, name):
-        """
-        assuming original attribute has "__old_" prefix
-        """
+        '''
+        assuming original attribute has '__old_' prefix
+        '''
         if name[0] == '_':
             return self.__dict__[name]
         _type = type(aq_base(self._patched_object))
         func = getattr(_type, '__old_' + name)
 
-        # "bind" it
+        # 'bind' it
         def bound_func(*args, **kwargs):
             return func(self._patched_object, *args, **kwargs)
         return bound_func
@@ -82,12 +82,12 @@ class ElasticResult(object):
         self.sort = sort
 
     def make_query_transaction_aware(self, query):
-        """
+        '''
         IMPORTANT HERE!
         How we do transactiona awareness here is by disabling
         the querying of currently active transaction uids and then
         allowing the querying of transaction data.
-        """
+        '''
         filters = [{'term': {'transaction': False}}]
         active = len(self.es.dm) > 0
         if active:
@@ -100,8 +100,8 @@ class ElasticResult(object):
         if active:
             # filter out transaction items
             filters.append({
-                "not": {
-                    "term": {"_id": self.es.dm.keys()}
+                'not': {
+                    'term': {'_id': self.es.dm.keys()}
                 }
             })
         query['filtered']['filter']['and'].extend(filters)
@@ -124,9 +124,9 @@ class ElasticResult(object):
 
 
 class ElasticSearchCatalog(object):
-    """
+    '''
     from patched methods
-    """
+    '''
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
@@ -165,10 +165,10 @@ class ElasticSearchCatalog(object):
         return self._dm
 
     def _search(self, query, **query_params):
-        """
-        """
-        if "start" in query_params:
-            query_params['from_'] = query_params.pop("start")
+        '''
+        '''
+        if 'start' in query_params:
+            query_params['from_'] = query_params.pop('start')
         query_params['fields'] = 'path.path'
         query_params['size'] = self.get_setting('bulk_size', 50)
 
@@ -245,7 +245,7 @@ class ElasticSearchCatalog(object):
                 try:
                     value = index.get_value(wrapped_object)
                 except:
-                    info("Error indexing value: %s: %s\n%s" % (
+                    info('Error indexing value: %s: %s\n%s' % (
                         '/'.join(obj.getPhysicalPath()),
                         index,
                         traceback.format_exc()))
@@ -338,7 +338,7 @@ class ElasticSearchCatalog(object):
         try:
             return self.search(query)
         except:
-            info("Error running Query: %s\n%s" % (
+            info('Error running Query: %s\n%s' % (
                 repr(orig_query),
                 traceback.format_exc()))
             if mode == DUAL_MODE:
@@ -356,7 +356,7 @@ class ElasticSearchCatalog(object):
             if index is not None:
                 properties[name] = index.create_mapping(name)
             else:
-                raise Exception("Can not locate index for %s" % (
+                raise Exception('Can not locate index for %s' % (
                     name))
 
         properties.update({
