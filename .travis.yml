@@ -4,6 +4,6 @@ services:
   - elasticsearch
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
-  - python bootstrap.py -c travis.cfg
+  - python bootstrap.py -c travis.cfg -v 2.2.5 --setuptools-version=9.1
   - bin/buildout -Nc travis.cfg
 script: bin/test

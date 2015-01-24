@@ -33,6 +33,7 @@ setup(name='collective.elasticsearch',
               'plone.app.testing',
               'plone.testing',
               'unittest2',
+              'plone.app.contenttypes'
           ],
       },
       entry_points="""
