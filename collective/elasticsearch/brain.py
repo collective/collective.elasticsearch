@@ -7,5 +7,8 @@ def BrainFactory(catalog):
             path = path[0]
         if path:
             rid = catalog.uids.get(path)
-            return catalog[rid]
+            try:
+                return catalog[rid]
+            except:
+                import pdb; pdb.set_trace()
     return factory

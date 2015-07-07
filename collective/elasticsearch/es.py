@@ -116,9 +116,7 @@ class ElasticResult(object):
             result_key = (key / self.bulk_size) * self.bulk_size
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
-                    self.query,
-                    sort=self.sort,
-                    start=result_key * self.bulk_size)
+                    self.query, sort=self.sort, start=key)['hits']['hits']
             result_index = key % self.bulk_size
             return self.results[result_key][result_index]
 
@@ -185,10 +183,17 @@ class ElasticSearchCatalog(object):
     def update_doc(self, obj, index_data):
         conn = self.connection
         uid = getUID(obj)
-        if conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid):
+        exists = False
+        if uid in self.dm._exists_cache:
+            exists = self.dm._exists_cache[uid]
+        else:
+            exists = conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid)
+            self.dm._exists_cache[uid] = exists
+        if exists:
             self.dm.add_action(Actions.modify, uid, index_data)
         else:
             self.dm.add_action(Actions.add, uid, index_data)
+        self.dm._exists_cache[uid] = True
 
         if self.registry.auto_flush:
             conn.indices.refresh(index=self.index_name)
@@ -196,10 +201,16 @@ class ElasticSearchCatalog(object):
     def remove_doc(self, obj):
         uid = getUID(obj)
         conn = self.connection
-        if conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid):
+        if uid in self.dm._exists_cache:
+            exists = self.dm._exists_cache[uid]
+        else:
+            exists = conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid)
+            self.dm._exists_cache[uid] = exists
+        if exists:
             self.dm.add_action(Actions.delete, uid)
         if self.registry.auto_flush:
             conn.indices.refresh(index=self.index_name)
+        self.dm._exists_cache[uid] = False
 
     @property
     def catalog_converted(self):

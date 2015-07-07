@@ -80,7 +80,11 @@ class ModifyAction(Action):
         '''
         es = self.dm.es
         conn = es.connection
-        doc = conn.get(index=es.index_name, doc_type=es.doc_type, id=self.uid)['_source']
+        if self.uid in self.dm._cache:
+            doc = self.dm._cache[self.uid]
+        else:
+            doc = conn.get(index=es.index_name, doc_type=es.doc_type, id=self.uid)['_source']
+            self.dm._cache[self.uid] = doc
         doc.update(self.doc)
         self.doc = doc
         self._index()
@@ -122,6 +126,8 @@ class ElasticDataManager(object):
         self.savepoints = []
         self.actions = {}
         self.register(es)
+        self._cache = {}
+        self._exists_cache = {}
 
     def register(self, es):
         self.es = es
@@ -184,7 +190,7 @@ class ElasticDataManager(object):
 
     def reset(self):
         # delete the transaction data
-        if self.es is not None:
+        if self.es is not None and len(self.actions) > 0:
             try:
                 self.es.connection.delete_by_query(
                     index=self.es.index_name,
@@ -200,6 +206,8 @@ class ElasticDataManager(object):
         self.actions = {}
         self.savepoints = []
         self.es = None
+        self._cache = {}
+        self._exists_cache = {}
 
     def commit(self, trans):
         '''
