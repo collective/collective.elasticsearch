@@ -116,7 +116,7 @@ class ElasticResult(object):
             result_key = (key / self.bulk_size) * self.bulk_size
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
-                    self.query, sort=self.sort, start=key)['hits']['hits']
+                    self.query, sort=self.sort, start=result_key)['hits']['hits']
             result_index = key % self.bulk_size
             return self.results[result_key][result_index]
 
