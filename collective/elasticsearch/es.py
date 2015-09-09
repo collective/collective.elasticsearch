@@ -325,7 +325,10 @@ class ElasticSearchCatalog(object):
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
         mode = self.mode
         if mode == DISABLE_MODE:
-            return self.patched.searchResults(REQUEST, **kw)
+            if check_perms:
+                return self.patched.searchResults(REQUEST, **kw)
+            else:
+                return self.patched.unrestrictedSearchResults(REQUEST, **kw)
         if isinstance(REQUEST, dict):
             query = REQUEST.copy()
         else:
