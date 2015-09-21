@@ -264,6 +264,12 @@ class ElasticSearchCatalog(object):
                 if value in (None, 'None'):
                     # yes, we'll index null data...
                     value = None
+
+                # Ignore errors in converting to unicode, so json.dumps
+                # does not barf when we're trying to send data to ES.
+                if isinstance(value, str):
+                    value = unicode(value, 'utf-8', 'ignore')
+
                 index_data[index_name] = value
         if update_metadata:
             index = self.catalog.uids.get(uid, None)
