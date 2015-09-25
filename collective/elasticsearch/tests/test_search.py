@@ -42,7 +42,8 @@ class TestQueries(BaseTest):
         for idx in range(5):
             event = createObject(
                 self.portal, 'Event',
-                'event%i' % idx, title='Some Event %i' % idx)
+                'event%i' % idx, title='Some Event %i' % idx,
+            effective=DateTime('2015/09/25 20:00'))
             events.append(event)
         end = DateTime()
         query = {'query': (start, end), 'range': 'min:max'}
@@ -50,6 +51,18 @@ class TestQueries(BaseTest):
         el_results = self.catalog(created=query)
         self.assertEqual(len(cat_results), len(el_results))
         self.assertEqual(len(cat_results), len(events))
+
+        query = {'query': DateTime().latestTime(), 'range': 'min'}
+        cat_results = self.searchResults(effective=query)
+        el_results = self.catalog(effective=query)
+        self.assertEqual(len(cat_results), len(el_results))
+        self.assertEqual(len(cat_results), 0)
+
+        query = {'query': DateTime().latestTime(), 'range': 'max'}
+        cat_results = self.searchResults(effective=query)
+        el_results = self.catalog(effective=query)
+        self.assertEqual(len(cat_results), len(el_results))
+        self.assertEqual(len(cat_results), 5)
 
     def test_text_index_query(self):
         for idx in range(5):
@@ -107,6 +120,21 @@ class TestQueries(BaseTest):
             len(self.catalog(path={'depth': 1, 'query': '/plone'})),
             len(self.searchResults(path={'depth': 1,
                                          'query': '/plone'})))
+        # this proofs its wrong
+        self.assertEqual(
+            len(self.catalog(path={'query': '/plone/folder1',
+                                   'navtree_start': 0, 'navtree': 1},
+                             is_default_page=False)),
+            len(self.searchResults(path={'query': '/plone/folder1',
+                                         'navtree_start': 0, 'navtree': 1},
+                                   is_default_page=False)))
+        self.assertEqual(
+            len(self.catalog(path={'query': '/plone/folder1',
+                                   'navtree_start': 1, 'navtree': 1},
+                             is_default_page=False)),
+            len(self.searchResults(path={'query': '/plone/folder1',
+                                         'navtree_start': 1, 'navtree': 1},
+                                   is_default_page=False)))
         self.assertEqual(
             len(self.catalog(path={'query': '/plone/folder1',
                                    'navtree_start': 2, 'navtree': 1},
