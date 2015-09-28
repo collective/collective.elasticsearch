@@ -10,5 +10,6 @@ def BrainFactory(catalog):
             try:
                 return catalog[rid]
             except:
-                import pdb; pdb.set_trace()
+                return None
+                # import pdb; pdb.set_trace()
     return factory
