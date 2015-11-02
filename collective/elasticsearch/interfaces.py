@@ -1,16 +1,31 @@
 from zope.interface import Interface
 from zope import schema
-from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 
-DISABLE_MODE = 'disabled'
-REPLACEMENT_MODE = 'replacement'
-DUAL_MODE = 'dual'
+
+class IElasticSearchLayer(Interface):
+    pass
 
 
 class IElasticSearchCatalog(Interface):
-    '''
-    Interface if elastic search catalog is allowed
-    '''
+    pass
+
+
+class IMappingProvider(Interface):
+    def __call__():
+        pass
+
+
+class IAdditionalIndexDataProvider(Interface):
+    def __call__():
+        pass
+
+
+class IQueryAssembler(Interface):
+    def normalize(query):
+        pass
+
+    def __call__(dquery):
+        pass
 
 
 class IElasticSettings(Interface):
@@ -21,20 +36,10 @@ class IElasticSettings(Interface):
         unique=True,
         value_type=schema.TextLine(title=u'Host'))
 
-    mode = schema.Choice(
-        title=u'Mode',
-        description=u'Which mode elastic search should operate in. '
-                    u'Changing this setting might require you to '
-                    u'reindex the catalog. ',
-        default=DISABLE_MODE,
-        vocabulary=SimpleVocabulary([
-            SimpleTerm(DISABLE_MODE, DISABLE_MODE, u'Disabled'),
-            SimpleTerm(REPLACEMENT_MODE, REPLACEMENT_MODE, u'Replace catalog'),
-            SimpleTerm(
-                DUAL_MODE, DUAL_MODE,
-                u'Index plone and elastic search but still '
-                u'search with elastic'),
-        ]))
+    enabled = schema.Bool(
+        title=u'Enabled',
+        default=False
+    )
 
     sniff_on_start = schema.Bool(
         title=u'Sniff on start',
@@ -55,7 +60,7 @@ class IElasticSettings(Interface):
     timeout = schema.Float(
         title=u'Read timeout',
         description=u'how long before timeout connecting to elastic search',
-        default=0.5)
+        default=2.0)
 
     auto_flush = schema.Bool(
         title=u'Auto flush',

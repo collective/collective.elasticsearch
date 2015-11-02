@@ -1,5 +1,4 @@
 from collective.elasticsearch.es import ElasticSearchCatalog
-from collective.elasticsearch.interfaces import DISABLE_MODE
 from collective.elasticsearch.interfaces import IElasticSettings
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone.app.registry.browser.controlpanel import RegistryEditForm
@@ -32,7 +31,10 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
         try:
             return self.es.connection.status()['ok']
         except AttributeError:
-            return self.es.connection.cluster.health()['status'] in ('green', 'yellow')
+            try:
+                return self.es.connection.cluster.health()['status'] in ('green', 'yellow')
+            except:
+                return False
         except:
             return False
 
@@ -43,7 +45,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             status = self.es.connection.indices.status(
                 index=self.es.index_name)['indices'][self.es.index_name]
             return [
-                ('Cluster Name', info['cluster_name']),
+                ('Cluster Name', info.get('name')),
                 ('Elastic Search Version', info['version']['number']),
                 ('Number of docs', status['docs']['num_docs']),
                 ('Deleted docs', status['docs']['deleted_docs']),
@@ -55,7 +57,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
 
     @property
     def active(self):
-        return self.es.registry.mode != DISABLE_MODE
+        return self.es.get_setting('enabled')
 
 ElasticControlPanelView = layout.wrap_form(ElasticControlPanelForm,
                                            ElasticControlPanelFormWrapper)

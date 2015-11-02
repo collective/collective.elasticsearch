@@ -4,10 +4,12 @@
     xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    xmlns:monkey="http://namespaces.plone.org/monkey"
     i18n_domain="collective.elasticsearch">
 
   <five:registerPackage package="." initialize=".initialize" />
 
+  <include package="plone.app.registry" />
   <include package="plone.app.layout" />
 
   <genericsetup:registerProfile
@@ -18,27 +20,94 @@
     provides="Products.GenericSetup.interfaces.EXTENSION"
     />
 
-  <browser:page
-    name="elastic-controlpanel"
-    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
-    permission="cmf.ManagePortal"
-    class=".controlpanel.ElasticControlPanelView"
+  <include package=".browser" />
+
+  <adapter
+    factory=".mapping.MappingAdapter"
+    provides=".interfaces.IMappingProvider"
+    for="zope.interface.Interface
+         .interfaces.IElasticSearchCatalog" />
+  <adapter
+    factory=".query.QueryAssembler"
+    provides=".interfaces.IQueryAssembler"
+    for="zope.interface.Interface
+         .interfaces.IElasticSearchCatalog" />
+
+
+  <!-- CMFPlone CatalogTool patches -->
+  <monkey:patch
+    description="searchResults"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="searchResults"
+    replacement=".patches.safeSearchResults"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    description="searchResults"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="__call__"
+    replacement=".patches.safeSearchResults"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    description="catalog_object"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="catalog_object"
+    replacement=".patches.catalog_object"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    description="uncatalog_object"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="uncatalog_object"
+    replacement=".patches.uncatalog_object"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    description="unrestrictedSearchResults"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="unrestrictedSearchResults"
+    replacement=".patches.unrestrictedSearchResults"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    description="manage_catalogRebuild"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="manage_catalogRebuild"
+    replacement=".patches.manage_catalogRebuild"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    description="manage_catalogClear"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="manage_catalogClear"
+    replacement=".patches.manage_catalogClear"
+    preserveOriginal="True"
     />
 
-  <browser:page
-    name="elastic-convert"
-    for=".interfaces.IElasticSearchCatalog"
-    class=".utilviews.Utils"
-    attribute="convert"
-    permission="cmf.ManagePortal"
+  <!-- CMFCore CatalogTool patches -->
+  <monkey:patch
+    description="unindexObject"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="unindexObject"
+    replacement=".patches.unindexObject"
+    preserveOriginal="True"
     />
 
-  <browser:page
-    name="elastic-rebuild"
-    for=".interfaces.IElasticSearchCatalog"
-    class=".utilviews.Utils"
-    attribute="rebuild"
-    permission="cmf.ManagePortal"
+  <monkey:patch
+    description="moveObjectsByDelta"
+    class="Products.CMFPlone.Portal.PloneSite"
+    original="moveObjectsByDelta"
+    replacement=".patches.PloneSite_moveObjectsByDelta"
+    preserveOriginal="True"
+    />
+
+  <monkey:patch
+    description="moveObjectsByDelta"
+    class="plone.folder.default.DefaultOrdering"
+    original="moveObjectsByDelta"
+    replacement=".patches.moveObjectsByDelta"
+    preserveOriginal="True"
     />
 
 </configure>

@@ -1,21 +1,22 @@
-from zope.configuration import xmlconfig
 from Products.CMFCore.utils import getToolByName
-from plone.app.testing import TEST_USER_ID
-from plone.app.testing import setRoles
-from plone.app.testing import applyProfile
-from plone.app.testing import TEST_USER_NAME
-from plone.app.testing import TEST_USER_PASSWORD
-from plone.app.testing import PLONE_FIXTURE
-from plone.app.testing import PloneSandboxLayer
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
+from plone.app.testing import PLONE_FIXTURE
+from plone.app.testing import PloneSandboxLayer
+from plone.app.testing import TEST_USER_ID
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
+from plone.app.testing import applyProfile
+from plone.app.testing import setRoles
 from plone.testing import z2
+from zope.configuration import xmlconfig
 
 
 class ElasticSearch(PloneSandboxLayer):
-    defaultBases = (PLONE_FIXTURE,)
+    defaultBases = (PLONE_FIXTURE, )
 
     def setUpZope(self, app, configurationContext):
+        super(ElasticSearch, self).setUpZope(app, configurationContext)
         # load ZCML
         import plone.app.contenttypes
         xmlconfig.file('configure.zcml', plone.app.contenttypes,
@@ -26,13 +27,20 @@ class ElasticSearch(PloneSandboxLayer):
         self.loadZCML(package=plone.app.event.dx,
                       context=configurationContext)
 
+        import plone.app.registry
+        xmlconfig.file('configure.zcml', plone.app.registry,
+                       context=configurationContext)
+        z2.installProduct(app, 'plone.app.registry')
+
         import collective.elasticsearch
         xmlconfig.file('configure.zcml', collective.elasticsearch,
                        context=configurationContext)
         z2.installProduct(app, 'collective.elasticsearch')
 
     def setUpPloneSite(self, portal):
+        super(ElasticSearch, self).setUpPloneSite(portal)
         # install into the Plone site
+        applyProfile(portal, 'plone.app.registry:default')
         applyProfile(portal, 'plone.app.contenttypes:default')
         applyProfile(portal, 'collective.elasticsearch:default')
         setRoles(portal, TEST_USER_ID, ('Member', 'Manager'))
@@ -40,6 +48,7 @@ class ElasticSearch(PloneSandboxLayer):
         workflowTool.setDefaultChain('plone_workflow')
 
     def tearDownPloneSite(self, portal):
+        super(ElasticSearch, self).tearDownPloneSite(portal)
         applyProfile(portal, 'plone.app.contenttypes:uninstall')
 
 

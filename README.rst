@@ -28,7 +28,7 @@ Use Elastic Search in Plone:
     - Goto Control Panel
     - Add "Eleastic Search" in Add-on Products
     - Click "Elastic Search" in "Add-on Configuration"
-    - Pick a mode
+    - Enable
     - Click "Convert Catalog"
     - Click "Rebuild Catalog"
 
@@ -37,15 +37,29 @@ You now have a insanely scalable modern search engine. Now live the life of the 
 Overview
 --------
 
-This package aims to be a drop in replacement the portal_catalog
-with elasticsearch.
+This package aims to index all fields the portal_catalog indexes
+and allows you to delete the `Title`, `Description` and `SearchableText`
+indexes which can provide significant improvement to performance and RAM usage.
 
-There are 3 modes:
-    - disabled: will not use elasticsearch
-    - replacement: completely replaces, old catalog no longer used
-    - dual: still index objects in portal_catalog, just use
-      elasticsearch for searching
+Then, ElasticSearch queries are ONLY used when Title, Description and SearchableText
+text are in the query. Otherwise, the plone's default catalog will be used.
+This is because Plone's default catalog is faster on normal queries than using
+ElasticSearch.
 
+
+Compatibility
+-------------
+
+Only works on Plone 5 with Dexterity types.
+
+State
+-----
+
+Support for all index column types is done EXCEPT for the DateRecurringIndex
+index column type. If you are doing a full text search along with a query that
+contains a DateRecurringIndex column, it will not work.
+
+Curren
 
 Options
 -------
@@ -62,14 +76,10 @@ auto flush
 TODO
 ----
 
-- optimize?
-
-- fix reindexing to not destroy the whole catalog
-- savepoints are expensive, hold lots of data
-
 - Spellcheck
 - Custom Similarity
 - Faceting
+
 
 Travis
 ------

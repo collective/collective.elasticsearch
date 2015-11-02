@@ -1,17 +1,15 @@
 # coding: utf-8
-from zope.component import getUtility
-from plone.registry.interfaces import IRegistry
+from zope.component.hooks import setSite
 from Products.CMFCore.utils import getToolByName
-from collective.elasticsearch.testing import \
-    ElasticSearch_INTEGRATION_TESTING, \
-    ElasticSearch_FUNCTIONAL_TESTING
-import unittest2 as unittest
-from collective.elasticsearch.es import ElasticSearchCatalog, PatchCaller
-from collective.elasticsearch.interfaces import (
-    IElasticSettings,
-    DUAL_MODE)
+from collective.elasticsearch import hook
+from collective.elasticsearch.es import ElasticSearchCatalog
+from collective.elasticsearch.interfaces import IElasticSettings
+from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
+from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
+from plone.registry.interfaces import IRegistry
 import transaction
-from collective.elasticsearch import datamanager
+import unittest2 as unittest
+from zope.component import getUtility
 
 
 class BaseTest(unittest.TestCase):
@@ -19,13 +17,15 @@ class BaseTest(unittest.TestCase):
     layer = ElasticSearch_INTEGRATION_TESTING
 
     def setUp(self):
+        super(BaseTest, self).setUp()
         self.portal = self.layer['portal']
         self.request = self.layer['request']
+        self.request.environ['testing'] = True
         self.app = self.layer['app']
 
         registry = getUtility(IRegistry)
         settings = registry.forInterface(IElasticSettings)
-        settings.mode = DUAL_MODE
+        settings.enabled = True
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.catalog._elasticcustomindex = 'plone-test-index'
@@ -34,16 +34,20 @@ class BaseTest(unittest.TestCase):
         self.catalog.manage_catalogRebuild()
         # need to commit here so all tests start with a baseline
         # of elastic enabled
+        self.commit()
+
+    def commit(self):
         transaction.commit()
-        patched = PatchCaller(self.catalog)
-        self.searchResults = patched.searchResults
+        # for some reason, commit() resets the site
+        setSite(self.portal)
 
     def clearTransactionEntries(self):
-        dm = datamanager.get_data_manager()
-        if dm:
-            dm.reset()
+        _hook = hook.getHook(self.es)
+        _hook.remove = []
+        _hook.index = {}
 
     def tearDown(self):
+        super(BaseTest, self).tearDown()
         self.es.connection.indices.delete(index=self.es.index_name)
         self.clearTransactionEntries()
 

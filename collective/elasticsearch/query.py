@@ -1,11 +1,15 @@
+from collective.elasticsearch.interfaces import IQueryAssembler
+from zope.interface import implements
 from collective.elasticsearch.indexes import getIndex
 
 
 class QueryAssembler(object):
+    implements(IQueryAssembler)
 
-    def __init__(self, catalogtool):
-        self.catalogtool = catalogtool
-        self.request = catalogtool.REQUEST
+    def __init__(self, request, es):
+        self.es = es
+        self.catalogtool = es.catalogtool
+        self.request = request
 
     def normalize(self, query):
         sort_on = ['_score']
@@ -35,16 +39,19 @@ class QueryAssembler(object):
         idxs = catalog.indexes.keys()
         query = {'match_all': {}}
         for key, value in dquery.items():
-            if key not in idxs:
+            if key not in idxs and key not in ('SearchableText', 'Title', 'Description'):
                 continue
             index = getIndex(catalog, key)
-            if index is None:
-                continue
-            qq = index.get_query(key, value)
+            qq = None
+            if index is None and key in ('SearchableText', 'Title', 'Description'):
+                # deleted index for plone performance but still need on ES
+                qq = {'match': {key: value}}
+            else:
+                qq = index.get_query(key, value)
             if qq is None:
                 continue
 
-            if index.filter_query:
+            if index is not None and index.filter_query:
                 filters.append(qq)
             else:
                 query = qq
