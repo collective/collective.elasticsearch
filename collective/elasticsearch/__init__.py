@@ -62,8 +62,7 @@ default_patch_map = {
     '__call__': safeSearchResults,
     'unrestrictedSearchResults': searchResults,
     'manage_catalogRebuild': manage_catalogRebuild,
-    'manage_catalogClear': manage_catalogClear,
-    'refreshCatalog': refreshCatalog
+    'manage_catalogClear': manage_catalogClear
 }
 
 

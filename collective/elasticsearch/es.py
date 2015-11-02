@@ -65,39 +65,13 @@ class ElasticResult(object):
         # but the start index of the bulk size for the
         # results it holds. This way we can skip around
         # for result data in a result object
-        self.query = self.make_query_transaction_aware(equery)
+        self.query = equery
         result = es._search(self.query, sort=sort)['hits']
         self.results = {
             0: result['hits']
         }
         self.count = result['total']
         self.sort = sort
-
-    def make_query_transaction_aware(self, query):
-        '''
-        IMPORTANT HERE!
-        How we do transactiona awareness here is by disabling
-        the querying of currently active transaction uids and then
-        allowing the querying of transaction data.
-        '''
-        filters = [{'term': {'transaction': False}}]
-        active = len(self.es.dm) > 0
-        if active:
-            filters.append({
-                'and': [{'term': {'transaction_id': self.es.dm.transaction_id}},
-                        {'term': {'transaction': True}}]
-            })
-        if filters > 1:
-            filters = [{'or': filters}]
-        if active:
-            # filter out transaction items
-            filters.append({
-                'not': {
-                    'term': {'_id': self.es.dm.keys()}
-                }
-            })
-        query['filtered']['filter']['and'].extend(filters)
-        return query
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -171,23 +145,24 @@ class ElasticSearchCatalog(object):
 
     @property
     def enabled(self):
-        return self.registry.enabled
+        return self.registry and self.registry.enabled
 
     def get_setting(self, name, default=None):
         return getattr(self.registry, name, default)
 
     def catalog_object(self, obj, uid=None, idxs=[], update_metadata=1, pghandler=None):
-        self.patched.catalog_object(
-            obj, uid, idxs, update_metadata, pghandler)
+        if idxs != ['getObjPositionInParent']:
+            self.patched.catalog_object(
+                obj, uid, idxs, update_metadata, pghandler)
         if not self.enabled:
             return
-        hook.add_object(obj)
+        hook.add_object(self, obj)
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
         # always need to uncatalog to remove brains, etc
         result = self.patched.uncatalog_object(uid, *args, **kwargs)
         if self.enabled:
-            hook.remove_object(obj)
+            hook.remove_object(self, obj)
 
         return result
 

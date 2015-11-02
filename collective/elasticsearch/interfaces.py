@@ -17,11 +17,8 @@ class IElasticSettings(Interface):
         value_type=schema.TextLine(title=u'Host'))
 
     enabled = schema.Bool(
-        title=u'Mode',
-        description=u'Which mode elastic search should operate in. '
-                    u'Changing this setting might require you to '
-                    u'reindex the catalog. ',
-        default=False,
+        title=u'Enabled',
+        default=False
     )
 
     sniff_on_start = schema.Bool(

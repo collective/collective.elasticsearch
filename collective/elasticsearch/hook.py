@@ -1,6 +1,5 @@
 from plone.app.uuid.utils import uuidToObject
 from plone import api
-from collective.elasticsearch.es import ElasticSearchCatalog
 from plone.indexer.interfaces import IIndexableObject
 from collective.elasticsearch.utils import getUID
 from plone.app.iterate.browser import info
@@ -29,6 +28,7 @@ except ImportError:
 
 
 def _remove_from_el(uids):
+    from collective.elasticsearch.es import ElasticSearchCatalog
     es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
     bulk_data = []
     for uid in uids:
@@ -39,7 +39,7 @@ def _remove_from_el(uids):
                 '_id': uid
             }
         })
-    es.conn.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
+    es.connection.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
 
 
 def _get_index_data(catalogtool, obj):
@@ -84,6 +84,7 @@ def _get_index_data(catalogtool, obj):
 
 
 def _index_in_el(data):
+    from collective.elasticsearch.es import ElasticSearchCatalog
     es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
     conn = es.connection
 
@@ -113,35 +114,39 @@ class CommitHook(object):
         self.index = {}
         self.es = es
 
-    def __call__(self):
+    def __call__(self, trns):
         # use collective.celery if it is available
         if HAS_CELERY:
-            remove_from_el_async.delay(self.remove)
-            index_el_async.delay(self.index.keys())
+            if len(self.remove) > 0:
+                remove_from_el_async.delay(self.remove)
+            if len(self.index) > 0:
+                index_el_async.delay(self.index.keys())
         else:
-            _remove_from_el(self.remove)
-            _index_in_el(self.index)
+            if len(self.remove) > 0:
+                _remove_from_el(self.remove)
+            if len(self.index) > 0:
+                _index_in_el(self.index)
 
 
 def getHook(es):
     trns = transaction.get()
     hook = None
     for _hook in trns._after_commit:
-        if isinstance(_hook, CommitHook):
-            hook = _hook
+        if isinstance(_hook[0], CommitHook):
+            hook = _hook[0]
             break
     if hook is None:
         hook = CommitHook(es)
         trns.addAfterCommitHook(hook)
-        return hook
+    return hook
 
 
 def remove_object(es, obj):
-    hook = getHook()
+    hook = getHook(es)
     uid = getUID(obj)
     hook.remove.append(uid)
 
 
 def add_object(es, obj):
-    hook = getHook()
+    hook = getHook(es)
     hook.index[getUID(obj)] = obj
