@@ -1,12 +1,17 @@
-from plone.app.uuid.utils import uuidToObject
-from plone import api
-from plone.indexer.interfaces import IIndexableObject
-from collective.elasticsearch.utils import getUID
-from plone.app.iterate.browser import info
-from zope.component import queryMultiAdapter
-from collective.elasticsearch.indexes import getIndex
-import transaction
+import logging
 import traceback
+
+from collective.elasticsearch.indexes import getIndex
+from collective.elasticsearch.utils import getUID
+from plone import api
+from plone.app.uuid.utils import uuidToObject
+from plone.indexer.interfaces import IIndexableObject
+import transaction
+from zope.component import queryMultiAdapter
+from zope.globalrequest import getRequest
+
+logger = logging.getLogger('collective.elasticsearch')
+
 
 try:
     from collective.celery import task
@@ -65,7 +70,7 @@ def _get_index_data(catalogtool, obj):
             try:
                 value = index.get_value(wrapped_object)
             except:
-                info('Error indexing value: %s: %s\n%s' % (
+                logger.info('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     index,
                     traceback.format_exc()))
@@ -114,9 +119,15 @@ class CommitHook(object):
         self.index = {}
         self.es = es
 
+    def useCelery(self):
+        if HAS_CELERY:
+            req = getRequest()
+            return req and not req.environ.get('testing')
+        return False
+
     def __call__(self, trns):
         # use collective.celery if it is available
-        if HAS_CELERY:
+        if self.useCelery():
             if len(self.remove) > 0:
                 remove_from_el_async.delay(self.remove)
             if len(self.index) > 0:
@@ -126,6 +137,8 @@ class CommitHook(object):
                 _remove_from_el(self.remove)
             if len(self.index) > 0:
                 _index_in_el(self.index)
+        self.index = {}
+        self.remove = []
 
 
 def getHook(es):

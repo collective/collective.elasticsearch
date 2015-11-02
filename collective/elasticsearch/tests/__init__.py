@@ -7,11 +7,9 @@ from collective.elasticsearch.testing import \
     ElasticSearch_FUNCTIONAL_TESTING
 import unittest2 as unittest
 from collective.elasticsearch.es import ElasticSearchCatalog, PatchCaller
-from collective.elasticsearch.interfaces import (
-    IElasticSettings,
-    DUAL_MODE)
+from collective.elasticsearch.interfaces import IElasticSettings
 import transaction
-from collective.elasticsearch import datamanager
+from collective.elasticsearch import hook
 
 
 class BaseTest(unittest.TestCase):
@@ -21,11 +19,12 @@ class BaseTest(unittest.TestCase):
     def setUp(self):
         self.portal = self.layer['portal']
         self.request = self.layer['request']
+        self.request.environ['testing'] = True
         self.app = self.layer['app']
 
         registry = getUtility(IRegistry)
         settings = registry.forInterface(IElasticSettings)
-        settings.mode = DUAL_MODE
+        settings.enabled = True
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.catalog._elasticcustomindex = 'plone-test-index'
@@ -39,9 +38,9 @@ class BaseTest(unittest.TestCase):
         self.searchResults = patched.searchResults
 
     def clearTransactionEntries(self):
-        dm = datamanager.get_data_manager()
-        if dm:
-            dm.reset()
+        _hook = hook.getHook(self.es)
+        _hook.remove = []
+        _hook.index = {}
 
     def tearDown(self):
         self.es.connection.indices.delete(index=self.es.index_name)

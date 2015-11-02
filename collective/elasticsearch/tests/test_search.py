@@ -1,39 +1,40 @@
-from collective.elasticsearch.tests import BaseTest
+from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.testing import createObject
 import unittest2 as unittest
 from DateTime import DateTime
 import time
+import transaction
 
 
 EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
 DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
 
 
-class TestQueries(BaseTest):
+class TestQueries(BaseFunctionalTest):
 
     def test_field_index_query(self):
         createObject(self.portal, 'Event', 'event', title='Some Event')
-        cat_results = self.searchResults(portal_type='Event')
-        el_results = self.catalog(portal_type='Event')
-        self.assertEqual(len(cat_results), len(el_results))
-        self.assertEqual(len(cat_results), 1)
+        transaction.commit()
+        self.es.connection.indices.flush()
+        el_results = self.catalog(portal_type='Event', Title='some event')
+        self.assertEqual(len(el_results), 1)
 
     def test_keyword_index_query(self):
         createObject(self.portal, 'Event', 'event', title='Some Event')
-        cat_results = self.searchResults(object_provides=EVENT_KLASS)
-        el_results = self.catalog(object_provides=[EVENT_KLASS])
-        self.assertEqual(len(cat_results), len(el_results))
-        self.assertEqual(len(cat_results), 1)
+        transaction.commit()
+        self.es.connection.indices.flush()
+        el_results = self.catalog(object_provides=[EVENT_KLASS], SearchableText='Event')
+        self.assertEqual(len(el_results), 1)
 
     def test_multi_keyword_index_query(self):
-        createObject(self.portal, 'Event', 'event', title='Some Event')
-        createObject(self.portal, 'Document', 'page', title='Some page')
-        cat_results = self.searchResults(
-            object_provides=[EVENT_KLASS, DOCUMENT_KLASS])
+        createObject(self.portal, 'Event', 'event', title='New Content')
+        createObject(self.portal, 'Document', 'page', title='New Content')
+        transaction.commit()
+        self.es.connection.indices.flush()
         el_results = self.catalog(
-            object_provides=[EVENT_KLASS, DOCUMENT_KLASS])
-        self.assertEqual(len(cat_results), len(el_results))
-        self.assertEqual(len(cat_results), 2)
+            object_provides=[EVENT_KLASS, DOCUMENT_KLASS],
+            SearchableText='new content')
+        self.assertEqual(len(el_results), 2)
 
     def test_date_index_query(self):
         start = DateTime()
@@ -43,10 +44,14 @@ class TestQueries(BaseTest):
             event = createObject(
                 self.portal, 'Event',
                 'event%i' % idx, title='Some Event %i' % idx,
-            effective=DateTime('2015/09/25 20:00'))
+                effective=DateTime('2015/09/25 20:00'))
             events.append(event)
+
+        transaction.commit()
+        self.es.connection.indices.flush()
+
         end = DateTime()
-        query = {'query': (start, end), 'range': 'min:max'}
+        query = {'query': (start, end), 'range': 'min:max', 'SearchableText': 'Event'}
         cat_results = self.searchResults(created=query)
         el_results = self.catalog(created=query)
         self.assertEqual(len(cat_results), len(el_results))
@@ -76,84 +81,72 @@ class TestQueries(BaseTest):
                 self.portal, 'Event',
                 'event%i' % idx, title='Some Event %i' % idx)
             events.append(event)
-        cat_results = self.searchResults(Title='Some Event')
-        el_results = self.catalog(Title='Some Event')
-        self.assertEqual(len(cat_results), len(el_results))
-        self.assertEqual(len(cat_results), len(events))
 
-        # only find one
-        cat_results = self.searchResults(Title='Some Event 1',
-                                         sort_on='getObjPositionInParent')
+        transaction.commit()
+        self.es.connection.indices.flush()
+
+        el_results = self.catalog(Title='Some Event')
+        self.assertEqual(len(el_results), len(events))
+
         el_results = self.catalog(Title='Some Event 1',
                                   sort_on='getObjPositionInParent')
         self.assertTrue('Some Event 1' in [
             b.Title for b in el_results])
-        self.assertEqual(cat_results[0].Title, 'Some Event 1')
+        self.assertEqual(el_results[0].Title, 'Some Event 1')
 
     def test_path_index_query(self):
-        folder1 = createObject(self.portal, 'Folder', 'folder1',
-                               title='Folder 1')
-        createObject(folder1, 'Document', 'page1', title='Page 1')
-        createObject(folder1, 'Document', 'page2', title='Page 2')
-        createObject(folder1, 'Document', 'page3', title='Page 3')
-        folder2 = createObject(folder1, 'Folder', 'folder2',
-                               title='Folder 2')
-        folder3 = createObject(folder2, 'Folder', 'folder3',
-                               title='Folder 3')
-        createObject(folder3, 'Document', 'page4', title='Page 4')
-        createObject(folder3, 'Document', 'page5', title='Page 5')
-        createObject(folder3, 'Document', 'page6', title='Page 6')
+        folder1 = createObject(self.portal, 'Folder', 'folder0',
+                               title='New Content 0')
+        createObject(folder1, 'Document', 'page1', title='New Content 1')
+        createObject(folder1, 'Document', 'page2', title='New Content 2')
+        createObject(folder1, 'Document', 'page3', title='New Content 3')
+        folder2 = createObject(folder1, 'Folder', 'folder4',
+                               title='New Content 4')
+        folder3 = createObject(folder2, 'Folder', 'folder5',
+                               title='New Content 5')
+        createObject(folder3, 'Document', 'page6', title='New Content 6')
+        createObject(folder3, 'Document', 'page7', title='New Content 7')
+        createObject(folder3, 'Document', 'page8', title='New Content 8')
+
+        transaction.commit()
+        self.es.connection.indices.flush()
+
         self.assertEqual(
-            len(self.catalog(path={'depth': 0, 'query': '/plone/folder1'})),
-            len(self.searchResults(
-                path={'depth': 0, 'query': '/plone/folder1'})))
+            len(self.catalog(path={'depth': 0, 'query': '/plone/folder0'},
+                             SearchableText='new content')), 1)
         self.assertEqual(
-            len(self.catalog(path={'depth': 1, 'query': '/plone/folder1'})),
-            len(self.searchResults(path={'depth': 1,
-                                         'query': '/plone/folder1'})))
+            len(self.catalog(path={'depth': 1, 'query': '/plone/folder0'},
+                             SearchableText='new content')), 4)
         self.assertEqual(
             len(self.catalog(path={'depth': -1,
-                                   'query': '/plone/folder1'})),
-            len(self.searchResults(path={'depth': -1,
-                                         'query': '/plone/folder1'})))
+                                   'query': '/plone/folder0'},
+                             SearchableText='new content')), 9)
         self.assertEqual(
-            len(self.catalog(path={'depth': 1, 'query': '/plone'})),
-            len(self.searchResults(path={'depth': 1,
-                                         'query': '/plone'})))
+            len(self.catalog(path={'depth': 1, 'query': '/plone'},
+                             SearchableText='new content')), 1)
         # this proofs its wrong
         self.assertEqual(
-            len(self.catalog(path={'query': '/plone/folder1',
+            len(self.catalog(path={'query': '/plone/folder0',
                                    'navtree_start': 0, 'navtree': 1},
-                             is_default_page=False)),
-            len(self.searchResults(path={'query': '/plone/folder1',
-                                         'navtree_start': 0, 'navtree': 1},
-                                   is_default_page=False)))
-        self.assertEqual(
-            len(self.catalog(path={'query': '/plone/folder1',
-                                   'navtree_start': 1, 'navtree': 1},
-                             is_default_page=False)),
-            len(self.searchResults(path={'query': '/plone/folder1',
-                                         'navtree_start': 1, 'navtree': 1},
-                                   is_default_page=False)))
-        self.assertEqual(
-            len(self.catalog(path={'query': '/plone/folder1',
-                                   'navtree_start': 2, 'navtree': 1},
-                             is_default_page=False)),
-            len(self.searchResults(path={'query': '/plone/folder1',
-                                         'navtree_start': 2, 'navtree': 1},
-                                   is_default_page=False)))
+                             is_default_page=False,
+                             SearchableText='new content')), 9)
 
     def test_combined_query(self):
         createObject(self.portal, 'Folder', 'folder1', title='Folder 1')
+        transaction.commit()
+        self.es.connection.indices.flush()
         self.assertEqual(
             len(self.catalog(path={'depth': 1, 'query': '/plone'},
                              portal_type='Folder',
-                             is_default_page=False)),
+                             is_default_page=False,
+                             SearchableText='folder')),
             1)
 
     def test_brains(self):
         event = createObject(self.portal, 'Event', 'event', title='Some Event')
-        el_results = self.catalog(portal_type='Event')
+        transaction.commit()
+        self.es.connection.indices.flush()
+        el_results = self.catalog(portal_type='Event', Title='Event')
         brain = el_results[0]
         self.assertEqual(brain.getObject(), event)
         self.assertEqual(brain.portal_type, 'Event')
