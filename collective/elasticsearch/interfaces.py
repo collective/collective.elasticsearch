@@ -2,6 +2,10 @@ from zope.interface import Interface
 from zope import schema
 
 
+class IElasticSearchLayer(Interface):
+    pass
+
+
 class IElasticSearchCatalog(Interface):
     '''
     Interface if elastic search catalog is allowed

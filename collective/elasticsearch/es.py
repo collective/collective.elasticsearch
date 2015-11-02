@@ -92,6 +92,13 @@ class ElasticSearchCatalog(object):
     from patched methods
     '''
 
+    # so these can be deleted but still used in queries
+    _default_mapping = {
+        'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
+        'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
+        'Description': {'store': False, 'type': 'string', 'index': 'analyzed'},
+    }
+
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
@@ -145,7 +152,7 @@ class ElasticSearchCatalog(object):
 
     @property
     def enabled(self):
-        return self.registry and self.registry.enabled
+        return self.registry and self.registry.enabled and self.catalog_converted
 
     def get_setting(self, name, default=None):
         return getattr(self.registry, name, default)
@@ -154,6 +161,7 @@ class ElasticSearchCatalog(object):
         if idxs != ['getObjPositionInParent']:
             self.patched.catalog_object(
                 obj, uid, idxs, update_metadata, pghandler)
+
         if not self.enabled:
             return
         hook.add_object(self, obj)
@@ -231,7 +239,7 @@ class ElasticSearchCatalog(object):
     def convertToElastic(self):
         setattr(self.catalogtool, CONVERTED_ATTR, True)
         self.catalogtool._p_changed = True
-        properties = {}
+        properties = self._default_mapping.copy()
         for name in self.catalog.indexes.keys():
             index = getIndex(self.catalog, name)
             if index is not None:
@@ -240,13 +248,6 @@ class ElasticSearchCatalog(object):
                 raise Exception('Can not locate index for %s' % (
                     name))
 
-        properties.update({
-            'transaction': {'type': 'boolean'},
-            'transaction_id': {
-                'type': 'string',
-                'index': 'not_analyzed',
-                'store': False}
-        })
         conn = self.connection
         try:
             conn.indices.create(self.index_name)

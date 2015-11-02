@@ -18,27 +18,15 @@
     provides="Products.GenericSetup.interfaces.EXTENSION"
     />
 
-  <browser:page
-    name="elastic-controlpanel"
-    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
-    permission="cmf.ManagePortal"
-    class=".controlpanel.ElasticControlPanelView"
-    />
+  <include package=".browser" />
 
-  <browser:page
-    name="elastic-convert"
-    for=".interfaces.IElasticSearchCatalog"
-    class=".utilviews.Utils"
-    attribute="convert"
-    permission="cmf.ManagePortal"
+  <!--
+  <adapter
+    for="plone.dexterity.interfaces.IDexterityItem
+         Products.CMFPlone.interfaces.IPloneCatalogTool"
+    factory=".indexerwrapper.CachedIndexableObjectWrapper"
+    provides="plone.indexer.interfaces.IIndexableObject"
     />
-
-  <browser:page
-    name="elastic-rebuild"
-    for=".interfaces.IElasticSearchCatalog"
-    class=".utilviews.Utils"
-    attribute="rebuild"
-    permission="cmf.ManagePortal"
-    />
+  -->
 
 </configure>

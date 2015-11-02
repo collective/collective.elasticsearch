@@ -38,9 +38,11 @@ class QueryAssembler(object):
             if key not in idxs:
                 continue
             index = getIndex(catalog, key)
-            if index is None:
-                continue
-            qq = index.get_query(key, value)
+            qq = None
+            if index is None and key in ('SearchableText', 'Title', 'Description'):
+                qq = {'match': {key: value}}
+            else:
+                qq = index.get_query(key, value)
             if qq is None:
                 continue
 
