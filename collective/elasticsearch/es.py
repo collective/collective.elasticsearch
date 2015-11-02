@@ -3,28 +3,20 @@ import traceback
 
 from Acquisition import aq_base
 from DateTime import DateTime
-from Products.ZCatalog.Lazy import LazyMap
-from Products.CMFCore.utils import _getAuthenticatedUser
 from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
-from zope.component import getUtility
-from zope.component import queryMultiAdapter
-from zope.component import ComponentLookupError
-
-from plone.registry.interfaces import IRegistry
-from plone.indexer.interfaces import IIndexableObject
-
+from Products.CMFCore.utils import _getAuthenticatedUser
+from Products.ZCatalog.Lazy import LazyMap
+from collective.elasticsearch import hook
+from collective.elasticsearch.brain import BrainFactory
+from collective.elasticsearch.indexes import getIndex
+from collective.elasticsearch.interfaces import IElasticSettings
+from collective.elasticsearch.query import QueryAssembler
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError, ElasticsearchException
-
-from collective.elasticsearch.brain import BrainFactory
-from collective.elasticsearch.query import QueryAssembler
-from collective.elasticsearch.interfaces import (
-    IElasticSettings, DISABLE_MODE, DUAL_MODE)
-from collective.elasticsearch.utils import getUID
-from collective.elasticsearch.indexes import getIndex
-from collective.elasticsearch import datamanager
-from collective.elasticsearch.datamanager import Actions
+from plone.registry.interfaces import IRegistry
+from zope.component import ComponentLookupError
+from zope.component import getUtility
 
 
 logger = getLogger(__name__)
@@ -140,7 +132,6 @@ class ElasticSearchCatalog(object):
         except ComponentLookupError:
             self.registry = None
 
-        self._dm = None
         self._conn = None
 
     @property
@@ -155,12 +146,6 @@ class ElasticSearchCatalog(object):
                 sniffer_timeout=self.get_setting('sniffer_timeout', 0.1),
                 retry_on_timeout=self.get_setting('retry_on_timeout', False))
         return self._conn
-
-    @property
-    def dm(self):
-        if self._dm is None:
-            self._dm = datamanager.register_in_transaction(self)
-        return self._dm
 
     def _search(self, query, **query_params):
         '''
@@ -180,145 +165,43 @@ class ElasticSearchCatalog(object):
         factory = BrainFactory(self.catalog)
         return LazyMap(factory, result, result.count)
 
-    def update_doc(self, obj, index_data):
-        conn = self.connection
-        uid = getUID(obj)
-        exists = False
-        if uid in self.dm._exists_cache:
-            exists = self.dm._exists_cache[uid]
-        else:
-            exists = conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid)
-            self.dm._exists_cache[uid] = exists
-        if exists:
-            self.dm.add_action(Actions.modify, uid, index_data)
-        else:
-            self.dm.add_action(Actions.add, uid, index_data)
-        self.dm._exists_cache[uid] = True
-
-        if self.registry.auto_flush:
-            conn.indices.refresh(index=self.index_name)
-
-    def remove_doc(self, obj):
-        uid = getUID(obj)
-        conn = self.connection
-        if uid in self.dm._exists_cache:
-            exists = self.dm._exists_cache[uid]
-        else:
-            exists = conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid)
-            self.dm._exists_cache[uid] = exists
-        if exists:
-            self.dm.add_action(Actions.delete, uid)
-        if self.registry.auto_flush:
-            conn.indices.refresh(index=self.index_name)
-        self.dm._exists_cache[uid] = False
-
     @property
     def catalog_converted(self):
         return getattr(self.catalogtool, CONVERTED_ATTR, False)
 
     @property
-    def mode(self):
-        if not self.catalog_converted:
-            return DISABLE_MODE
-        if self.registry is None:
-            return DISABLE_MODE
-        return self.registry.mode
+    def enabled(self):
+        return self.registry.enabled
 
     def get_setting(self, name, default=None):
         return getattr(self.registry, name, default)
 
     def catalog_object(self, obj, uid=None, idxs=[], update_metadata=1, pghandler=None):
-        mode = self.mode
-        if mode in (DISABLE_MODE, DUAL_MODE):
-            result = self.patched.catalog_object(
-                obj, uid, idxs, update_metadata, pghandler)
-            if mode == DISABLE_MODE:
-                return result
-        wrapped_object = None
-        if not IIndexableObject.providedBy(obj):
-            # This is the CMF 2.2 compatible approach, which should be used
-            # going forward
-            wrapper = queryMultiAdapter((obj, self.catalogtool),
-                                        IIndexableObject)
-            if wrapper is not None:
-                wrapped_object = wrapper
-            else:
-                wrapped_object = obj
-        else:
-            wrapped_object = obj
-        catalog = self.catalog
-        if idxs == []:
-            idxs = catalog.indexes.keys()
-        index_data = {}
-        for index_name in idxs:
-            index = getIndex(catalog, index_name)
-            if index is not None:
-                try:
-                    value = index.get_value(wrapped_object)
-                except:
-                    info('Error indexing value: %s: %s\n%s' % (
-                        '/'.join(obj.getPhysicalPath()),
-                        index,
-                        traceback.format_exc()))
-                    value = None
-                if value in (None, 'None'):
-                    # yes, we'll index null data...
-                    value = None
-
-                # Ignore errors in converting to unicode, so json.dumps
-                # does not barf when we're trying to send data to ES.
-                if isinstance(value, str):
-                    value = unicode(value, 'utf-8', 'ignore')
-
-                index_data[index_name] = value
-        if update_metadata:
-            index = self.catalog.uids.get(uid, None)
-            if index is None:  # we are inserting new data
-                index = self.catalog.updateMetadata(obj, uid, None)
-                self.catalog._length.change(1)
-                self.catalog.uids[uid] = index
-                self.catalog.paths[index] = uid
-            # need to match elasticsearch result with brain
-            self.catalog.updateMetadata(wrapped_object, uid, index)
-
-        self.update_doc(obj, index_data)
+        self.patched.catalog_object(
+            obj, uid, idxs, update_metadata, pghandler)
+        if not self.enabled:
+            return
+        hook.add_object(obj)
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
-        mode = self.mode
         # always need to uncatalog to remove brains, etc
         result = self.patched.uncatalog_object(uid, *args, **kwargs)
-        if mode == DISABLE_MODE:
-            return result
-
-        self.remove_doc(obj)
+        if self.enabled:
+            hook.remove_object(obj)
 
         return result
 
     def manage_catalogRebuild(self, *args, **kwargs):
-        mode = self.mode
-        if mode == DISABLE_MODE:
-            return self.patched.manage_catalogRebuild(*args, **kwargs)
-
-        self.recreateCatalog()
+        if self.enabled:
+            self.recreateCatalog()
 
         return self.patched.manage_catalogRebuild(*args, **kwargs)
 
     def manage_catalogClear(self, *args, **kwargs):
-        mode = self.mode
-        if mode == DISABLE_MODE:
-            return self.patched.manage_catalogClear(*args, **kwargs)
+        if self.enabled:
+            self.recreateCatalog()
 
-        self.recreateCatalog()
-
-        if mode == DUAL_MODE:
-            return self.patched.manage_catalogClear(*args, **kwargs)
-
-    def refreshCatalog(self, clear=0, pghandler=None):
-        mode = self.mode
-        if mode == DISABLE_MODE:
-            return self.patched.refreshCatalog(clear, pghandler)
-
-        return self.patched.refreshCatalog(clear, pghandler)
+        return self.patched.manage_catalogClear(*args, **kwargs)
 
     def recreateCatalog(self):
         conn = self.connection
@@ -329,12 +212,19 @@ class ElasticSearchCatalog(object):
         self.convertToElastic()
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
-        mode = self.mode
-        if mode == DISABLE_MODE:
+        enabled = False
+        if self.enabled:
+            # need to also check is it is a search result we care about
+            # using EL for
+            if 'Title' in kw or 'SearchableText' in kw or 'Description' in kw:
+                # XXX need a smarter check here...
+                enabled = True
+        if not enabled:
             if check_perms:
                 return self.patched.searchResults(REQUEST, **kw)
             else:
                 return self.patched.unrestrictedSearchResults(REQUEST, **kw)
+
         if isinstance(REQUEST, dict):
             query = REQUEST.copy()
         else:
@@ -361,11 +251,7 @@ class ElasticSearchCatalog(object):
             info('Error running Query: %s\n%s' % (
                 repr(orig_query),
                 traceback.format_exc()))
-            if mode == DUAL_MODE:
-                # fall back now...
-                return self.patched.searchResults(REQUEST, **kw)
-            else:
-                return LazyMap(BrainFactory(self.catalog), [], 0)
+            return self.patched.searchResults(REQUEST, **kw)
 
     def convertToElastic(self):
         setattr(self.catalogtool, CONVERTED_ATTR, True)

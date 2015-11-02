@@ -55,12 +55,6 @@ def manage_catalogClear(self, *args, **kwargs):
     return es.manage_catalogClear(*args, **kwargs)
 
 
-def refreshCatalog(self, clear=0, pghandler=None):
-    """ need to be publishable """
-    es = ElasticSearchCatalog(self)
-    return es.refreshCatalog(clear, pghandler)
-
-
 default_patch_map = {
     'catalog_object': catalog_object,
     'uncatalog_object': uncatalog_object,
@@ -114,6 +108,7 @@ def indexPositions(context, ids):
         if not hasattr(ob, 'reindexObject'):
             continue
         if len(inspect.getargspec(ob.reindexObject).args) == 2:
+            # XXX ONLY reindex EL
             ob.reindexObject(idxs=['getObjPositionInParent'])
 
 

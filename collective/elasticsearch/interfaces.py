@@ -1,10 +1,5 @@
 from zope.interface import Interface
 from zope import schema
-from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
-
-DISABLE_MODE = 'disabled'
-REPLACEMENT_MODE = 'replacement'
-DUAL_MODE = 'dual'
 
 
 class IElasticSearchCatalog(Interface):
@@ -21,20 +16,13 @@ class IElasticSettings(Interface):
         unique=True,
         value_type=schema.TextLine(title=u'Host'))
 
-    mode = schema.Choice(
+    enabled = schema.Bool(
         title=u'Mode',
         description=u'Which mode elastic search should operate in. '
                     u'Changing this setting might require you to '
                     u'reindex the catalog. ',
-        default=DISABLE_MODE,
-        vocabulary=SimpleVocabulary([
-            SimpleTerm(DISABLE_MODE, DISABLE_MODE, u'Disabled'),
-            SimpleTerm(REPLACEMENT_MODE, REPLACEMENT_MODE, u'Replace catalog'),
-            SimpleTerm(
-                DUAL_MODE, DUAL_MODE,
-                u'Index plone and elastic search but still '
-                u'search with elastic'),
-        ]))
+        default=False,
+    )
 
     sniff_on_start = schema.Bool(
         title=u'Sniff on start',
