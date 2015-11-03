@@ -85,6 +85,10 @@ class CommitHook(object):
 
         index_data = {}
         for index_name in catalog.indexes.keys():
+            if uid in self.cached_index_data and index_name in self.cached_index_data[uid]:
+                index_data[index_name] = self.cached_index_data[uid][index_name]
+                continue
+
             index = getIndex(catalog, index_name)
             if index is not None:
                 try:

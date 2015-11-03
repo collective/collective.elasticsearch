@@ -20,13 +20,11 @@
 
   <include package=".browser" />
 
-  <!--
   <adapter
     for="plone.dexterity.interfaces.IDexterityItem
          Products.CMFPlone.interfaces.IPloneCatalogTool"
     factory=".indexerwrapper.CachedIndexableObjectWrapper"
     provides="plone.indexer.interfaces.IIndexableObject"
     />
-  -->
 
 </configure>
