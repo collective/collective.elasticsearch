@@ -133,6 +133,9 @@ def getHook(es=None):
     if es is None:
         from collective.elasticsearch.es import ElasticSearchCatalog
         es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
+    if not es.enabled:
+        return
+
     trns = transaction.get()
     hook = None
     for _hook in trns._after_commit:
