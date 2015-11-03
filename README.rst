@@ -28,7 +28,7 @@ Use Elastic Search in Plone:
     - Goto Control Panel
     - Add "Eleastic Search" in Add-on Products
     - Click "Elastic Search" in "Add-on Configuration"
-    - Pick a mode
+    - Enable
     - Click "Convert Catalog"
     - Click "Rebuild Catalog"
 
@@ -37,14 +37,9 @@ You now have a insanely scalable modern search engine. Now live the life of the 
 Overview
 --------
 
-This package aims to be a drop in replacement the portal_catalog
-with elasticsearch.
-
-There are 3 modes:
-    - disabled: will not use elasticsearch
-    - replacement: completely replaces, old catalog no longer used
-    - dual: still index objects in portal_catalog, just use
-      elasticsearch for searching
+This package aims to index all fields the portal_catalog indexes
+and allows you to delete the `Title`, `Description` and `SearchableText`
+indexes which can provide significant improvement to performance and RAM usage.
 
 
 Options
