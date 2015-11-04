@@ -40,6 +40,9 @@ setup(name='collective.elasticsearch',
       entry_points="""
       # -*- Entry points: -*-
 
+      [celery_tasks]
+      castle = collective.elasticsearch.hook
+
       [z3c.autoinclude.plugin]
       target = plone
       """,
