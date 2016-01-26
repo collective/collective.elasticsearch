@@ -60,6 +60,15 @@ index column type. If you are doing a full text search along with a query that
 contains a DateRecurringIndex column, it will not work.
 
 
+Celery support
+--------------
+
+This package comes with Celery support where all indexing operations will be pushed
+into celery to be run asynchronously.
+
+Please see instructions for collective.celery to see how this works.
+
+
 Options
 -------
 
