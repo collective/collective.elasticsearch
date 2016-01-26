@@ -59,7 +59,6 @@ Support for all index column types is done EXCEPT for the DateRecurringIndex
 index column type. If you are doing a full text search along with a query that
 contains a DateRecurringIndex column, it will not work.
 
-Curren
 
 Options
 -------
