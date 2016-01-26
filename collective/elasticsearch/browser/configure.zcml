@@ -1,0 +1,44 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="collective.elasticsearch">
+
+  <browser:page
+    name="elastic-controlpanel"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    permission="cmf.ManagePortal"
+    class=".controlpanel.ElasticControlPanelView"
+    layer="..interfaces.IElasticSearchLayer"
+    />
+
+  <browser:page
+    name="elastic-convert"
+    for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
+    class=".utilviews.Utils"
+    attribute="convert"
+    permission="cmf.ManagePortal"
+    layer="..interfaces.IElasticSearchLayer"
+    />
+
+  <browser:page
+    name="elastic-rebuild"
+    for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
+    class=".utilviews.Utils"
+    attribute="rebuild"
+    permission="cmf.ManagePortal"
+    layer="..interfaces.IElasticSearchLayer"
+    />
+
+  <configure package="Products.CMFPlone.browser">
+    <browser:page
+      name="search"
+      class="collective.elasticsearch.browser.search.Search"
+      permission="zope2.View"
+      for="plone.app.layout.navigation.interfaces.INavigationRoot"
+      template="templates/search.pt"
+      layer="collective.elasticsearch.interfaces.IElasticSearchLayer"
+      />
+  </configure>
+
+</configure>

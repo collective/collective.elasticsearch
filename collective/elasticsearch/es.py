@@ -1,30 +1,25 @@
 from logging import getLogger
 import traceback
 
-from Acquisition import aq_base
 from DateTime import DateTime
-from Products.ZCatalog.Lazy import LazyMap
-from Products.CMFCore.utils import _getAuthenticatedUser
 from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
-from zope.component import getUtility
-from zope.component import queryMultiAdapter
-from zope.component import ComponentLookupError
-
-from plone.registry.interfaces import IRegistry
-from plone.indexer.interfaces import IIndexableObject
-
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import NotFoundError, ElasticsearchException
-
+from Products.CMFCore.utils import _getAuthenticatedUser
+from Products.ZCatalog.Lazy import LazyMap
+from collective.elasticsearch import hook
 from collective.elasticsearch.brain import BrainFactory
-from collective.elasticsearch.query import QueryAssembler
-from collective.elasticsearch.interfaces import (
-    IElasticSettings, DISABLE_MODE, DUAL_MODE)
-from collective.elasticsearch.utils import getUID
-from collective.elasticsearch.indexes import getIndex
-from collective.elasticsearch import datamanager
-from collective.elasticsearch.datamanager import Actions
+from collective.elasticsearch.interfaces import IElasticSearchCatalog
+from collective.elasticsearch.interfaces import IElasticSettings
+from collective.elasticsearch.interfaces import IMappingProvider
+from collective.elasticsearch.interfaces import IQueryAssembler
+from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import NotFoundError
+from plone.registry.interfaces import IRegistry
+from zope.component import ComponentLookupError
+from zope.component import getMultiAdapter
+from zope.component import getUtility
+from zope.globalrequest import getRequest
+from zope.interface import implements
 
 
 logger = getLogger(__name__)
@@ -35,37 +30,12 @@ CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 
 
-class PatchCaller(object):
-    '''
-    Very odd I have to do this. If I don't,
-    I get very pecular errors trying to call
-    the original methods
-    '''
-
-    def __init__(self, patched_object):
-        self._patched_object = patched_object
-
-    def __getattr__(self, name):
-        '''
-        assuming original attribute has '__old_' prefix
-        '''
-        if name[0] == '_':
-            return self.__dict__[name]
-        _type = type(aq_base(self._patched_object))
-        func = getattr(_type, '__old_' + name)
-
-        # 'bind' it
-        def bound_func(*args, **kwargs):
-            return func(self._patched_object, *args, **kwargs)
-        return bound_func
-
-
 class ElasticResult(object):
 
     def __init__(self, es, query):
         self.es = es
         self.bulk_size = es.get_setting('bulk_size', 50)
-        qassembler = QueryAssembler(es.catalogtool)
+        qassembler = getMultiAdapter((getRequest(), es), IQueryAssembler)
         dquery, sort = qassembler.normalize(query)
         equery = qassembler(dquery)
 
@@ -73,39 +43,13 @@ class ElasticResult(object):
         # but the start index of the bulk size for the
         # results it holds. This way we can skip around
         # for result data in a result object
-        self.query = self.make_query_transaction_aware(equery)
+        self.query = equery
         result = es._search(self.query, sort=sort)['hits']
         self.results = {
             0: result['hits']
         }
         self.count = result['total']
         self.sort = sort
-
-    def make_query_transaction_aware(self, query):
-        '''
-        IMPORTANT HERE!
-        How we do transactiona awareness here is by disabling
-        the querying of currently active transaction uids and then
-        allowing the querying of transaction data.
-        '''
-        filters = [{'term': {'transaction': False}}]
-        active = len(self.es.dm) > 0
-        if active:
-            filters.append({
-                'and': [{'term': {'transaction_id': self.es.dm.transaction_id}},
-                        {'term': {'transaction': True}}]
-            })
-        if filters > 1:
-            filters = [{'or': filters}]
-        if active:
-            # filter out transaction items
-            filters.append({
-                'not': {
-                    'term': {'_id': self.es.dm.keys()}
-                }
-            })
-        query['filtered']['filter']['and'].extend(filters)
-        return query
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -125,11 +69,19 @@ class ElasticSearchCatalog(object):
     '''
     from patched methods
     '''
+    implements(IElasticSearchCatalog)
+
+    # so these can be deleted but still used in queries
+    _default_mapping = {
+        'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
+        'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
+        'Description': {'store': False, 'type': 'string', 'index': 'analyzed'},
+        'views': {'store': True, 'type': 'integer'}  # allow integrators to utilize this
+    }
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
-        self.patched = PatchCaller(self.catalogtool)
 
         try:
             registry = getUtility(IRegistry)
@@ -140,7 +92,6 @@ class ElasticSearchCatalog(object):
         except ComponentLookupError:
             self.registry = None
 
-        self._dm = None
         self._conn = None
 
     @property
@@ -155,12 +106,6 @@ class ElasticSearchCatalog(object):
                 sniffer_timeout=self.get_setting('sniffer_timeout', 0.1),
                 retry_on_timeout=self.get_setting('retry_on_timeout', False))
         return self._conn
-
-    @property
-    def dm(self):
-        if self._dm is None:
-            self._dm = datamanager.register_in_transaction(self)
-        return self._dm
 
     def _search(self, query, **query_params):
         '''
@@ -180,145 +125,45 @@ class ElasticSearchCatalog(object):
         factory = BrainFactory(self.catalog)
         return LazyMap(factory, result, result.count)
 
-    def update_doc(self, obj, index_data):
-        conn = self.connection
-        uid = getUID(obj)
-        exists = False
-        if uid in self.dm._exists_cache:
-            exists = self.dm._exists_cache[uid]
-        else:
-            exists = conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid)
-            self.dm._exists_cache[uid] = exists
-        if exists:
-            self.dm.add_action(Actions.modify, uid, index_data)
-        else:
-            self.dm.add_action(Actions.add, uid, index_data)
-        self.dm._exists_cache[uid] = True
-
-        if self.registry.auto_flush:
-            conn.indices.refresh(index=self.index_name)
-
-    def remove_doc(self, obj):
-        uid = getUID(obj)
-        conn = self.connection
-        if uid in self.dm._exists_cache:
-            exists = self.dm._exists_cache[uid]
-        else:
-            exists = conn.exists(index=self.index_name, doc_type=self.doc_type, id=uid)
-            self.dm._exists_cache[uid] = exists
-        if exists:
-            self.dm.add_action(Actions.delete, uid)
-        if self.registry.auto_flush:
-            conn.indices.refresh(index=self.index_name)
-        self.dm._exists_cache[uid] = False
-
     @property
     def catalog_converted(self):
         return getattr(self.catalogtool, CONVERTED_ATTR, False)
 
     @property
-    def mode(self):
-        if not self.catalog_converted:
-            return DISABLE_MODE
-        if self.registry is None:
-            return DISABLE_MODE
-        return self.registry.mode
+    def enabled(self):
+        return self.registry and self.registry.enabled and self.catalog_converted
 
     def get_setting(self, name, default=None):
         return getattr(self.registry, name, default)
 
     def catalog_object(self, obj, uid=None, idxs=[], update_metadata=1, pghandler=None):
-        mode = self.mode
-        if mode in (DISABLE_MODE, DUAL_MODE):
-            result = self.patched.catalog_object(
+        if idxs != ['getObjPositionInParent']:
+            self.catalogtool._old_catalog_object(
                 obj, uid, idxs, update_metadata, pghandler)
-            if mode == DISABLE_MODE:
-                return result
-        wrapped_object = None
-        if not IIndexableObject.providedBy(obj):
-            # This is the CMF 2.2 compatible approach, which should be used
-            # going forward
-            wrapper = queryMultiAdapter((obj, self.catalogtool),
-                                        IIndexableObject)
-            if wrapper is not None:
-                wrapped_object = wrapper
-            else:
-                wrapped_object = obj
-        else:
-            wrapped_object = obj
-        catalog = self.catalog
-        if idxs == []:
-            idxs = catalog.indexes.keys()
-        index_data = {}
-        for index_name in idxs:
-            index = getIndex(catalog, index_name)
-            if index is not None:
-                try:
-                    value = index.get_value(wrapped_object)
-                except:
-                    info('Error indexing value: %s: %s\n%s' % (
-                        '/'.join(obj.getPhysicalPath()),
-                        index,
-                        traceback.format_exc()))
-                    value = None
-                if value in (None, 'None'):
-                    # yes, we'll index null data...
-                    value = None
 
-                # Ignore errors in converting to unicode, so json.dumps
-                # does not barf when we're trying to send data to ES.
-                if isinstance(value, str):
-                    value = unicode(value, 'utf-8', 'ignore')
-
-                index_data[index_name] = value
-        if update_metadata:
-            index = self.catalog.uids.get(uid, None)
-            if index is None:  # we are inserting new data
-                index = self.catalog.updateMetadata(obj, uid, None)
-                self.catalog._length.change(1)
-                self.catalog.uids[uid] = index
-                self.catalog.paths[index] = uid
-            # need to match elasticsearch result with brain
-            self.catalog.updateMetadata(wrapped_object, uid, index)
-
-        self.update_doc(obj, index_data)
+        if not self.enabled:
+            return
+        hook.add_object(self, obj)
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
-        mode = self.mode
         # always need to uncatalog to remove brains, etc
-        result = self.patched.uncatalog_object(uid, *args, **kwargs)
-        if mode == DISABLE_MODE:
-            return result
-
-        self.remove_doc(obj)
+        result = self.catalogtool._old_uncatalog_object(uid, *args, **kwargs)
+        if self.enabled:
+            hook.remove_object(self, obj)
 
         return result
 
     def manage_catalogRebuild(self, *args, **kwargs):
-        mode = self.mode
-        if mode == DISABLE_MODE:
-            return self.patched.manage_catalogRebuild(*args, **kwargs)
+        if self.enabled:
+            self.recreateCatalog()
 
-        self.recreateCatalog()
-
-        return self.patched.manage_catalogRebuild(*args, **kwargs)
+        return self.catalogtool._old_manage_catalogRebuild(*args, **kwargs)
 
     def manage_catalogClear(self, *args, **kwargs):
-        mode = self.mode
-        if mode == DISABLE_MODE:
-            return self.patched.manage_catalogClear(*args, **kwargs)
+        if self.enabled:
+            self.recreateCatalog()
 
-        self.recreateCatalog()
-
-        if mode == DUAL_MODE:
-            return self.patched.manage_catalogClear(*args, **kwargs)
-
-    def refreshCatalog(self, clear=0, pghandler=None):
-        mode = self.mode
-        if mode == DISABLE_MODE:
-            return self.patched.refreshCatalog(clear, pghandler)
-
-        return self.patched.refreshCatalog(clear, pghandler)
+        return self.catalogtool._old_manage_catalogClear(*args, **kwargs)
 
     def recreateCatalog(self):
         conn = self.connection
@@ -329,12 +174,19 @@ class ElasticSearchCatalog(object):
         self.convertToElastic()
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
-        mode = self.mode
-        if mode == DISABLE_MODE:
+        enabled = False
+        if self.enabled:
+            # need to also check is it is a search result we care about
+            # using EL for
+            if 'Title' in kw or 'SearchableText' in kw or 'Description' in kw:
+                # XXX need a smarter check here...
+                enabled = True
+        if not enabled:
             if check_perms:
-                return self.patched.searchResults(REQUEST, **kw)
+                return self.catalogtool._old_searchResults(REQUEST, **kw)
             else:
-                return self.patched.unrestrictedSearchResults(REQUEST, **kw)
+                return self.catalogtool._old_unrestrictedSearchResults(REQUEST, **kw)
+
         if isinstance(REQUEST, dict):
             query = REQUEST.copy()
         else:
@@ -361,39 +213,14 @@ class ElasticSearchCatalog(object):
             info('Error running Query: %s\n%s' % (
                 repr(orig_query),
                 traceback.format_exc()))
-            if mode == DUAL_MODE:
-                # fall back now...
-                return self.patched.searchResults(REQUEST, **kw)
-            else:
-                return LazyMap(BrainFactory(self.catalog), [], 0)
+            return self.catalogtool._old_searchResults(REQUEST, **kw)
 
     def convertToElastic(self):
         setattr(self.catalogtool, CONVERTED_ATTR, True)
         self.catalogtool._p_changed = True
-        properties = {}
-        for name in self.catalog.indexes.keys():
-            index = getIndex(self.catalog, name)
-            if index is not None:
-                properties[name] = index.create_mapping(name)
-            else:
-                raise Exception('Can not locate index for %s' % (
-                    name))
-
-        properties.update({
-            'transaction': {'type': 'boolean'},
-            'transaction_id': {
-                'type': 'string',
-                'index': 'not_analyzed',
-                'store': False}
-        })
-        conn = self.connection
-        try:
-            conn.indices.create(self.index_name)
-        except ElasticsearchException:
-            pass
-
-        mapping = {'properties': properties}
-        conn.indices.put_mapping(
+        adapter = getMultiAdapter((getRequest(), self), IMappingProvider)
+        mapping = adapter()
+        self.connection.indices.put_mapping(
             doc_type=self.doc_type,
             body=mapping,
             index=self.index_name)

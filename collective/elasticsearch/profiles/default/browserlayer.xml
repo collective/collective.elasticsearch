@@ -1,0 +1,6 @@
+<layers>
+  <layer
+    name="collective.elasticsearch"
+    interface="collective.elasticsearch.interfaces.IElasticSearchLayer"
+    />
+</layers>

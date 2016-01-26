@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0'
+version = '1.0.0dev0'
 
 setup(name='collective.elasticsearch',
       version=version,
@@ -26,18 +26,24 @@ setup(name='collective.elasticsearch',
       install_requires=[
           'setuptools',
           'elasticsearch>=1.0.0,<2.0.0',
-          'plone.app.registry'
+          'plone.app.registry',
+          'plone.api',
+          'collective.monkeypatcher'
       ],
       extras_require={
           'test': [
               'plone.app.testing',
               'plone.testing',
               'unittest2',
-              'plone.app.contenttypes'
+              'plone.app.contenttypes',
+              'collective.celery[test]'
           ],
       },
       entry_points="""
       # -*- Entry points: -*-
+
+      [celery_tasks]
+      castle = collective.elasticsearch.hook
 
       [z3c.autoinclude.plugin]
       target = plone
