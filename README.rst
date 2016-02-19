@@ -13,8 +13,8 @@ Step by Step for Ubuntu:
     - add-apt-repository ppa:webupd8team/java
     - apt-get update
     - apt-get install git curl oracle-java7-installer
-    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.1.tar.gz
-    - tar xfvz elasticsearch-0.90.1.tar.gz
+    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.3.4.deb
+    - tar xfvz elasticsearch-1.3.4.deb
     - cd elasticsearch
     - bin/elasticsearch -f &
 
@@ -51,6 +51,8 @@ Compatibility
 -------------
 
 Only works on Plone 5 with Dexterity types.
+
+Deployed with Elasticsearch 1.3.4, might work with other versions
 
 State
 -----
