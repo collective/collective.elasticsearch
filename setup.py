@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0.0dev0'
+version = '1.0.0a1'
 
 setup(name='collective.elasticsearch',
       version=version,
@@ -13,6 +13,8 @@ setup(name='collective.elasticsearch',
       classifiers=[
         "Framework :: Plone",
         "Programming Language :: Python",
+        "Framework :: Plone",
+        "Framework :: Plone :: 5.0"
         ],
       keywords='',
       author='',
