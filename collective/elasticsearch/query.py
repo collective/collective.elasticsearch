@@ -16,7 +16,7 @@ class QueryAssembler(object):
         sort = query.pop('sort_on', None)
         if sort:
             sort_on.extend(sort.split(','))
-        sort_order = query.pop('sort_order', 'ascending')
+        sort_order = query.pop('sort_order', 'descending')
         if sort_on:
             sortstr = ','.join(sort_on)
             if sort_order in ('descending', 'reverse', 'desc'):
