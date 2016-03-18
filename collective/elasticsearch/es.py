@@ -28,6 +28,7 @@ warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
+INDEX_VERSION_ATTR = '_elasticindexversion'
 
 
 class ElasticResult(object):
@@ -168,9 +169,14 @@ class ElasticSearchCatalog(object):
     def recreateCatalog(self):
         conn = self.connection
         try:
-            conn.indices.delete(index=self.index_name)
+            conn.indices.delete(index=self.real_index_name)
         except NotFoundError:
             pass
+        if self.index_version:
+            try:
+                conn.indices.delete_alias(self.index_name, self.real_index_name)
+            except NotFoundError:
+                pass
         self.convertToElastic()
 
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
@@ -230,6 +236,25 @@ class ElasticSearchCatalog(object):
         if hasattr(self.catalogtool, CUSTOM_INDEX_NAME_ATTR):
             return getattr(self.catalogtool, CUSTOM_INDEX_NAME_ATTR)
         return '-'.join(self.catalogtool.getPhysicalPath()[1:]).lower()
+
+    @property
+    def index_version(self):
+        return getattr(self.catalogtool, INDEX_VERSION_ATTR, None)
+
+    def bump_index_version(self):
+        version = getattr(self.catalogtool, INDEX_VERSION_ATTR, None)
+        if version is None:
+            version = 1
+        else:
+            version += 1
+        setattr(self.catalogtool, INDEX_VERSION_ATTR, version)
+        return version
+
+    @property
+    def real_index_name(self):
+        if self.index_version:
+            return '%s_%i' % (self.index_name, self.index_version)
+        return self.index_name
 
     @property
     def doc_type(self):

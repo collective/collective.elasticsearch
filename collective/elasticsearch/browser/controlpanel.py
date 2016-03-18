@@ -43,7 +43,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
         try:
             info = self.es.connection.info()
             status = self.es.connection.indices.status(
-                index=self.es.index_name)['indices'][self.es.index_name]
+                index=self.es.real_index_name)['indices'][self.es.real_index_name]
             return [
                 ('Cluster Name', info.get('name')),
                 ('Elastic Search Version', info['version']['number']),

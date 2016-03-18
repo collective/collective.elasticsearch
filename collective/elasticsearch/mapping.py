@@ -1,6 +1,5 @@
 from zope.interface import implements
 from collective.elasticsearch.indexes import getIndex
-from elasticsearch.exceptions import ElasticsearchException
 from collective.elasticsearch.interfaces import IMappingProvider
 
 
@@ -29,9 +28,19 @@ class MappingAdapter(object):
                     name))
 
         conn = self.es.connection
-        try:
-            conn.indices.create(self.es.index_name)
-        except ElasticsearchException:
+        index_name = self.es.index_name
+        if conn.indices.exists(index_name):
+            # created BEFORE we started creating this as aliases to versions,
+            # we can't go anywhere from here beside try updating...
             pass
+        else:
+            if not self.es.index_version:
+                # need to initialize version value
+                self.es.bump_index_version()
+            index_name_v = '%s_%i' % (index_name, self.es.index_version)
+            if not conn.indices.exists(index_name_v):
+                conn.indices.create(index_name_v)
+            if not conn.indices.exists_alias(index_name):
+                conn.indices.put_alias(index_name, index_name_v)
 
         return {'properties': properties}
