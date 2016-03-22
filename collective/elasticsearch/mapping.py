@@ -40,7 +40,7 @@ class MappingAdapter(object):
             index_name_v = '%s_%i' % (index_name, self.es.index_version)
             if not conn.indices.exists(index_name_v):
                 conn.indices.create(index_name_v)
-            if not conn.indices.exists_alias(index_name):
-                conn.indices.put_alias(index_name, index_name_v)
+            if not conn.indices.exists_alias(name=index_name):
+                conn.indices.put_alias(index=index_name_v, name=index_name)
 
         return {'properties': properties}

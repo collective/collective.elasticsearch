@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0.1a3 (2016-03-22)
+--------------------
+
+- make sure to get alias definition right
+  [vangheem]
+
 1.0.1a2 (2016-03-18)
 --------------------
 
