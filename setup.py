@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0.1a2'
+version = '1.0.1a3'
 
 setup(name='collective.elasticsearch',
       version=version,
