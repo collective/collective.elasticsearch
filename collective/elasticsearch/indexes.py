@@ -197,9 +197,17 @@ class EZCTextIndex(BaseIndex):
 
     def get_query(self, name, value):
         value = self._normalize_query(value)
+        clean_value = value.strip('*')  # el doesn't care about * like zope catalog does
         return {
-            'match': {
-                name: value
+            "dis_max": {
+                "queries": [
+                    {"match": {name: clean_value}},
+                    {"match_phrase_prefix": {name: clean_value}},
+                    {"match_phrase": {name: {
+                        'query': clean_value,
+                        'slop': 10
+                    }}}
+                ]
             }
         }
 

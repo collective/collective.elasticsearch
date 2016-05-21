@@ -1,6 +1,7 @@
 from collective.elasticsearch.interfaces import IQueryAssembler
 from zope.interface import implements
 from collective.elasticsearch.indexes import getIndex
+from collective.elasticsearch.indexes import EZCTextIndex
 
 
 class QueryAssembler(object):
@@ -45,9 +46,9 @@ class QueryAssembler(object):
             qq = None
             if index is None and key in ('SearchableText', 'Title', 'Description'):
                 # deleted index for plone performance but still need on ES
-                qq = {'match': {key: value}}
-            else:
-                qq = index.get_query(key, value)
+                index = EZCTextIndex(catalog, key)
+
+            qq = index.get_query(key, value)
             if qq is None:
                 continue
 
