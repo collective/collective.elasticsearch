@@ -27,7 +27,7 @@ setup(name='collective.elasticsearch',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'elasticsearch>=1.0.0,<2.0.0',
+          'elasticsearch>=2.0.0,<3.0.0',
           'plone.app.registry',
           'plone.api',
           'collective.monkeypatcher'

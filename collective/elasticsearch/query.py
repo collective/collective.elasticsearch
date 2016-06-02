@@ -42,6 +42,7 @@ class QueryAssembler(object):
         for key, value in dquery.items():
             if key not in idxs and key not in ('SearchableText', 'Title', 'Description'):
                 continue
+
             index = getIndex(catalog, key)
             qq = None
             if index is None and key in ('SearchableText', 'Title', 'Description'):

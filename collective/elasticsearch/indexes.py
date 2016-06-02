@@ -240,7 +240,7 @@ class EExtendedPathIndex(BaseIndex):
                 'path': {
                     'type': 'string',
                     'index': 'analyzed',
-                    'index_analyzer': 'keyword',
+                    'analyzer': 'keyword',
                     'store': False
                 },
                 'depth': {

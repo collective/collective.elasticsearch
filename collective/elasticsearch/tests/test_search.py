@@ -145,7 +145,7 @@ class TestQueries(BaseFunctionalTest):
         event = createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
-        el_results = self.catalog(portal_type='Event', Title='Event')
+        el_results = self.catalog(portal_type='Event', Title='Some Event')
         brain = el_results[0]
         self.assertEqual(brain.getObject(), event)
         self.assertEqual(brain.portal_type, 'Event')
