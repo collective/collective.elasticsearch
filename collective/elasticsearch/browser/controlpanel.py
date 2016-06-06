@@ -42,15 +42,16 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def es_info(self):
         try:
             info = self.es.connection.info()
-            status = self.es.connection.indices.status(
-                index=self.es.real_index_name)['indices'][self.es.real_index_name]
+            stats = self.es.connection.indices.stats(
+                index=self.es.real_index_name)['indices'][self.es.real_index_name]['total']
+
             return [
                 ('Cluster Name', info.get('name')),
                 ('Elastic Search Version', info['version']['number']),
-                ('Number of docs', status['docs']['num_docs']),
-                ('Deleted docs', status['docs']['deleted_docs']),
+                ('Number of docs', stats['docs']['count']),
+                ('Deleted docs', stats['docs']['deleted']),
                 ('Size', str(int(math.ceil(
-                    status['index']['size_in_bytes'] / 1024.0 / 1024.0))) + 'MB')
+                    stats['store']['size_in_bytes'] / 1024.0 / 1024.0))) + 'MB')
             ]
         except Exception:
             return []

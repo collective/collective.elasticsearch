@@ -10,4 +10,4 @@ install:
   - bin/buildout -Nc travis.cfg
 script: bin/test
 before_install:
-  - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.3.4.deb && sudo dpkg -i --force-confnew elasticsearch-1.3.4.deb
+  - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-2.3.3.deb && sudo dpkg -i --force-confnew elasticsearch-2.3.3.deb
