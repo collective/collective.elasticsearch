@@ -13,7 +13,7 @@ Step by Step for Ubuntu:
     - add-apt-repository ppa:webupd8team/java
     - apt-get update
     - apt-get install git curl oracle-java7-installer
-    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.3.4.tar.gz
+    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-2.3.3.tar.gz
     - tar xfvz elasticsearch-1.3.4.deb
     - cd elasticsearch
     - bin/elasticsearch -f &
@@ -52,7 +52,7 @@ Compatibility
 
 Only works on Plone 5 with Dexterity types.
 
-Deployed with Elasticsearch 1.3.4, might work with other versions
+Deployed with Elasticsearch 2.3.3
 
 State
 -----
@@ -93,6 +93,8 @@ TODO
 
 Travis
 ------
+
+Travis is broken with elastic search right now, tests run local though.
 
 .. image:: https://travis-ci.org/collective/collective.elasticsearch.png
    :target: https://travis-ci.org/collective/collective.elasticsearch
