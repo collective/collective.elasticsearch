@@ -1,9 +1,3 @@
-import logging
-import random
-import time
-import traceback
-
-from Products.CMFCore.interfaces import ISiteRoot
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.utils import getUID
@@ -12,11 +6,17 @@ from plone.app.uuid.utils import uuidToObject
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
 from plone.uuid.interfaces import IUUID
-import transaction
-import urllib3
-from zope.component import queryAdapter
+from Products.CMFCore.interfaces import ISiteRoot
+from zope.component import getAdapters
 from zope.component import queryMultiAdapter
 from zope.component.hooks import getSite
+
+import logging
+import random
+import time
+import traceback
+import transaction
+import urllib3
 
 
 logger = logging.getLogger('collective.elasticsearch')
@@ -163,8 +163,7 @@ def get_index_data(uid, obj, es):
                     name,
                     traceback.format_exc()))
 
-    adapter = queryAdapter(obj, IAdditionalIndexDataProvider)
-    if adapter:
+    for _, adapter in getAdapters((obj,), IAdditionalIndexDataProvider):
         index_data.update(adapter(es, index_data))
 
     return index_data
