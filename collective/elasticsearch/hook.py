@@ -162,6 +162,11 @@ def get_index_data(uid, obj, es):
                     '/'.join(obj.getPhysicalPath()),
                     name,
                     traceback.format_exc()))
+        else:
+            val = getattr(obj, name, None)
+            if callable(val):
+                val = val()
+            index_data[name] = val
 
     for _, adapter in getAdapters((obj,), IAdditionalIndexDataProvider):
         index_data.update(adapter(es, index_data))
