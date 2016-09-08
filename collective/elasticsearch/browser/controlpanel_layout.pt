@@ -88,6 +88,17 @@
               <td tal:content="python: data[1]" />
             </tr>
           </tbody>
+          <thead>
+            <th colspan="2">
+              Cluster Health
+            </th>
+          </thead>
+          <tbody>
+            <tr tal:repeat="data view/es_cluster_info">
+              <td tal:content="python: data[0]" />
+              <td tal:content="python: data[1]" />
+            </tr>
+          </tbody>
         </table>
       </div>
     </tal:el>

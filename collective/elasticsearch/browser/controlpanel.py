@@ -44,7 +44,6 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             info = self.es.connection.info()
             stats = self.es.connection.indices.stats(
                 index=self.es.real_index_name)['indices'][self.es.real_index_name]['total']
-
             return [
                 ('Cluster Name', info.get('name')),
                 ('Elastic Search Version', info['version']['number']),
@@ -52,6 +51,20 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
                 ('Deleted docs', stats['docs']['deleted']),
                 ('Size', str(int(math.ceil(
                     stats['store']['size_in_bytes'] / 1024.0 / 1024.0))) + 'MB')
+            ]
+        except Exception:
+            return []
+
+    @property
+    def es_cluster_info(self):
+        try:
+            info = self.es.connection.cluster.health()
+            return [
+                ('Cluster Name', info.get('cluster_name')),
+                ('Status', info.get('status')),
+                ('Active primary shards', info.get('active_primary_shards')),
+                ('Number nodes', info.get('number_of_nodes')),
+                ('Active shards', info.get('active_shards'))
             ]
         except Exception:
             return []
