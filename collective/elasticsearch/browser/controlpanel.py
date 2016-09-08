@@ -45,7 +45,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             stats = self.es.connection.indices.stats(
                 index=self.es.real_index_name)['indices'][self.es.real_index_name]['total']
             return [
-                ('Cluster Name', info.get('name')),
+                ('Node Name', info.get('name')),
                 ('Elastic Search Version', info['version']['number']),
                 ('Number of docs', stats['docs']['count']),
                 ('Deleted docs', stats['docs']['deleted']),
