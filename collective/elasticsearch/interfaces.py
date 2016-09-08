@@ -41,6 +41,14 @@ class IElasticSettings(Interface):
         default=False
     )
 
+    number_shards = schema.Integer(
+        title=u'Number of shards',
+        default=1)
+
+    number_replicas = schema.Integer(
+        title=u'Number of replicas',
+        default=0)
+
     sniff_on_start = schema.Bool(
         title=u'Sniff on start',
         default=False)
