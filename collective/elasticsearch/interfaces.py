@@ -47,11 +47,11 @@ class IElasticSettings(Interface):
         value_type=schema.TextLine(title=u'Index'),
     )
 
-    number_shards = schema.Integer(
+    number_shards = schema.Int(
         title=u'Number of shards',
         default=1)
 
-    number_replicas = schema.Integer(
+    number_replicas = schema.Int(
         title=u'Number of replicas',
         default=0)
 
