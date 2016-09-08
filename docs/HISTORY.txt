@@ -9,7 +9,10 @@ Changelog
 
 - Works under Plone 4.3
   [thomasdesvenain]
-  
+
+- TTW configuration for ES number of replicas and shards
+  [ajung]
+
 2.0.0a2 (2016-07-19)
 --------------------
 
