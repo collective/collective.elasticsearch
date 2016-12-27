@@ -35,6 +35,7 @@ class ElasticSearch(PloneSandboxLayer):
         import collective.elasticsearch
         xmlconfig.file('configure.zcml', collective.elasticsearch,
                        context=configurationContext)
+        z2.installProduct(app, 'Products.DateRecurringIndex')
         z2.installProduct(app, 'collective.elasticsearch')
 
     def setUpPloneSite(self, portal):

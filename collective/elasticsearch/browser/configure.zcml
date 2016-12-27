@@ -1,6 +1,6 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
-    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     xmlns:browser="http://namespaces.zope.org/browser"
     i18n_domain="collective.elasticsearch">
 
@@ -30,7 +30,7 @@
     layer="..interfaces.IElasticSearchLayer"
     />
 
-  <configure package="Products.CMFPlone.browser">
+  <configure zcml:condition="have plone-5" package="Products.CMFPlone.browser">
     <browser:page
       name="search"
       class="collective.elasticsearch.browser.search.Search"
