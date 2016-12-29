@@ -2,6 +2,7 @@ from collective.elasticsearch.interfaces import IQueryAssembler
 from zope.interface import implements
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.indexes import EZCTextIndex
+from collective.elasticsearch.utils import getESOnlyIndexes
 
 
 class QueryAssembler(object):
@@ -39,13 +40,13 @@ class QueryAssembler(object):
         catalog = self.catalogtool._catalog
         idxs = catalog.indexes.keys()
         query = {'match_all': {}}
+        es_only_indexes = getESOnlyIndexes()
         for key, value in dquery.items():
-            if key not in idxs and key not in ('SearchableText', 'Title', 'Description'):
+            if key not in idxs and key not in es_only_indexes:
                 continue
 
             index = getIndex(catalog, key)
-            qq = None
-            if index is None and key in ('SearchableText', 'Title', 'Description'):
+            if index is None and key in es_only_indexes:
                 # deleted index for plone performance but still need on ES
                 index = EZCTextIndex(catalog, key)
 

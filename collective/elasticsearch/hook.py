@@ -1,6 +1,6 @@
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
-from collective.elasticsearch.utils import getUID
+from collective.elasticsearch.utils import getUID, getESOnlyIndexes
 from plone import api
 from plone.app.uuid.utils import uuidToObject
 from plone.indexer.interfaces import IIndexableObject
@@ -58,7 +58,7 @@ def index_batch(remove, index, positions, es=None):
                     '_type': es.doc_type,
                     '_id': uid
                 }
-            }, get_index_data(uid, obj, es)])
+            }, get_index_data(obj, es)])
             if len(bulk_data) % bulk_size == 0:
                 conn.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
                 bulk_data = []
@@ -119,7 +119,7 @@ def get_wrapped_object(obj, es):
     return wrapped_object
 
 
-def get_index_data(uid, obj, es):
+def get_index_data(obj, es):
     catalog = es.catalogtool._catalog
 
     wrapped_object = get_wrapped_object(obj, es)
@@ -147,7 +147,7 @@ def get_index_data(uid, obj, es):
             index_data[index_name] = value
 
     # in case these indexes are deleted(to increase performance and improve ram usage)
-    for name in ('SearchableText', 'Title', 'Description'):
+    for name in getESOnlyIndexes():
         if name in index_data:
             continue
         indexer = queryMultiAdapter((obj, es.catalogtool), IIndexer, name=name)
