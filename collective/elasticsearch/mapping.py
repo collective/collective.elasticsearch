@@ -39,7 +39,13 @@ class MappingAdapter(object):
                 self.es.bump_index_version()
             index_name_v = '%s_%i' % (index_name, self.es.index_version)
             if not conn.indices.exists(index_name_v):
-                conn.indices.create(index_name_v)
+                request_body = {
+                    "settings" : {
+                        "number_of_shards": self.es.registry.number_shards,
+                        "number_of_replicas": self.es.registry.number_replicas
+                        }
+                }
+                conn.indices.create(index_name_v, body=request_body)
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
 
