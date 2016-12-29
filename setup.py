@@ -15,6 +15,7 @@ setup(name='collective.elasticsearch',
         "Programming Language :: Python",
         "Framework :: Plone",
         "Framework :: Plone :: 5.0"
+        "Framework :: Plone :: 4.3"
         ],
       keywords='plone elasticsearch search indexing',
       author='Nathan Van Gheem',
@@ -39,6 +40,12 @@ setup(name='collective.elasticsearch',
               'unittest2',
               'plone.app.contenttypes',
               'collective.celery[test]'
+          ],
+          'test-wo-celery': [
+              'plone.app.testing',
+              'plone.testing',
+              'unittest2',
+              'plone.app.contenttypes',
           ],
       },
       entry_points="""

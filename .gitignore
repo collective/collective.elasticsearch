@@ -4,3 +4,6 @@
 *.wpr
 *.wpu
 *.log
+bin/
+develop-eggs/
+.installed.cfg

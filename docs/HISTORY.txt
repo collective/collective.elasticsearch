@@ -4,6 +4,9 @@ Changelog
 2.0.0a2 (2016-07-19)
 --------------------
 
+- Works under Plone 4.3
+  [thomasdesvenain]
+
 - Fix indexing when removing the Title and Description indexes from Plone
   [vangheem]
 
