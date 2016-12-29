@@ -14,7 +14,7 @@ Step by Step for Ubuntu:
     - apt-get update
     - apt-get install git curl oracle-java7-installer
     - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-2.3.3.tar.gz
-    - tar xfvz elasticsearch-1.3.4.deb
+    - tar xfvz elasticsearch-2.3.3.tar.gz
     - cd elasticsearch
     - bin/elasticsearch -f &
 
@@ -69,18 +69,6 @@ This package comes with Celery support where all indexing operations will be pus
 into celery to be run asynchronously.
 
 Please see instructions for collective.celery to see how this works.
-
-
-Options
--------
-
-connection string
-    elasticsearch connection string
-mode
-    What mode to put elasticsearch into(default disabled)
-auto flush
-    if after every index, flush should be performed.
-    If on, things are always updated at a cost of performance.
 
 
 TODO
