@@ -62,14 +62,6 @@ class IElasticSettings(Interface):
         description=u'how long before timeout connecting to elastic search',
         default=2.0)
 
-    auto_flush = schema.Bool(
-        title=u'Auto flush',
-        description=u'Should indexing operations in elastic search '
-                    u'be immediately consistent. '
-                    u'If on, things are always updated immediately at '
-                    u'a cost of performance.',
-        default=True)
-
     bulk_size = schema.Int(
         title=u'Bulk Size',
         description=u'bulk size for elastic queries',
