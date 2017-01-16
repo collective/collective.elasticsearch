@@ -1,7 +1,5 @@
 language: python
 python: 2.7
-services:
-  - elasticsearch
 before_script:
   - sleep 10
 install:
@@ -10,4 +8,4 @@ install:
   - bin/buildout -Nc travis.cfg
 script: bin/test
 before_install:
-  - curl -O curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.3.3/elasticsearch-2.3.3.deb && sudo dpkg -i --force-confnew elasticsearch-2.3.3.deb
+  - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.3/elasticsearch-2.4.3.deb && sudo dpkg -i --force-confnew elasticsearch-2.4.3.deb && sudo service elasticsearch start

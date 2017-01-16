@@ -12,6 +12,7 @@ from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.interfaces import IMappingProvider
 from collective.elasticsearch.interfaces import IQueryAssembler
+from collective.elasticsearch.utils import getESOnlyIndexes
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from plone.registry.interfaces import IRegistry
@@ -182,10 +183,9 @@ class ElasticSearchCatalog(object):
     def searchResults(self, REQUEST=None, check_perms=False, **kw):
         enabled = False
         if self.enabled:
-            # need to also check is it is a search result we care about
+            # need to also check if it is a search result we care about
             # using EL for
-            if 'Title' in kw or 'SearchableText' in kw or 'Description' in kw:
-                # XXX need a smarter check here...
+            if getESOnlyIndexes().intersection(kw.keys()):
                 enabled = True
         if not enabled:
             if check_perms:

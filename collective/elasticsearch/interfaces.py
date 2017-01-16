@@ -24,7 +24,7 @@ class IQueryAssembler(Interface):
     def normalize(query):
         pass
 
-    def __call__(dquery):
+    def __call__(query):
         pass
 
 
@@ -39,6 +39,12 @@ class IElasticSettings(Interface):
     enabled = schema.Bool(
         title=u'Enabled',
         default=False
+    )
+
+    es_only_indexes = schema.Set(
+        title=u'Indexes for which all searches are done through ElasticSearch',
+        default={'Title', 'Description', 'SearchableText'},
+        value_type=schema.TextLine(title=u'Index'),
     )
 
     sniff_on_start = schema.Bool(
