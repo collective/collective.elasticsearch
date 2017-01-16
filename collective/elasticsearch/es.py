@@ -1,4 +1,3 @@
-from logging import getLogger
 import traceback
 
 from DateTime import DateTime
@@ -7,6 +6,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import _getAuthenticatedUser
 from Products.ZCatalog.Lazy import LazyMap
 from collective.elasticsearch import hook
+from collective.elasticsearch import logger
 from collective.elasticsearch.brain import BrainFactory
 from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
@@ -21,11 +21,6 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.interface import implements
-
-
-logger = getLogger(__name__)
-info = logger.info
-warn = logger.warn
 
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
@@ -212,7 +207,7 @@ class ElasticSearchCatalog(object):
                     AccessInactivePortalContent, self.catalogtool):
                 query['effectiveRange'] = DateTime()
         orig_query = query.copy()
-        # info('Running query: %s' % repr(orig_query))
+        logger.debug('Running query: %s' % repr(orig_query))
         try:
             return self.search(query)
         except Exception:

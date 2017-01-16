@@ -14,9 +14,7 @@ from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.DateRangeIndex.DateRangeIndex import DateRangeIndex
 from plone.app.folder.nogopip import GopipIndex
 from datetime import datetime
-
-logger = getLogger(__name__)
-info = logger.info
+from collective.elasticsearch import logger
 
 
 def _one(val):
@@ -60,7 +58,7 @@ class BaseIndex(object):
         if hasattr(self.index, 'index_object'):
             value = self.index._get_object_datum(object, attr)
         else:
-            info('catalogObject was passed bad index '
+            logger.info('catalogObject was passed bad index '
                  'object %s.' % str(self.index))
         if value == MV:
             return None
