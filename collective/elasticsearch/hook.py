@@ -82,7 +82,7 @@ def index_batch(remove, index, positions, es=None):
                 wrapped_object = get_wrapped_object(ob, es)
                 try:
                     value = index.get_value(wrapped_object)
-                except:
+                except Exception:
                     continue
                 bulk_data.extend([{
                     'update': {
@@ -130,7 +130,7 @@ def get_index_data(obj, es):
             try:
                 value = index.get_value(wrapped_object)
             except:
-                logger.info('Error indexing value: %s: %s\n%s' % (
+                logger.error('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     index_name,
                     traceback.format_exc()))
@@ -158,7 +158,7 @@ def get_index_data(obj, es):
                     val = unicode(val, 'utf-8', 'ignore')
                 index_data[name] = val
             except:
-                logger.info('Error indexing value: %s: %s\n%s' % (
+                logger.error('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     name,
                     traceback.format_exc()))

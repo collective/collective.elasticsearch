@@ -154,7 +154,7 @@ class EDateIndex(BaseIndex):
     def extract(self, name, data):
         try:
             return DateTime(super(EDateIndex, self).extract(name, data))
-        except:
+        except Exception:
             return None
 
 
@@ -171,7 +171,7 @@ class EZCTextIndex(BaseIndex):
     def get_value(self, object):
         try:
             fields = self.index._indexed_attrs
-        except:
+        except Exception:
             fields = [self.index._fieldname]
 
         all_texts = []

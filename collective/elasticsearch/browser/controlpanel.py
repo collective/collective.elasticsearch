@@ -33,9 +33,9 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
         except AttributeError:
             try:
                 return self.es.connection.cluster.health()['status'] in ('green', 'yellow')
-            except:
+            except Exception:
                 return False
-        except:
+        except Exception:
             return False
 
     @property

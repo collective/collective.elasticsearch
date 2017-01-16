@@ -89,7 +89,7 @@ class ElasticSearchCatalog(object):
             registry = getUtility(IRegistry)
             try:
                 self.registry = registry.forInterface(IElasticSettings)
-            except:
+            except Exception:
                 self.registry = None
         except ComponentLookupError:
             self.registry = None
@@ -215,8 +215,8 @@ class ElasticSearchCatalog(object):
         # info('Running query: %s' % repr(orig_query))
         try:
             return self.search(query)
-        except:
-            info('Error running Query: %s\n%s' % (
+        except Exception:
+            logger.error('Error running Query: %s\n%s' % (
                 repr(orig_query),
                 traceback.format_exc()))
             return self.catalogtool._old_searchResults(REQUEST, **kw)

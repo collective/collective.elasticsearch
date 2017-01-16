@@ -128,7 +128,7 @@ def importit(app):
                             type=random.choice(portal_types), id=pid, container=folder,
                             exclude_from_nav=True, **data.next())
                         print 'created ', count
-                    except:
+                    except Exception:
                         print 'skipping', count
             count = populate(folder, count, depth + 1)
         print 'commiting'
