@@ -9,7 +9,7 @@ from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import ISiteRoot
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
-from zope.component.hooks import getSite
+from zope.component.hooks import getSite, setSite
 
 import logging
 import random
@@ -26,6 +26,8 @@ def index_batch(remove, index, positions, es=None):
     if es is None:
         from collective.elasticsearch.es import ElasticSearchCatalog
         es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
+
+    setSite(api.portal.get())
     conn = es.connection
     bulk_size = es.get_setting('bulk_size', 50)
 

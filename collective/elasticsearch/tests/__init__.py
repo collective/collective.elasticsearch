@@ -38,8 +38,6 @@ class BaseTest(unittest.TestCase):
 
     def commit(self):
         transaction.commit()
-        # for some reason, commit() resets the site
-        setSite(self.portal)
 
     def clearTransactionEntries(self):
         _hook = hook.getHook(self.es)
