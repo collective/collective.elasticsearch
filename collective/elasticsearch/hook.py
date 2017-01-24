@@ -202,7 +202,7 @@ except ImportError:
 class CommitHook(object):
 
     def __init__(self, es):
-        self.remove = []
+        self.remove = set()
         self.index = {}
         self.positions = {}
         self.es = es
@@ -266,6 +266,8 @@ def add_object(es, obj):
         return
 
     hook.index[uid] = obj
+    if uid in hook.remove:
+        hook.remove.remove(uid)
 
 
 def index_positions(obj, ids):

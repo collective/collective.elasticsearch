@@ -23,7 +23,7 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(self.get_hook().index, {getUID(obj): obj})
         self.portal.manage_delObjects(['event'])
         self.assertEqual(current_length, len(self.catalog._catalog.uids))
-        self.assertEqual(self.get_hook().remove, [getUID(obj)])
+        self.assertEqual(self.get_hook().remove, {getUID(obj)})
         self.assertEqual(self.get_hook().index, {})
 
     def test_rename_object(self):
@@ -32,13 +32,15 @@ class TestQueries(BaseFunctionalTest):
         obj_uid = getUID(obj)
         self.assertEqual(current_length + 1, len(self.catalog._catalog.uids))
         api.content.rename(self.portal.event1, new_id='event2')
+        self.assertEqual(self.get_hook().remove, set())
+        self.assertEqual(self.get_hook().index, {obj_uid: obj})
 
     def test_delete_object(self):
         obj = createObject(self.portal, 'Event', 'event_to_delete', title='Some Event')
         obj_uid = getUID(obj)
         self.portal.manage_delObjects(['event_to_delete'])
         self.assertEqual(self.get_hook().index, {})
-        self.assertEqual(self.get_hook().remove, [obj_uid])
+        self.assertEqual(self.get_hook().remove, {obj_uid})
 
 if HAS_ATCONTENTTYPES:
     from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT
