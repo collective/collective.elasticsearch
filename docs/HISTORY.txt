@@ -7,7 +7,10 @@ Changelog
 - The list of indexes that forces es search is configurable.
   [thomasdesvenain]
 
-- Works under Plone 4.3
+- Works under Plone 4.3.
+  [thomasdesvenain]
+
+- Works with archetypes contents.
   [thomasdesvenain]
   
 2.0.0a2 (2016-07-19)

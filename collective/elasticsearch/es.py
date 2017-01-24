@@ -16,6 +16,7 @@ from collective.elasticsearch.utils import getESOnlyIndexes
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from plone.registry.interfaces import IRegistry
+from plone import api
 from zope.component import ComponentLookupError
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -144,6 +145,13 @@ class ElasticSearchCatalog(object):
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
         # always need to uncatalog to remove brains, etc
+        if obj is None:
+            # with archetypes, the obj is not passed, only the uid is
+            try:
+                obj = api.content.get(uid)
+            except KeyError:
+                pass
+
         result = self.catalogtool._old_uncatalog_object(uid, *args, **kwargs)
         if self.enabled:
             hook.remove_object(self, obj)

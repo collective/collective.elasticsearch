@@ -249,14 +249,23 @@ def getHook(es=None):
 def remove_object(es, obj):
     hook = getHook(es)
     uid = getUID(obj)
-    hook.remove.append(uid)
+    if uid is None:
+        logger.error("Tried to unindex an object of None uid")
+        return
+
+    hook.remove.add(uid)
     if uid in hook.index:
         del hook.index[uid]
 
 
 def add_object(es, obj):
     hook = getHook(es)
-    hook.index[getUID(obj)] = obj
+    uid = getUID(obj)
+    if uid is None:
+        logger.error("Tried to index an object of None uid")
+        return
+
+    hook.index[uid] = obj
 
 
 def index_positions(obj, ids):
@@ -264,4 +273,8 @@ def index_positions(obj, ids):
     if ISiteRoot.providedBy(obj):
         hook.positions['/'] = ids
     else:
+        uid = getUID(obj)
+        if uid is None:
+            logger.error("Tried to index an object of None uid")
+            return
         hook.positions[getUID(obj)] = ids
