@@ -69,14 +69,6 @@ class ElasticSearchCatalog(object):
     '''
     implements(IElasticSearchCatalog)
 
-    # so these can be deleted but still used in queries
-    _default_mapping = {
-        'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'Description': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'views': {'store': True, 'type': 'integer'}  # allow integrators to utilize this
-    }
-
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
