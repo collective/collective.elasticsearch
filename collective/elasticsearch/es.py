@@ -30,7 +30,9 @@ INDEX_VERSION_ATTR = '_elasticindexversion'
 
 class ElasticResult(object):
 
-    def __init__(self, es, query):
+    def __init__(self, es, query, **query_params):
+        assert 'sort' not in query_params
+        assert 'start' not in query_params
         self.es = es
         self.bulk_size = es.get_setting('bulk_size', 50)
         qassembler = getMultiAdapter((getRequest(), es), IQueryAssembler)
@@ -42,12 +44,13 @@ class ElasticResult(object):
         # results it holds. This way we can skip around
         # for result data in a result object
         self.query = equery
-        result = es._search(self.query, sort=sort)['hits']
+        result = es._search(self.query, sort=sort, **query_params)['hits']
         self.results = {
             0: result['hits']
         }
         self.count = result['total']
         self.sort = sort
+        self.query_params = query_params
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -58,7 +61,8 @@ class ElasticResult(object):
             result_key = (key / self.bulk_size) * self.bulk_size
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
-                    self.query, sort=self.sort, start=result_key)['hits']['hits']
+                    self.query, sort=self.sort, start=result_key, **self.query_params
+                )['hits']['hits']
             result_index = key % self.bulk_size
             return self.results[result_key][result_index]
 
@@ -102,7 +106,8 @@ class ElasticSearchCatalog(object):
         '''
         if 'start' in query_params:
             query_params['from_'] = query_params.pop('start')
-        query_params['fields'] = 'path.path'
+
+        query_params['fields'] = query_params.get('fields', 'path.path')
         query_params['size'] = self.get_setting('bulk_size', 50)
 
         return self.connection.search(index=self.index_name,
@@ -110,9 +115,21 @@ class ElasticSearchCatalog(object):
                                       body={'query': query},
                                       **query_params)
 
-    def search(self, query):
-        result = ElasticResult(self, query)
-        factory = BrainFactory(self.catalog)
+    def search(self, query, factory=None, **query_params):
+        """
+        @param query: dict
+            The plone query
+        @param factory: function(result: dict): any
+            The factory that maps each elastic search result.
+            By default, get the plone catalog brain.
+        @param query_params:
+            Parameters to pass to the search method
+            'fields': the list of fields to get from stored source
+        @return: LazyMap
+        """
+        result = ElasticResult(self, query, **query_params)
+        if not factory:
+            factory = BrainFactory(self.catalog)
         return LazyMap(factory, result, result.count)
 
     @property

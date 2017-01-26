@@ -16,6 +16,11 @@ Changelog
 2.0.0a2 (2016-07-19)
 --------------------
 
+- We can pass a custom results factory and custom query parameters
+  to IElasticSearchCatalog.search() method.
+  So we can use it as a public interface for custom needs.
+  [thomasdesvenain]
+
 - Prevent from unindex before reindex when uid is unchanged, for instance at rename.
   Use a set for to-remove list.
   [thomasdesvenain]
