@@ -28,6 +28,18 @@ CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 INDEX_VERSION_ATTR = '_elasticindexversion'
 
 
+def _reversed_sort(sort):
+    criterion, order = sort.split(':')
+    if order == 'desc':
+        order = 'asc'
+    elif order == 'asc':
+        order = 'desc'
+    else:
+        raise ValueError("Invalid order: %s" % order)
+
+    return "%s:%s" % (criterion, order)
+
+
 class ElasticResult(object):
 
     def __init__(self, es, query, **query_params):
@@ -56,14 +68,26 @@ class ElasticResult(object):
         if isinstance(key, slice):
             return [self[i] for i in range(key.start, key.end)]
         else:
-            if key >= self.count:
+            if key + 1 > self.count:
                 raise IndexError
-            result_key = (key / self.bulk_size) * self.bulk_size
+            elif key < 0 and abs(key) > self.count:
+                raise IndexError
+            elif key >= 0:
+                result_key = (key / self.bulk_size) * self.bulk_size
+                start = result_key
+                sort = self.sort
+                result_index = key % self.bulk_size
+            elif key < 0:
+                result_key = - ((abs(key) / self.bulk_size) * self.bulk_size) - 1
+                start = abs(result_key) - 1
+                sort = _reversed_sort(self.sort)
+                result_index = (abs(key) - 1) % self.bulk_size
+
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
-                    self.query, sort=self.sort, start=result_key, **self.query_params
+                    self.query, sort=sort, start=start, **self.query_params
                 )['hits']['hits']
-            result_index = key % self.bulk_size
+
             return self.results[result_key][result_index]
 
 

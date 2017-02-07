@@ -155,6 +155,27 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(brain.getURL(), 'http://nohost/plone/event')
         self.assertEqual(brain.getPath(), '/plone/event')
 
+        brain = el_results[-1]
+        self.assertEqual(brain.getObject(), event)
+        self.assertEqual(brain.portal_type, 'Event')
+        self.assertEqual(brain.getURL(), 'http://nohost/plone/event')
+        self.assertEqual(brain.getPath(), '/plone/event')
+
+        createObject(self.portal, 'Event', 'event2', title='Some Event')
+        self.commit()
+        self.es.connection.indices.flush()
+
+        el_results2 = self.catalog(portal_type='Event', Title='Some Event', sort_on='getId', sort_order='descending')
+        brain = el_results2[0]
+        self.assertEqual(brain.getId, 'event2')
+        brain = el_results2[1]
+        self.assertEqual(brain.getId, 'event')
+
+        brain = el_results2[-1]
+        self.assertEqual(brain.getId, 'event')
+        brain = el_results2[-2]
+        self.assertEqual(brain.getId, 'event2')
+
 
 if HAS_ATCONTENTTYPES:
     from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT

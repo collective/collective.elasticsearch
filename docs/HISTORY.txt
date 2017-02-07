@@ -4,6 +4,9 @@ Changelog
 2.0.0a3 (Unreleased)
 --------------------
 
+- Fixed get brain in lazy list with negative indexes.
+  [thomasdesvenain]
+
 - The list of indexes that forces es search is configurable.
   [thomasdesvenain]
 
@@ -12,7 +15,7 @@ Changelog
 
 - Works with archetypes contents.
   [thomasdesvenain]
-  
+
 2.0.0a2 (2016-07-19)
 --------------------
 
