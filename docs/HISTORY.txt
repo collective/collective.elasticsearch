@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.0.0a2 (2016-07-19)
+2.0.0a3 (Unreleased)
 --------------------
 
 - The list of indexes that forces es search is configurable.
@@ -9,6 +9,9 @@ Changelog
 
 - Works under Plone 4.3
   [thomasdesvenain]
+  
+2.0.0a2 (2016-07-19)
+--------------------
 
 - Fix indexing when removing the Title and Description indexes from Plone
   [vangheem]
