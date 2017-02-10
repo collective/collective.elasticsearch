@@ -1,3 +1,4 @@
+from collective.elasticsearch import logger
 
 
 def BrainFactory(catalog):
@@ -9,6 +10,10 @@ def BrainFactory(catalog):
             rid = catalog.uids.get(path)
             try:
                 return catalog[rid]
-            except:
+            except TypeError:
+                logger.error("Got not integer key for result: {0}".format(result))
+                return None
+            except KeyError:
+                logger.error("Couldn't get catalog entry for result: {0}".format(result))
                 return None
     return factory

@@ -1,5 +1,5 @@
 from collective.elasticsearch.tests import BaseFunctionalTest
-from collective.elasticsearch.testing import createObject
+from collective.elasticsearch.testing import createObject, HAS_ATCONTENTTYPES
 import unittest2 as unittest
 from DateTime import DateTime
 import time
@@ -10,6 +10,9 @@ DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
 
 
 class TestQueries(BaseFunctionalTest):
+
+    event_klass = EVENT_KLASS
+    document_klass = DOCUMENT_KLASS
 
     def test_field_index_query(self):
         createObject(self.portal, 'Event', 'event', title='Some Event')
@@ -22,7 +25,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
-        el_results = self.catalog(object_provides=[EVENT_KLASS], SearchableText='Event')
+        el_results = self.catalog(object_provides=[self.event_klass], SearchableText='Event')
         self.assertEqual(len(el_results), 1)
 
     def test_multi_keyword_index_query(self):
@@ -31,7 +34,7 @@ class TestQueries(BaseFunctionalTest):
         self.commit()
         self.es.connection.indices.flush()
         el_results = self.catalog(
-            object_provides=[EVENT_KLASS, DOCUMENT_KLASS],
+            object_provides=[self.event_klass, self.document_klass],
             SearchableText='new content')
         self.assertEqual(len(el_results), 2)
 
@@ -151,6 +154,40 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(brain.portal_type, 'Event')
         self.assertEqual(brain.getURL(), 'http://nohost/plone/event')
         self.assertEqual(brain.getPath(), '/plone/event')
+
+        brain = el_results[-1]
+        self.assertEqual(brain.getObject(), event)
+        self.assertEqual(brain.portal_type, 'Event')
+        self.assertEqual(brain.getURL(), 'http://nohost/plone/event')
+        self.assertEqual(brain.getPath(), '/plone/event')
+
+        createObject(self.portal, 'Event', 'event2', title='Some Event')
+        self.commit()
+        self.es.connection.indices.flush()
+
+        el_results2 = self.catalog(portal_type='Event', Title='Some Event', sort_on='getId', sort_order='descending')
+        brain = el_results2[0]
+        self.assertEqual(brain.getId, 'event2')
+        brain = el_results2[1]
+        self.assertEqual(brain.getId, 'event')
+
+        brain = el_results2[-1]
+        self.assertEqual(brain.getId, 'event')
+        brain = el_results2[-2]
+        self.assertEqual(brain.getId, 'event2')
+
+
+if HAS_ATCONTENTTYPES:
+    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT
+
+    EVENT_KLASS_AT = 'Products.ATContentTypes.interfaces.event.IATEvent'
+    DOCUMENT_KLASS_AT = 'Products.ATContentTypes.interfaces.document.IATDocument'
+
+    class TestQueriesAT(TestQueries):
+        layer = ElasticSearch_FUNCTIONAL_TESTING_AT
+
+        event_klass = EVENT_KLASS_AT
+        document_klass = DOCUMENT_KLASS_AT
 
 
 def test_suite():

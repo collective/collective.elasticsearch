@@ -1,12 +1,6 @@
-from logging import getLogger
-
 from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog
 from plone import api
-
-
-logger = getLogger(__name__)
-info = logger.info
 
 
 def catalog_object(self, object, uid=None, idxs=[],

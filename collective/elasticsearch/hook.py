@@ -9,7 +9,7 @@ from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import ISiteRoot
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
-from zope.component.hooks import getSite
+from zope.component.hooks import getSite, setSite
 
 import logging
 import random
@@ -26,6 +26,8 @@ def index_batch(remove, index, positions, es=None):
     if es is None:
         from collective.elasticsearch.es import ElasticSearchCatalog
         es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
+
+    setSite(api.portal.get())
     conn = es.connection
     bulk_size = es.get_setting('bulk_size', 50)
 
@@ -82,7 +84,7 @@ def index_batch(remove, index, positions, es=None):
                 wrapped_object = get_wrapped_object(ob, es)
                 try:
                     value = index.get_value(wrapped_object)
-                except:
+                except Exception:
                     continue
                 bulk_data.extend([{
                     'update': {
@@ -130,7 +132,7 @@ def get_index_data(obj, es):
             try:
                 value = index.get_value(wrapped_object)
             except:
-                logger.info('Error indexing value: %s: %s\n%s' % (
+                logger.error('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     index_name,
                     traceback.format_exc()))
@@ -158,7 +160,7 @@ def get_index_data(obj, es):
                     val = unicode(val, 'utf-8', 'ignore')
                 index_data[name] = val
             except:
-                logger.info('Error indexing value: %s: %s\n%s' % (
+                logger.error('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     name,
                     traceback.format_exc()))
@@ -200,7 +202,7 @@ except ImportError:
 class CommitHook(object):
 
     def __init__(self, es):
-        self.remove = []
+        self.remove = set()
         self.index = {}
         self.positions = {}
         self.es = es
@@ -247,14 +249,25 @@ def getHook(es=None):
 def remove_object(es, obj):
     hook = getHook(es)
     uid = getUID(obj)
-    hook.remove.append(uid)
+    if uid is None:
+        logger.error("Tried to unindex an object of None uid")
+        return
+
+    hook.remove.add(uid)
     if uid in hook.index:
         del hook.index[uid]
 
 
 def add_object(es, obj):
     hook = getHook(es)
-    hook.index[getUID(obj)] = obj
+    uid = getUID(obj)
+    if uid is None:
+        logger.error("Tried to index an object of None uid")
+        return
+
+    hook.index[uid] = obj
+    if uid in hook.remove:
+        hook.remove.remove(uid)
 
 
 def index_positions(obj, ids):
@@ -262,4 +275,8 @@ def index_positions(obj, ids):
     if ISiteRoot.providedBy(obj):
         hook.positions['/'] = ids
     else:
+        uid = getUID(obj)
+        if uid is None:
+            logger.error("Tried to index an object of None uid")
+            return
         hook.positions[getUID(obj)] = ids

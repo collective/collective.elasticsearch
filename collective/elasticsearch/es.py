@@ -1,4 +1,3 @@
-from logging import getLogger
 import traceback
 
 from DateTime import DateTime
@@ -7,6 +6,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import _getAuthenticatedUser
 from Products.ZCatalog.Lazy import LazyMap
 from collective.elasticsearch import hook
+from collective.elasticsearch import logger
 from collective.elasticsearch.brain import BrainFactory
 from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
@@ -16,25 +16,35 @@ from collective.elasticsearch.utils import getESOnlyIndexes
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from plone.registry.interfaces import IRegistry
+from plone import api
 from zope.component import ComponentLookupError
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.interface import implements
 
-
-logger = getLogger(__name__)
-info = logger.info
-warn = logger.warn
-
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 INDEX_VERSION_ATTR = '_elasticindexversion'
 
 
+def _reversed_sort(sort):
+    criterion, order = sort.split(':')
+    if order == 'desc':
+        order = 'asc'
+    elif order == 'asc':
+        order = 'desc'
+    else:
+        raise ValueError("Invalid order: %s" % order)
+
+    return "%s:%s" % (criterion, order)
+
+
 class ElasticResult(object):
 
-    def __init__(self, es, query):
+    def __init__(self, es, query, **query_params):
+        assert 'sort' not in query_params
+        assert 'start' not in query_params
         self.es = es
         self.bulk_size = es.get_setting('bulk_size', 50)
         qassembler = getMultiAdapter((getRequest(), es), IQueryAssembler)
@@ -46,24 +56,38 @@ class ElasticResult(object):
         # results it holds. This way we can skip around
         # for result data in a result object
         self.query = equery
-        result = es._search(self.query, sort=sort)['hits']
+        result = es._search(self.query, sort=sort, **query_params)['hits']
         self.results = {
             0: result['hits']
         }
         self.count = result['total']
         self.sort = sort
+        self.query_params = query_params
 
     def __getitem__(self, key):
         if isinstance(key, slice):
             return [self[i] for i in range(key.start, key.end)]
         else:
-            if key >= self.count:
+            if key + 1 > self.count:
                 raise IndexError
-            result_key = (key / self.bulk_size) * self.bulk_size
+            elif key < 0 and abs(key) > self.count:
+                raise IndexError
+            elif key >= 0:
+                result_key = (key / self.bulk_size) * self.bulk_size
+                start = result_key
+                sort = self.sort
+                result_index = key % self.bulk_size
+            elif key < 0:
+                result_key = - ((abs(key) / self.bulk_size) * self.bulk_size) - 1
+                start = abs(result_key) - 1
+                sort = _reversed_sort(self.sort)
+                result_index = (abs(key) - 1) % self.bulk_size
+
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
-                    self.query, sort=self.sort, start=result_key)['hits']['hits']
-            result_index = key % self.bulk_size
+                    self.query, sort=sort, start=start, **self.query_params
+                )['hits']['hits']
+
             return self.results[result_key][result_index]
 
 
@@ -73,14 +97,6 @@ class ElasticSearchCatalog(object):
     '''
     implements(IElasticSearchCatalog)
 
-    # so these can be deleted but still used in queries
-    _default_mapping = {
-        'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'Description': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'views': {'store': True, 'type': 'integer'}  # allow integrators to utilize this
-    }
-
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
@@ -89,7 +105,7 @@ class ElasticSearchCatalog(object):
             registry = getUtility(IRegistry)
             try:
                 self.registry = registry.forInterface(IElasticSettings)
-            except:
+            except Exception:
                 self.registry = None
         except ComponentLookupError:
             self.registry = None
@@ -114,7 +130,8 @@ class ElasticSearchCatalog(object):
         '''
         if 'start' in query_params:
             query_params['from_'] = query_params.pop('start')
-        query_params['fields'] = 'path.path'
+
+        query_params['fields'] = query_params.get('fields', 'path.path')
         query_params['size'] = self.get_setting('bulk_size', 50)
 
         return self.connection.search(index=self.index_name,
@@ -122,9 +139,21 @@ class ElasticSearchCatalog(object):
                                       body={'query': query},
                                       **query_params)
 
-    def search(self, query):
-        result = ElasticResult(self, query)
-        factory = BrainFactory(self.catalog)
+    def search(self, query, factory=None, **query_params):
+        """
+        @param query: dict
+            The plone query
+        @param factory: function(result: dict): any
+            The factory that maps each elastic search result.
+            By default, get the plone catalog brain.
+        @param query_params:
+            Parameters to pass to the search method
+            'fields': the list of fields to get from stored source
+        @return: LazyMap
+        """
+        result = ElasticResult(self, query, **query_params)
+        if not factory:
+            factory = BrainFactory(self.catalog)
         return LazyMap(factory, result, result.count)
 
     @property
@@ -149,6 +178,13 @@ class ElasticSearchCatalog(object):
 
     def uncatalog_object(self, uid, obj=None, *args, **kwargs):
         # always need to uncatalog to remove brains, etc
+        if obj is None:
+            # with archetypes, the obj is not passed, only the uid is
+            try:
+                obj = api.content.get(uid)
+            except KeyError:
+                pass
+
         result = self.catalogtool._old_uncatalog_object(uid, *args, **kwargs)
         if self.enabled:
             hook.remove_object(self, obj)
@@ -212,11 +248,11 @@ class ElasticSearchCatalog(object):
                     AccessInactivePortalContent, self.catalogtool):
                 query['effectiveRange'] = DateTime()
         orig_query = query.copy()
-        # info('Running query: %s' % repr(orig_query))
+        logger.debug('Running query: %s' % repr(orig_query))
         try:
             return self.search(query)
-        except:
-            info('Error running Query: %s\n%s' % (
+        except Exception:
+            logger.error('Error running Query: %s\n%s' % (
                 repr(orig_query),
                 traceback.format_exc()))
             return self.catalogtool._old_searchResults(REQUEST, **kw)

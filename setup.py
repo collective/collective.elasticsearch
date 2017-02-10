@@ -47,6 +47,12 @@ setup(name='collective.elasticsearch',
               'unittest2',
               'plone.app.contenttypes',
           ],
+          'test-archetypes': [
+              'plone.app.testing',
+              'plone.testing',
+              'unittest2',
+              'Products.ATContentTypes',
+          ],
       },
       entry_points="""
       # -*- Entry points: -*-
