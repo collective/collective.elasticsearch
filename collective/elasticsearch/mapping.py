@@ -12,6 +12,9 @@ class MappingAdapter(object):
         'Description': {'store': False, 'type': 'string', 'index': 'analyzed'}
     }
 
+    number_of_replicas = None
+    number_of_shards = None
+
     def __init__(self, request, es):
         self.request = request
         self.es = es
@@ -39,7 +42,14 @@ class MappingAdapter(object):
                 self.es.bump_index_version()
             index_name_v = '%s_%i' % (index_name, self.es.index_version)
             if not conn.indices.exists(index_name_v):
-                conn.indices.create(index_name_v)
+                body = {}
+                if self.number_of_replicas:
+                    body['number_of_replicas'] = self.number_of_replicas
+
+                if self.number_of_shards:
+                    body['number_of_shards'] = self.number_of_shards
+
+                conn.indices.create(index_name_v, body=body)
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
 
