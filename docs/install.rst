@@ -1,5 +1,8 @@
-collective.elasticsearch Installation
--------------------------------------
+Installation
+============
+
+collective.elasticsearch
+------------------------
 
 To install collective.elasticsearch into the global Python environment (or a workingenv),
 using a traditional Zope 2 instance, you can do this:
@@ -28,15 +31,15 @@ into your Zope instance.
 Alternatively, if you are using zc.buildout and the plone.recipe.zope2instance
 recipe to manage your project, you can do this:
 
-* Add ``collective.elasticsearch`` to the list of eggs to install, e.g.:
+* Add ``collective.elasticsearch`` to the list of eggs to install, e.g.::
 
     [buildout]
     ...
     eggs =
         ...
         collective.elasticsearch
-       
-* Tell the plone.recipe.zope2instance recipe to install a ZCML slug:
+
+* Tell the plone.recipe.zope2instance recipe to install a ZCML slug::
 
     [instance]
     recipe = plone.recipe.zope2instance
@@ -44,9 +47,30 @@ recipe to manage your project, you can do this:
     zcml =
         collective.elasticsearch
       
-* Re-run buildout, e.g. with:
+* Re-run buildout, e.g. with::
 
     $ ./bin/buildout
         
 You can skip the ZCML slug if you are going to explicitly include the package
 from another package's configure.zcml file.
+
+elasticsearch
+-------------
+
+Less than 5 minutes:
+    - Download & install Java
+    - Download & install Elastic Search
+    - bin/elasticsearch
+
+Step by Step for Ubuntu:
+    - add-apt-repository ppa:webupd8team/java
+    - apt-get update
+    - apt-get install git curl oracle-java7-installer
+    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-2.4.3.tar.gz
+    - tar xfvz elasticsearch-2.4.3.tar.gz
+    - cd elasticsearch
+    - bin/elasticsearch &
+
+Does it work?
+    - curl http://localhost:9200/
+    - Do you see the Hudsucker Proxy reference? "You Know, for Search"

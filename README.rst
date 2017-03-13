@@ -1,6 +1,8 @@
 Introduction
 ============
 
+See the full documentation on [readthedocs](http://collectiveelasticsearch.readthedocs.io/).
+
 Install elasticsearch
 ---------------------
 
