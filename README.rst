@@ -7,7 +7,7 @@ Install elasticsearch
 Less than 5 minutes:
     - Download & install Java
     - Download & install Elastic Search
-    - bin/elasticsearch -f
+    - bin/elasticsearch
 
 Step by Step for Ubuntu:
     - add-apt-repository ppa:webupd8team/java
@@ -16,7 +16,7 @@ Step by Step for Ubuntu:
     - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-2.3.3.tar.gz
     - tar xfvz elasticsearch-2.3.3.tar.gz
     - cd elasticsearch
-    - bin/elasticsearch -f &
+    - bin/elasticsearch &
 
 Does it work?
     - curl http://localhost:9200/
