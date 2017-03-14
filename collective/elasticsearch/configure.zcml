@@ -20,6 +20,25 @@
     provides="Products.GenericSetup.interfaces.EXTENSION"
     />
 
+  <genericsetup:upgradeSteps
+        source="*"
+        destination="1"
+        profile="collective.elasticsearch:default">
+  </genericsetup:upgradeSteps>
+
+  <genericsetup:upgradeSteps
+        source="1"
+        destination="2"
+        profile="collective.elasticsearch:default">
+
+    <genericsetup:upgradeStep
+         title="Update registry."
+         description=""
+         handler=".upgrades.update_registry"
+         />
+
+  </genericsetup:upgradeSteps>
+
   <include package=".browser" />
 
   <adapter
