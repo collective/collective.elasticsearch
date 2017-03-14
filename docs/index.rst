@@ -22,7 +22,9 @@ ElasticSearch.
 Compatibility
 -------------
 
-Only works on Plone 5 with Dexterity types.
+Only unit tested with Plone 5 with Dexterity types and archetypes.
+
+It should also work with Plone 4.3 and Plone 5.1.
 
 Deployed with Elasticsearch 2.4.3
 

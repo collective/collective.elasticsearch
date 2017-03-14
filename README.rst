@@ -52,7 +52,9 @@ ElasticSearch.
 Compatibility
 -------------
 
-Only works on Plone 5 with Dexterity types.
+Only tested with Plone 5 with Dexterity types.
+
+It should also work with Plone 4.3 and archetypes.
 
 Deployed with Elasticsearch 2.4.3
 
@@ -83,8 +85,6 @@ TODO
 
 Travis
 ------
-
-Travis is broken with elastic search right now, tests run local though.
 
 .. image:: https://travis-ci.org/collective/collective.elasticsearch.png
    :target: https://travis-ci.org/collective/collective.elasticsearch
