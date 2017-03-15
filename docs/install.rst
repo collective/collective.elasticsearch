@@ -69,7 +69,7 @@ Step by Step for Ubuntu:
     - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.3/elasticsearch-2.4.3.tar.gz
     - tar xfvz elasticsearch-2.4.3.tar.gz
     - cd elasticsearch
-    - bin/elasticsearch &
+    - bin/elasticsearch
 
 Step by Step for CentOS/RedHat:
     - yum -y install java-1.8.0-openjdk.x86_64
@@ -77,7 +77,7 @@ Step by Step for CentOS/RedHat:
     - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.3/elasticsearch-2.4.3.tar.gz
     - tar xfvz elasticsearch-2.4.3.tar.gz
     - cd elasticsearch
-    - bin/elasticsearch &
+    - bin/elasticsearch
 
 Does it work?
     - curl http://localhost:9200/
