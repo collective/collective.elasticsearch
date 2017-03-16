@@ -11,6 +11,9 @@ class IElasticSearchCatalog(Interface):
 
 
 class IMappingProvider(Interface):
+    def get_index_creation_body():
+        pass
+
     def __call__():
         pass
 
