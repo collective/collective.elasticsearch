@@ -54,6 +54,23 @@ the _default_mapping attribute to add your own indexes::
         }
 
 
+Changing the settings of the index
+----------------------------------
+
+If you want to customize your elasticsearch index, you can override the ``get_index_creation_body`` method on the ``MappingAdapter``::
+
+    class MyMappingAdapter(object):
+        implements(IMappingProvider)
+
+        def get_index_creation_body(self):
+            return {
+                "settings" : {
+                    "number_of_shards": 1,
+                    "number_of_replicas": 0
+                }
+            }
+
+
 Changing the query made to elasticsearch
 ----------------------------------------
 

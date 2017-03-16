@@ -4,6 +4,9 @@ Changelog
 2.0.0a3 (Unreleased)
 --------------------
 
+- Add a method to set the body of the request during index creation.
+  [Gagaro]
+
 - Fixed get brain in lazy list with negative indexes.
   [thomasdesvenain]
 

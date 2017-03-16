@@ -17,6 +17,9 @@ class MappingAdapter(object):
         self.es = es
         self.catalog = es.catalog
 
+    def get_index_creation_body(self):
+        return {}
+
     def __call__(self):
         properties = self._default_mapping.copy()
         for name in self.catalog.indexes.keys():
@@ -39,7 +42,7 @@ class MappingAdapter(object):
                 self.es.bump_index_version()
             index_name_v = '%s_%i' % (index_name, self.es.index_version)
             if not conn.indices.exists(index_name_v):
-                conn.indices.create(index_name_v)
+                conn.indices.create(index_name_v, body=self.get_index_creation_body())
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
 
