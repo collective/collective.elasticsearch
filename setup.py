@@ -14,7 +14,7 @@ setup(name='collective.elasticsearch',
         "Framework :: Plone",
         "Programming Language :: Python",
         "Framework :: Plone",
-        "Framework :: Plone :: 5.0"
+        "Framework :: Plone :: 5.0",
         "Framework :: Plone :: 4.3"
         ],
       keywords='plone elasticsearch search indexing',
