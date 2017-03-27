@@ -5,7 +5,7 @@ version = '2.0.0a3'
 
 setup(name='collective.elasticsearch',
       version=version,
-      description="",
+      description="elasticsearch integration with plone",
       long_description=open("README.rst").read() + "\n" +
                        open(os.path.join("docs", "history.rst")).read(),
       # Get more strings from
