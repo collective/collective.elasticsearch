@@ -1,10 +1,10 @@
 Changelog
 =========
 
-2.0.0a4 (unreleased)
+2.0.0a4 (2017-03-27)
 --------------------
 
-- Nothing changed yet.
+- released
 
 
 2.0.0a3 (2017-03-27)
