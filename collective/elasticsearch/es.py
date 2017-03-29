@@ -104,7 +104,7 @@ class ElasticSearchCatalog(object):
         try:
             registry = getUtility(IRegistry)
             try:
-                self.registry = registry.forInterface(IElasticSettings)
+                self.registry = registry.forInterface(IElasticSettings, check=False)
             except Exception:
                 self.registry = None
         except ComponentLookupError:

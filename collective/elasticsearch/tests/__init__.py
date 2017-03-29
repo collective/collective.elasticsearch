@@ -24,7 +24,7 @@ class BaseTest(unittest.TestCase):
         self.app = self.layer['app']
 
         registry = getUtility(IRegistry)
-        settings = registry.forInterface(IElasticSettings)
+        settings = registry.forInterface(IElasticSettings, check=False)
         settings.enabled = True
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')

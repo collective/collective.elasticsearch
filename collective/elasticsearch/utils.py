@@ -17,4 +17,7 @@ def getUID(obj):
 
 
 def getESOnlyIndexes():
-    return getUtility(IRegistry).forInterface(IElasticSettings).es_only_indexes
+    try:
+        return getUtility(IRegistry).forInterface(IElasticSettings, check=False).es_only_indexes
+    except (KeyError, AttributeError):
+        return {'Title', 'Description', 'SearchableText'}

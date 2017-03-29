@@ -4,7 +4,9 @@ Changelog
 2.0.0a6 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Gracefully handle upgrades in the settings interface so it doesn't break
+  for people upgrading.
+  [vangheem]
 
 
 2.0.0a5 (2017-03-29)
