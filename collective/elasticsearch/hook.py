@@ -179,7 +179,7 @@ def get_index_data(obj, es):
 try:
     from collective.celery import task
 
-    @task()
+    @task.as_admin()
     def index_batch_async(remove, index, positions):
         retries = 0
         while True:

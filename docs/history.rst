@@ -4,7 +4,9 @@ Changelog
 2.0.0a5 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Running indexing as admin as it is possible to initiate reindex or index on an
+  object that you do not have permissions for
+  [vangheem]
 
 
 2.0.0a4 (2017-03-27)
