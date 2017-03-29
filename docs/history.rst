@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.0.0a6 (unreleased)
+2.0.0a6 (2017-03-29)
 --------------------
 
 - Gracefully handle upgrades in the settings interface so it doesn't break
