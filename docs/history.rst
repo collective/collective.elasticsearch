@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.0.0a5 (unreleased)
+2.0.0a5 (2017-03-29)
 --------------------
 
 - Running indexing as admin as it is possible to initiate reindex or index on an
