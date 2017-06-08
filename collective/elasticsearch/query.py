@@ -1,12 +1,12 @@
 from collective.elasticsearch.interfaces import IQueryAssembler
-from zope.interface import implements
+from zope.interface import implementer
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.indexes import EZCTextIndex
 from collective.elasticsearch.utils import getESOnlyIndexes
 
 
+@implementer(IQueryAssembler)
 class QueryAssembler(object):
-    implements(IQueryAssembler)
 
     def __init__(self, request, es):
         self.es = es

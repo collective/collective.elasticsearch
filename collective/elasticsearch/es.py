@@ -21,7 +21,7 @@ from zope.component import ComponentLookupError
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.globalrequest import getRequest
-from zope.interface import implements
+from zope.interface import implementer
 
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
@@ -91,11 +91,11 @@ class ElasticResult(object):
             return self.results[result_key][result_index]
 
 
+@implementer(IElasticSearchCatalog)
 class ElasticSearchCatalog(object):
     '''
     from patched methods
     '''
-    implements(IElasticSearchCatalog)
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
