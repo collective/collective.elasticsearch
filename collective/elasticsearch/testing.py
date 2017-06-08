@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from Products.CMFCore.utils import getToolByName
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting

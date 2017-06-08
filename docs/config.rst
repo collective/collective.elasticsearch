@@ -43,8 +43,8 @@ the _default_mapping attribute to add your own indexes::
 
 ::
 
+    @implementer(IMappingProvider)
     class MyMappingAdapter(object):
-        implements(IMappingProvider)
 
         _default_mapping = {
             'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
@@ -59,8 +59,8 @@ Changing the settings of the index
 
 If you want to customize your elasticsearch index, you can override the ``get_index_creation_body`` method on the ``MappingAdapter``::
 
+    @implementer(IMappingProvider)
     class MyMappingAdapter(object):
-        implements(IMappingProvider)
 
         def get_index_creation_body(self):
             return {

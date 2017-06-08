@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import traceback
 
 from DateTime import DateTime
@@ -21,7 +22,7 @@ from zope.component import ComponentLookupError
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.globalrequest import getRequest
-from zope.interface import implements
+from zope.interface import implementer
 
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
@@ -78,7 +79,7 @@ class ElasticResult(object):
                 sort = self.sort
                 result_index = key % self.bulk_size
             elif key < 0:
-                result_key = - ((abs(key) / self.bulk_size) * self.bulk_size) - 1
+                result_key = - ((abs(key) / self.bulk_size) * self.bulk_size) - 1  # noqa
                 start = abs(result_key) - 1
                 sort = _reversed_sort(self.sort)
                 result_index = (abs(key) - 1) % self.bulk_size
@@ -91,11 +92,11 @@ class ElasticResult(object):
             return self.results[result_key][result_index]
 
 
+@implementer(IElasticSearchCatalog)
 class ElasticSearchCatalog(object):
     '''
     from patched methods
     '''
-    implements(IElasticSearchCatalog)
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
@@ -104,7 +105,9 @@ class ElasticSearchCatalog(object):
         try:
             registry = getUtility(IRegistry)
             try:
-                self.registry = registry.forInterface(IElasticSettings, check=False)
+                self.registry = registry.forInterface(
+                    IElasticSettings,
+                    check=False)
             except Exception:
                 self.registry = None
         except ComponentLookupError:
@@ -119,8 +122,9 @@ class ElasticSearchCatalog(object):
                 self.registry.hosts,
                 timeout=self.get_setting('timeout', 0.5),
                 sniff_on_start=self.get_setting('sniff_on_start', False),
-                sniff_on_connection_fail=self.get_setting('sniff_on_connection_fail',
-                                                          False),
+                sniff_on_connection_fail=self.get_setting(
+                    'sniff_on_connection_fail',
+                    False),
                 sniffer_timeout=self.get_setting('sniffer_timeout', 0.1),
                 retry_on_timeout=self.get_setting('retry_on_timeout', False))
         return self._conn
@@ -162,12 +166,17 @@ class ElasticSearchCatalog(object):
 
     @property
     def enabled(self):
-        return self.registry and self.registry.enabled and self.catalog_converted
+        return (
+            self.registry and
+            self.registry.enabled and
+            self.catalog_converted
+        )
 
     def get_setting(self, name, default=None):
         return getattr(self.registry, name, default)
 
-    def catalog_object(self, obj, uid=None, idxs=[], update_metadata=1, pghandler=None):
+    def catalog_object(self, obj, uid=None, idxs=[], update_metadata=1,
+                       pghandler=None):
         if idxs != ['getObjPositionInParent']:
             self.catalogtool._old_catalog_object(
                 obj, uid, idxs, update_metadata, pghandler)
@@ -211,7 +220,9 @@ class ElasticSearchCatalog(object):
             pass
         if self.index_version:
             try:
-                conn.indices.delete_alias(self.index_name, self.real_index_name)
+                conn.indices.delete_alias(
+                    self.index_name,
+                    self.real_index_name)
             except NotFoundError:
                 pass
         self.convertToElastic()
@@ -227,7 +238,9 @@ class ElasticSearchCatalog(object):
             if check_perms:
                 return self.catalogtool._old_searchResults(REQUEST, **kw)
             else:
-                return self.catalogtool._old_unrestrictedSearchResults(REQUEST, **kw)
+                return self.catalogtool._old_unrestrictedSearchResults(
+                    REQUEST,
+                    **kw)
 
         if isinstance(REQUEST, dict):
             query = REQUEST.copy()

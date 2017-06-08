@@ -1,13 +1,18 @@
-from zope.interface import implements
+# -*- coding: utf-8 -*-
+from zope.interface import implementer
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IMappingProvider
 
 
+@implementer(IMappingProvider)
 class MappingAdapter(object):
-    implements(IMappingProvider)
 
     _default_mapping = {
-        'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
+        'SearchableText': {
+            'store': False,
+            'type': 'string',
+            'index': 'analyzed'
+        },
         'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
         'Description': {'store': False, 'type': 'string', 'index': 'analyzed'}
     }
@@ -42,7 +47,9 @@ class MappingAdapter(object):
                 self.es.bump_index_version()
             index_name_v = '%s_%i' % (index_name, self.es.index_version)
             if not conn.indices.exists(index_name_v):
-                conn.indices.create(index_name_v, body=self.get_index_creation_body())
+                conn.indices.create(
+                    index_name_v,
+                    body=self.get_index_creation_body())
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
 

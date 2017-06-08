@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.interfaces import IElasticSettings
 from zope.component import getUtility
 from plone.registry.interfaces import IRegistry
@@ -18,6 +19,8 @@ def getUID(obj):
 
 def getESOnlyIndexes():
     try:
-        return getUtility(IRegistry).forInterface(IElasticSettings, check=False).es_only_indexes
+        return getUtility(IRegistry).forInterface(
+            IElasticSettings,
+            check=False).es_only_indexes
     except (KeyError, AttributeError):
         return {'Title', 'Description', 'SearchableText'}

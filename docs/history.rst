@@ -4,7 +4,8 @@ Changelog
 2.0.0a7 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Minor code cleanup: readability, pep8, 80 cols, zca decorators.
+  [jensens]
 
 
 2.0.0a6 (2017-03-29)

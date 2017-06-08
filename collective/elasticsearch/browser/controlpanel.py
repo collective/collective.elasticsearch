@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
@@ -32,7 +33,8 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             return self.es.connection.status()['ok']
         except AttributeError:
             try:
-                return self.es.connection.cluster.health()['status'] in ('green', 'yellow')
+                health_status = self.es.connection.cluster.health()['status']
+                return health_status in ('green', 'yellow')
             except Exception:
                 return False
         except Exception:
@@ -43,15 +45,15 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
         try:
             info = self.es.connection.info()
             stats = self.es.connection.indices.stats(
-                index=self.es.real_index_name)['indices'][self.es.real_index_name]['total']
-
+                index=self.es.real_index_name
+            )['indices'][self.es.real_index_name]['total']
+            size_in_mb = stats['store']['size_in_bytes'] / 1024.0 / 1024.0
             return [
                 ('Cluster Name', info.get('name')),
                 ('Elastic Search Version', info['version']['number']),
                 ('Number of docs', stats['docs']['count']),
                 ('Deleted docs', stats['docs']['deleted']),
-                ('Size', str(int(math.ceil(
-                    stats['store']['size_in_bytes'] / 1024.0 / 1024.0))) + 'MB')
+                ('Size', str(int(math.ceil(size_in_mb) + 'MB'))),
             ]
         except Exception:
             return []
@@ -60,5 +62,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def active(self):
         return self.es.get_setting('enabled')
 
-ElasticControlPanelView = layout.wrap_form(ElasticControlPanelForm,
-                                           ElasticControlPanelFormWrapper)
+
+ElasticControlPanelView = layout.wrap_form(
+    ElasticControlPanelForm,
+    ElasticControlPanelFormWrapper)

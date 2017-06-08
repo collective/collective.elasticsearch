@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.testing import createObject
@@ -36,14 +37,19 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(self.get_hook().index, {obj_uid: obj})
 
     def test_delete_object(self):
-        obj = createObject(self.portal, 'Event', 'event_to_delete', title='Some Event')
+        obj = createObject(
+            self.portal,
+            'Event',
+            'event_to_delete',
+            title='Some Event')
         obj_uid = getUID(obj)
         self.portal.manage_delObjects(['event_to_delete'])
         self.assertEqual(self.get_hook().index, {})
         self.assertEqual(self.get_hook().remove, {obj_uid})
 
+
 if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT
+    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
 
     class TestQueriesAT(TestQueries):
 

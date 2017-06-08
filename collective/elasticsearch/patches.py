@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog
 from plone import api

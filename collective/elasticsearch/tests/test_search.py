@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.testing import createObject, HAS_ATCONTENTTYPES
 import unittest2 as unittest
@@ -25,7 +26,9 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
-        el_results = self.catalog(object_provides=[self.event_klass], SearchableText='Event')
+        el_results = self.catalog(
+            object_provides=[self.event_klass],
+            SearchableText='Event')
         self.assertEqual(len(el_results), 1)
 
     def test_multi_keyword_index_query(self):
@@ -53,7 +56,11 @@ class TestQueries(BaseFunctionalTest):
         self.es.connection.indices.flush()
 
         end = DateTime()
-        query = {'query': (start, end), 'range': 'min:max', 'SearchableText': 'Event'}
+        query = {
+            'query': (start, end),
+            'range': 'min:max',
+            'SearchableText': 'Event'
+        }
         cat_results = self.catalog._old_searchResults(created=query)
         el_results = self.catalog(created=query)
         self.assertEqual(len(cat_results), len(el_results))
@@ -165,7 +172,11 @@ class TestQueries(BaseFunctionalTest):
         self.commit()
         self.es.connection.indices.flush()
 
-        el_results2 = self.catalog(portal_type='Event', Title='Some Event', sort_on='getId', sort_order='descending')
+        el_results2 = self.catalog(
+            portal_type='Event',
+            Title='Some Event',
+            sort_on='getId',
+            sort_order='descending')
         brain = el_results2[0]
         self.assertEqual(brain.getId, 'event2')
         brain = el_results2[1]
@@ -178,10 +189,10 @@ class TestQueries(BaseFunctionalTest):
 
 
 if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT
+    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
 
     EVENT_KLASS_AT = 'Products.ATContentTypes.interfaces.event.IATEvent'
-    DOCUMENT_KLASS_AT = 'Products.ATContentTypes.interfaces.document.IATDocument'
+    DOCUMENT_KLASS_AT = 'Products.ATContentTypes.interfaces.document.IATDocument'  # noqa
 
     class TestQueriesAT(TestQueries):
         layer = ElasticSearch_FUNCTIONAL_TESTING_AT

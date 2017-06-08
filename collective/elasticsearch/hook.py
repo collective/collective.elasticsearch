@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.utils import getUID, getESOnlyIndexes
@@ -41,7 +42,10 @@ def index_batch(remove, index, positions, es=None):
                     '_id': uid
                 }
             })
-        es.connection.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
+        es.connection.bulk(
+            index=es.index_name,
+            doc_type=es.doc_type,
+            body=bulk_data)
 
     if len(index) > 0:
         if type(index) in (list, tuple, set):
@@ -62,11 +66,17 @@ def index_batch(remove, index, positions, es=None):
                 }
             }, get_index_data(obj, es)])
             if len(bulk_data) % bulk_size == 0:
-                conn.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
+                conn.bulk(
+                    index=es.index_name,
+                    doc_type=es.doc_type,
+                    body=bulk_data)
                 bulk_data = []
 
         if len(bulk_data) > 0:
-            conn.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
+            conn.bulk(
+                index=es.index_name,
+                doc_type=es.doc_type,
+                body=bulk_data)
 
     if len(positions) > 0:
         bulk_data = []
@@ -98,11 +108,17 @@ def index_batch(remove, index, positions, es=None):
                     }
                 }])
                 if len(bulk_data) % bulk_size == 0:
-                    conn.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
+                    conn.bulk(
+                        index=es.index_name,
+                        doc_type=es.doc_type,
+                        body=bulk_data)
                     bulk_data = []
 
         if len(bulk_data) > 0:
-            conn.bulk(index=es.index_name, doc_type=es.doc_type, body=bulk_data)
+            conn.bulk(
+                index=es.index_name,
+                doc_type=es.doc_type,
+                body=bulk_data)
 
 
 def get_wrapped_object(obj, es):
@@ -131,7 +147,7 @@ def get_index_data(obj, es):
         if index is not None:
             try:
                 value = index.get_value(wrapped_object)
-            except:
+            except Exception:
                 logger.error('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     index_name,
@@ -148,7 +164,8 @@ def get_index_data(obj, es):
 
             index_data[index_name] = value
 
-    # in case these indexes are deleted(to increase performance and improve ram usage)
+    # in case these indexes are deleted
+    # (to increase performance and improve ram usage)
     for name in getESOnlyIndexes():
         if name in index_data:
             continue
@@ -159,7 +176,7 @@ def get_index_data(obj, es):
                 if isinstance(value, str):
                     val = unicode(val, 'utf-8', 'ignore')
                 index_data[name] = val
-            except:
+            except Exception:
                 logger.error('Error indexing value: %s: %s\n%s' % (
                     '/'.join(obj.getPhysicalPath()),
                     name,
