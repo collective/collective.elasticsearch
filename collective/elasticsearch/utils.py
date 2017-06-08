@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.interfaces import IElasticSettings
 from zope.component import getUtility
 from plone.registry.interfaces import IRegistry

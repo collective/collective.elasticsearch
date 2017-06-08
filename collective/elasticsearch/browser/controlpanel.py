@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.testing import createObject

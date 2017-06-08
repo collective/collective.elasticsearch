@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.utils import getUID, getESOnlyIndexes

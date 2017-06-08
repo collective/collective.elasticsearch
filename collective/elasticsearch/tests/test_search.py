@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.testing import createObject, HAS_ATCONTENTTYPES
 import unittest2 as unittest

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collective.elasticsearch.interfaces import IQueryAssembler
 from zope.interface import implementer
 from collective.elasticsearch.indexes import getIndex
