@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # coding: utf-8
-from zope.component.hooks import setSite
 from Products.CMFCore.utils import getToolByName
 from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog

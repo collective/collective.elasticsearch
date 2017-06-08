@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from logging import getLogger
-
 from Missing import MV
 from Acquisition import aq_parent, aq_base
 from DateTime import DateTime
