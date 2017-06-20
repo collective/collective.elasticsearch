@@ -29,6 +29,8 @@ def _one(val):
 def _zdt(val):
     if type(val) == datetime:
         val = DateTime(val)
+    elif isinstance(val, basestring):
+        val = DateTime(val)
     return val
 
 
