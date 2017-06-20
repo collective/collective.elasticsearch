@@ -141,7 +141,7 @@ class EDateIndex(BaseIndex):
             return {'range': {name: {'gte': first}}}
         elif range_ == 'max':
             return {'range': {name: {'lte': first}}}
-        elif range_ == 'min:max' and type(query) in (list, tuple) and \
+        elif range_ == 'minmax' and type(query) in (list, tuple) and \
                 len(query) == 2:
             return {
                 'and': [
