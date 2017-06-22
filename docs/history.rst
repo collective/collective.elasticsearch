@@ -7,6 +7,9 @@ Changelog
 - Minor code cleanup: readability, pep8, 80 cols, zca decorators.
   [jensens]
 
+- Fix date criteria: 'minmax' instead of 'min:max' + string to date conversion
+  [ebrehault]
+
 
 2.0.0a6 (2017-03-29)
 --------------------

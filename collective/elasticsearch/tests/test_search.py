@@ -58,7 +58,7 @@ class TestQueries(BaseFunctionalTest):
         end = DateTime()
         query = {
             'query': (start, end),
-            'range': 'min:max',
+            'range': 'minmax',
             'SearchableText': 'Event'
         }
         cat_results = self.catalog._old_searchResults(created=query)
