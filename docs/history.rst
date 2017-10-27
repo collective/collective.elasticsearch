@@ -4,6 +4,9 @@ Changelog
 2.0.0a7 (unreleased)
 --------------------
 
+- Prevent critical error when by chance query value is None.
+  [thomasdesvenain]
+
 - Minor code cleanup: readability, pep8, 80 cols, zca decorators.
   [jensens]
 
