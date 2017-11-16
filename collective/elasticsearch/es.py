@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-import traceback
-
-from DateTime import DateTime
-from Products.CMFCore.permissions import AccessInactivePortalContent
-from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import _getAuthenticatedUser
-from Products.ZCatalog.Lazy import LazyMap
 from collective.elasticsearch import hook
 from collective.elasticsearch import logger
 from collective.elasticsearch.brain import BrainFactory
@@ -14,15 +7,21 @@ from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.interfaces import IMappingProvider
 from collective.elasticsearch.interfaces import IQueryAssembler
 from collective.elasticsearch.utils import getESOnlyIndexes
+from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
-from plone.registry.interfaces import IRegistry
 from plone import api
+from plone.registry.interfaces import IRegistry
+from Products.CMFCore.permissions import AccessInactivePortalContent
+from Products.CMFCore.utils import _checkPermission
+from Products.CMFCore.utils import _getAuthenticatedUser
+from Products.ZCatalog.Lazy import LazyMap
 from zope.component import ComponentLookupError
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.interface import implementer
+
 
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
@@ -107,7 +106,8 @@ class ElasticSearchCatalog(object):
             try:
                 self.registry = registry.forInterface(
                     IElasticSettings,
-                    check=False)
+                    check=False
+                )
             except Exception:
                 self.registry = None
         except ComponentLookupError:
@@ -118,15 +118,21 @@ class ElasticSearchCatalog(object):
     @property
     def connection(self):
         if self._conn is None:
+            kwargs = dict()
+            if self.get_setting('timeout', 0):
+                kwargs['timeout'] = self.get_setting('timeout')
+            if self.get_setting('sniff_on_start', False):
+                kwargs['sniff_on_start'] = True
+            if self.get_setting('sniff_on_connection', False):
+                kwargs['sniff_on_connection'] = True
+            if self.get_setting('sniffer_timeout', 0):
+                kwargs['sniffer_timeout'] = self.get_setting('sniffer_timeout')
+            if self.get_setting('retry_on_timeout', False):
+                kwargs['retry_on_timeout'] = True
             self._conn = Elasticsearch(
                 self.registry.hosts,
-                timeout=self.get_setting('timeout', 0.5),
-                sniff_on_start=self.get_setting('sniff_on_start', False),
-                sniff_on_connection_fail=self.get_setting(
-                    'sniff_on_connection_fail',
-                    False),
-                sniffer_timeout=self.get_setting('sniffer_timeout', 0.1),
-                retry_on_timeout=self.get_setting('retry_on_timeout', False))
+                **kwargs
+            )
         return self._conn
 
     def _search(self, query, **query_params):
@@ -265,9 +271,7 @@ class ElasticSearchCatalog(object):
         try:
             return self.search(query)
         except Exception:
-            logger.error('Error running Query: %s\n%s' % (
-                repr(orig_query),
-                traceback.format_exc()))
+            logger.exception('Error running Query: {0!r}'.format(orig_query))
             return self.catalogtool._old_searchResults(REQUEST, **kw)
 
     def convertToElastic(self):
