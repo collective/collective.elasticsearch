@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-from Missing import MV
-from Acquisition import aq_parent, aq_base
-from DateTime import DateTime
-from Products.PluginIndexes.common import safe_callable
-from Products.PluginIndexes.KeywordIndex.KeywordIndex import KeywordIndex
-from Products.PluginIndexes.FieldIndex.FieldIndex import FieldIndex
-from Products.PluginIndexes.DateIndex.DateIndex import DateIndex
-from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
-from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
-from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
-from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
-from Products.PluginIndexes.DateRangeIndex.DateRangeIndex import DateRangeIndex
-from plone.app.folder.nogopip import GopipIndex
-from datetime import datetime
+from Acquisition import aq_base
+from Acquisition import aq_parent
 from collective.elasticsearch import logger
+from DateTime import DateTime
+from datetime import datetime
+from Missing import MV
+from plone.app.folder.nogopip import GopipIndex
+from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
+from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
+from Products.PluginIndexes.common import safe_callable
+from Products.PluginIndexes.DateIndex.DateIndex import DateIndex
+from Products.PluginIndexes.DateRangeIndex.DateRangeIndex import DateRangeIndex
+from Products.PluginIndexes.FieldIndex.FieldIndex import FieldIndex
+from Products.PluginIndexes.KeywordIndex.KeywordIndex import KeywordIndex
+from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
+from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
 
 
 def _one(val):
@@ -59,8 +60,10 @@ class BaseIndex(object):
         if hasattr(self.index, 'index_object'):
             value = self.index._get_object_datum(object, attr)
         else:
-            logger.info('catalogObject was passed bad index '
-                 'object %s.' % str(self.index))
+            logger.info(
+                'catalogObject was passed bad index '
+                'object %s.' % str(self.index)
+            )
         if value == MV:
             return None
         return value
@@ -196,11 +199,18 @@ class EZCTextIndex(BaseIndex):
 
     def get_query(self, name, value):
         value = self._normalize_query(value)
-        clean_value = value.strip('*') if value else ""  # el doesn't care about * like zope catalog does
-        queries = [{"match_phrase": {name: {
-            'query': clean_value,
-            'slop': 2
-        }}}]
+        # EL doesn't care about * like zope catalog does
+        clean_value = value.strip('*') if value else ""
+        queries = [
+            {
+                "match_phrase": {
+                    name: {
+                        'query': clean_value,
+                        'slop': 2
+                    }
+                }
+            }
+        ]
         if name in ('Title', 'SearchableText'):
             # titles have most importance... we override here...
             queries.append({

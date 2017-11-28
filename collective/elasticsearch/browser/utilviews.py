@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from Acquisition import aq_parent
 from AccessControl import Unauthorized
+from Acquisition import aq_parent
+from collective.elasticsearch.es import ElasticSearchCatalog
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
-
-from collective.elasticsearch.es import ElasticSearchCatalog
 
 
 class Utils(BrowserView):

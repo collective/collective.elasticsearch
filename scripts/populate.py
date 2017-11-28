@@ -1,19 +1,20 @@
-import os
-import random
-
 from AccessControl.SecurityManagement import newSecurityManager
 from AccessControl.SecurityManager import setSecurityPolicy
+from lxml.html import fromstring
+from lxml.html import tostring
+from plone import api
+from plone.app.textfield.value import RichTextValue
 from Products.CMFCore.tests.base.security import OmnipotentUser
 from Products.CMFCore.tests.base.security import PermissiveSecurityPolicy
 from Testing.makerequest import makerequest
-from lxml.html import fromstring, tostring
-from plone import api
-from plone.app.textfield.value import RichTextValue
+from unidecode import unidecode
+from zope.component.hooks import setSite
+
+import multiprocessing
+import os
+import random
 import requests
 import transaction
-from zope.component.hooks import setSite
-import multiprocessing
-from unidecode import unidecode
 
 
 SITE_ID = 'Plone3'

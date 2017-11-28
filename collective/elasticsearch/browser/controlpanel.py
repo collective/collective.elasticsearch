@@ -4,9 +4,10 @@ from collective.elasticsearch.interfaces import IElasticSettings
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.z3cform import layout
-from z3c.form import form
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from z3c.form import form
+
 import math
 
 

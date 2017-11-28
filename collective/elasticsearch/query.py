@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from collective.elasticsearch.interfaces import IQueryAssembler
-from zope.interface import implementer
-from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.indexes import EZCTextIndex
+from collective.elasticsearch.indexes import getIndex
+from collective.elasticsearch.interfaces import IQueryAssembler
 from collective.elasticsearch.utils import getESOnlyIndexes
+from zope.interface import implementer
 
 
 @implementer(IQueryAssembler)

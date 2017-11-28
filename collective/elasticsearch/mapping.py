@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from zope.interface import implementer
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IMappingProvider
+from zope.interface import implementer
 
 
 @implementer(IMappingProvider)

@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 # coding: utf-8
-from Products.CMFCore.utils import getToolByName
 from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
 from plone.registry.interfaces import IRegistry
+from Products.CMFCore.utils import getToolByName
+from zope.component import getUtility
+
 import transaction
 import unittest2 as unittest
-from zope.component import getUtility
 
 
 class BaseTest(unittest.TestCase):

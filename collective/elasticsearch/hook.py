@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
-from collective.elasticsearch.utils import getUID, getESOnlyIndexes
+from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.elasticsearch.utils import getUID
 from plone import api
 from plone.app.uuid.utils import uuidToObject
 from plone.indexer.interfaces import IIndexableObject
@@ -10,7 +11,8 @@ from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import ISiteRoot
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
-from zope.component.hooks import getSite, setSite
+from zope.component.hooks import getSite
+from zope.component.hooks import setSite
 
 import logging
 import random

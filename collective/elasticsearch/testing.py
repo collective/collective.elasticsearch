@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-from Products.CMFCore.utils import getToolByName
+from plone.app.testing import applyProfile
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
 from plone.app.testing import PLONE_FIXTURE
 from plone.app.testing import PloneSandboxLayer
+from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from plone.app.testing import TEST_USER_NAME
 from plone.app.testing import TEST_USER_PASSWORD
-from plone.app.testing import applyProfile
-from plone.app.testing import setRoles
 from plone.testing import z2
+from Products.CMFCore.utils import getToolByName
 from zope.configuration import xmlconfig
+
 
 try:
     import Products.ATContentTypes

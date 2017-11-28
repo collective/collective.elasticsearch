@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from collective.elasticsearch.testing import createObject
+from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
 from collective.elasticsearch.tests import BaseFunctionalTest
-from collective.elasticsearch.testing import createObject, HAS_ATCONTENTTYPES
-import unittest2 as unittest
 from DateTime import DateTime
+
 import time
+import unittest2 as unittest
 
 
 EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
