@@ -10,7 +10,7 @@ version = '2.0.0a7.dev0'
 setup(
     name='collective.elasticsearch',
     version=version,
-    description="elasticsearch integration with plone",
+    description="ElasticSearch integration with Plone",
     long_description=(
         open('README.rst').read() +
         '\n' +
@@ -22,14 +22,14 @@ setup(
         'Framework :: Plone',
         'Programming Language :: Python',
         'Framework :: Plone',
-        'Framework :: Plone :: 4.',
+        'Framework :: Plone :: 4.3',
         'Framework :: Plone :: 5.0',
         'Framework :: Plone :: 5.1',
     ],
     keywords='plone elasticsearch search indexing',
     author='Nathan Van Gheem',
     author_email='vangheem@gmail.com',
-    url='http://svn.plone.org/svn/collective/',
+    url='https://github.com/collective/collective.elasticsearch',
     license='GPL',
     packages=find_packages(exclude=['ez_setup']),
     namespace_packages=['collective'],

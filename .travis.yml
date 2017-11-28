@@ -1,11 +1,42 @@
 language: python
 python: 2.7
-before_script:
-  - sleep 10
-install:
-  - mkdir -p buildout-cache/{eggs,downloads}
-  - python bootstrap.py -c travis.cfg -v 2.2.5 --setuptools-version=9.1
-  - bin/buildout -Nc travis.cfg
-script: bin/test
+sudo: false
+cache:
+  pip: true
+  directories:
+  - eggs
+env:
+  matrix:
+  - PLONE_VERSION=4.3 ES_DLURL=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.6/elasticsearch-2.4.6.tar.gz
+  - PLONE_VERSION=4.3 ES_DLURL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.4.tar.gz
+  - PLONE_VERSION=4.3 ES_DLURL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.0.0.tar.gz
+  - PLONE_VERSION=5.0 ES_DLURL=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.6/elasticsearch-2.4.6.tar.gz
+  - PLONE_VERSION=5.0 ES_DLURL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.4.tar.gz
+  - PLONE_VERSION=5.0 ES_DLURL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.0.0.tar.gz
+  - PLONE_VERSION=5.1 ES_DLURL=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.6/elasticsearch-2.4.6.tar.gz
+  - PLONE_VERSION=5.1 ES_DLURL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.4.tar.gz
+  - PLONE_VERSION=5.1 ES_DLURL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.0.0.tar.gz
+matrix:
+  fast_finish: true
 before_install:
-  - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.3/elasticsearch-2.4.3.deb && sudo dpkg -i --force-confnew elasticsearch-2.4.3.deb && sudo service elasticsearch start
+  - wget ${ES_DLURL}
+  - tar -xzf elasticsearch-*.tar.gz
+install:
+  - sed -ie "s#test-5.0.x.cfg#test-$PLONE_VERSION.x.cfg#" buildout.cfg
+  - virtualenv .
+  - bin/pip install -r requirements.txt
+  - bin/buildout annotate
+  - bin/buildout
+before_script:
+  - ./`echo elasticsearch-*/`bin/elasticsearch &
+  - wget -q --waitretry=1 --retry-connrefused -T 10 -O - http://127.0.0.1:9200
+script:
+  - bin/code-analysis
+  - bin/test
+after_success:
+  - bin/createcoverage --output-dir=htmlcov
+  - coveralls
+install:
+  - wget ${ES_DOWNLOAD_URL}
+  - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
+  - ./elasticsearch-${ES_VERSION}/bin/elasticsearch &
