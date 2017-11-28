@@ -40,7 +40,7 @@ setup(
         'elasticsearch>=2.0.0,<3.0.0',
         'plone.app.registry',
         'plone.api',
-        'collective.monkeypatcher'
+        'collective.monkeypatcher',
     ],
     extras_require={
         'test': [
@@ -48,7 +48,8 @@ setup(
             'plone.testing',
             'unittest2',
             'plone.app.contenttypes',
-            'collective.celery[test]'
+            'collective.celery[test]',
+            'celery<=3.999',
         ],
         'test-wo-celery': [
             'plone.app.testing',
