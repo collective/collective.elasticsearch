@@ -13,8 +13,11 @@ except ImportError:
 
 def getUID(obj):
     value = IUUID(obj, None)
-    if not value and hasattr(obj, 'UID'):
-        value = obj.UID()
+    if not value:
+        try:
+            return obj.UID()
+        except AttributeError:
+            pass
     return value
 
 

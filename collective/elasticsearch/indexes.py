@@ -2,8 +2,8 @@
 from Acquisition import aq_base
 from Acquisition import aq_parent
 from collective.elasticsearch import logger
-from DateTime import DateTime
 from datetime import datetime
+from DateTime import DateTime
 from Missing import MV
 from plone.app.folder.nogopip import GopipIndex
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
@@ -57,7 +57,7 @@ class BaseIndex(object):
         else:
             attr = ''
 
-        if hasattr(self.index, 'index_object'):
+        if hasattr(self.index, 'index_object'):  # noqa: P002
             value = self.index._get_object_datum(object, attr)
         else:
             logger.info(
@@ -348,8 +348,11 @@ class EGopipIndex(BaseIndex):
 
     def get_value(self, object):
         parent = aq_parent(object)
-        if hasattr(parent, 'getObjectPosition'):
-            return parent.getObjectPosition(object.getId())
+        oid = object.getId()
+        try:
+            return parent.getObjectPosition(oid)
+        except AttributeError:
+            pass
 
 
 class EDateRangeIndex(BaseIndex):

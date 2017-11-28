@@ -25,7 +25,7 @@ import urllib3
 logger = logging.getLogger('collective.elasticsearch')
 
 
-def index_batch(remove, index, positions, es=None):
+def index_batch(remove, index, positions, es=None):  # noqa: C901
     if es is None:
         from collective.elasticsearch.es import ElasticSearchCatalog
         es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
@@ -139,7 +139,7 @@ def get_wrapped_object(obj, es):
     return wrapped_object
 
 
-def get_index_data(obj, es):
+def get_index_data(obj, es):  # noqa: C901
     catalog = es.catalogtool._catalog
 
     wrapped_object = get_wrapped_object(obj, es)

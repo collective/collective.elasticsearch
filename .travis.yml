@@ -36,7 +36,3 @@ script:
 after_success:
   - bin/createcoverage --output-dir=htmlcov
   - coveralls
-install:
-  - wget ${ES_DOWNLOAD_URL}
-  - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
-  - ./elasticsearch-${ES_VERSION}/bin/elasticsearch &

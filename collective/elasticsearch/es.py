@@ -93,9 +93,7 @@ class ElasticResult(object):
 
 @implementer(IElasticSearchCatalog)
 class ElasticSearchCatalog(object):
-    '''
-    from patched methods
-    '''
+    """from patched methods."""
 
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
@@ -136,8 +134,6 @@ class ElasticSearchCatalog(object):
         return self._conn
 
     def _search(self, query, **query_params):
-        '''
-        '''
         if 'start' in query_params:
             query_params['from_'] = query_params.pop('start')
 
@@ -233,7 +229,7 @@ class ElasticSearchCatalog(object):
                 pass
         self.convertToElastic()
 
-    def searchResults(self, REQUEST=None, check_perms=False, **kw):
+    def searchResults(self, REQUEST=None, check_perms=False, **kw):  # noqa: C901
         enabled = False
         if self.enabled:
             # need to also check if it is a search result we care about
@@ -286,9 +282,10 @@ class ElasticSearchCatalog(object):
 
     @property
     def index_name(self):
-        if hasattr(self.catalogtool, CUSTOM_INDEX_NAME_ATTR):
+        try:
             return getattr(self.catalogtool, CUSTOM_INDEX_NAME_ATTR)
-        return '-'.join(self.catalogtool.getPhysicalPath()[1:]).lower()
+        except AttributeError:
+            return '-'.join(self.catalogtool.getPhysicalPath()[1:]).lower()
 
     @property
     def index_version(self):

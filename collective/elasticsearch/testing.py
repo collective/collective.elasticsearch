@@ -102,7 +102,6 @@ if HAS_ATCONTENTTYPES:
             workflowTool = getToolByName(portal, 'portal_workflow')
             workflowTool.setDefaultChain('plone_workflow')
 
-
     ElasticSearch_FIXTURE_AT = ElasticSearchAT()
     ElasticSearch_FUNCTIONAL_TESTING_AT = FunctionalTesting(
         bases=(ElasticSearch_FIXTURE_AT,), name='ElasticSearch:FunctionalAT')
