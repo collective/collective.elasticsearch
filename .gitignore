@@ -10,4 +10,7 @@ develop-eggs/
 /venv/
 /.idea
 _build
-
+/include
+/lib
+/local
+pip-selfcheck.json
