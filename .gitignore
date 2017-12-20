@@ -9,6 +9,7 @@ develop-eggs/
 .installed.cfg
 /venv/
 /.idea
+*.sublime-*
 _build
 /include
 /lib
