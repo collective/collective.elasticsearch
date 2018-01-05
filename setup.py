@@ -22,7 +22,6 @@ setup(
         'Framework :: Plone',
         'Programming Language :: Python',
         'Framework :: Plone',
-        'Framework :: Plone :: 4.',
         'Framework :: Plone :: 5.0',
         'Framework :: Plone :: 5.1',
     ],
