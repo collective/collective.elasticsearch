@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.0.0a7 (2018-01-05)
---------------------
+2.0.1 (unreleased)
+------------------
 
 - Prevent critical error when by chance query value is None.
   [thomasdesvenain]
