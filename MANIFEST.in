@@ -1,0 +1,13 @@
+include *.py
+include tests-plone4.3.cfg
+include travis.cfg
+recursive-include collective *.pt
+recursive-include collective *.xml
+recursive-include collective *.zcml
+recursive-include docs *.GPL
+recursive-include docs *.bat
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.txt
+recursive-include docs Makefile
+recursive-include scripts *.py
