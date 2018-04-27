@@ -4,7 +4,8 @@ Changelog
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix error causing "Server Status" on @@elastic-controlpanel to be empty.
+  [fulv]
 
 
 2.0.1 (2018-01-05)
