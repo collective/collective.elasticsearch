@@ -45,17 +45,24 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def es_info(self):
         try:
             info = self.es.connection.info()
-            stats = self.es.connection.indices.stats(
-                index=self.es.real_index_name
-            )['indices'][self.es.real_index_name]['total']
-            size_in_mb = stats['store']['size_in_bytes'] / 1024.0 / 1024.0
-            return [
-                ('Cluster Name', info.get('name')),
-                ('Elastic Search Version', info['version']['number']),
-                ('Number of docs', stats['docs']['count']),
-                ('Deleted docs', stats['docs']['deleted']),
-                ('Size', str(int(math.ceil(size_in_mb))) + 'MB'),
-            ]
+            try:
+                stats = self.es.connection.indices.stats(
+                    index=self.es.real_index_name
+                )['indices'][self.es.real_index_name]['primaries']
+                size_in_mb = stats['store']['size_in_bytes'] / 1024.0 / 1024.0
+                return [
+                    ('Cluster Name', info.get('name')),
+                    ('Elastic Search Version', info['version']['number']),
+                    ('Number of docs', stats['docs']['count']),
+                    ('Deleted docs', stats['docs']['deleted']),
+                    ('Size', str(int(math.ceil(size_in_mb))) + 'MB'),
+                    ('Query Count', stats['search']['query_total'])
+                ]
+            except Exception:
+                return [
+                    ('Cluster Name', info.get('name')),
+                    ('Elastic Search Version', info['version']['number'])
+                ]
         except Exception:
             return []
 

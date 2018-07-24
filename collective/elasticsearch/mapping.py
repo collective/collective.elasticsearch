@@ -10,11 +10,31 @@ class MappingAdapter(object):
     _default_mapping = {
         'SearchableText': {
             'store': False,
-            'type': 'string',
-            'index': 'analyzed'
+            'type': 'text',
+            'index': True
         },
-        'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
-        'Description': {'store': False, 'type': 'string', 'index': 'analyzed'}
+        'Title': {
+            'store': False,
+            'type': 'text',
+            'index': True
+        },
+        'Description': {
+            'store': False,
+            'type': 'text',
+            'index': True
+        },
+        'allowedRolesAndUsers': {
+            'store': False,
+            'type': 'text',
+            'index': True,
+            'analyzer': 'keyword'
+        },
+        'portal_type': {
+            'store': False,
+            'type': 'text',
+            'index': True,
+            'analyzer': 'keyword'
+        }
     }
 
     def __init__(self, request, es):

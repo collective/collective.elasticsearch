@@ -28,7 +28,7 @@ Use Elastic Search in Plone:
     - Add collective.elasticsearch to eggs & re-run buildout
     - Restart Plone
     - Goto Control Panel
-    - Add "Eleastic Search" in Add-on Products
+    - Add "Elastic Search" in Add-on Products
     - Click "Elastic Search" in "Add-on Configuration"
     - Enable
     - Click "Convert Catalog"
@@ -44,7 +44,7 @@ and allows you to delete the `Title`, `Description` and `SearchableText`
 indexes which can provide significant improvement to performance and RAM usage.
 
 Then, ElasticSearch queries are ONLY used when Title, Description and SearchableText
-text are in the query. Otherwise, the plone's default catalog will be used.
+text are in the query. Otherwise, Plone's default catalog will be used.
 This is because Plone's default catalog is faster on normal queries than using
 ElasticSearch.
 
