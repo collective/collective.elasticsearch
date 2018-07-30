@@ -15,11 +15,11 @@ class QueryAssembler(object):
         self.request = request
 
     def normalize(self, query):
-        sort_on = ['_score']
+        sort_on = []
         sort = query.pop('sort_on', None)
         if sort:
             sort_on.extend(sort.split(','))
-        sort_order = query.pop('sort_order', 'descending')
+        sort_order = query.pop('sort_order', '')
         if sort_on:
             sortstr = ','.join(sort_on)
             if sort_order in ('descending', 'reverse', 'desc'):
@@ -27,7 +27,8 @@ class QueryAssembler(object):
             else:
                 sortstr += ':asc'
         else:
-            sortstr = ''
+            # If no sorting is passed, use ES score
+            sortstr = '_score:desc'
         if 'b_size' in query:
             del query['b_size']
         if 'b_start' in query:
