@@ -199,13 +199,11 @@ class EZCTextIndex(BaseIndex):
 
     def get_query(self, name, value):
         value = self._normalize_query(value)
-        # EL doesn't care about * like zope catalog does
-        clean_value = value.strip('*') if value else ""
         queries = [
             {
                 "match_phrase": {
                     name: {
-                        'query': clean_value,
+                        'query': value,
                         'slop': 2
                     }
                 }
@@ -216,13 +214,14 @@ class EZCTextIndex(BaseIndex):
             queries.append({
                 "match_phrase_prefix": {
                     'Title': {
-                        'query': clean_value,
+                        'query': value,
                         'boost': 2
                     }
                 }
             })
         if name != 'Title':
-            queries.append({"match": {name: {'query': clean_value}}})
+            queries.append({"query_string": {'default_field': name,
+                                             'query': value}})
 
         return {
             "bool": {
