@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 from zope import schema
 from zope.interface import Interface
+from zope.schema.vocabulary import SimpleVocabulary
+from zope.schema.vocabulary import SimpleTerm
 
+query_types = SimpleVocabulary(
+    [SimpleTerm(value=u'default', title=u'Default'),
+     SimpleTerm(value=u'simple_query_string', title=u'Simple Query String')]
+    )
 
 class IElasticSearchLayer(Interface):
     pass
@@ -9,7 +15,6 @@ class IElasticSearchLayer(Interface):
 
 class IElasticSearchCatalog(Interface):
     pass
-
 
 class IMappingProvider(Interface):
     def get_index_creation_body():
@@ -76,3 +81,9 @@ class IElasticSettings(Interface):
         title=u'Bulk Size',
         description=u'bulk size for elastic queries',
         default=50)
+
+    query_type = schema.Choice(
+        title=u'Query Type',
+        default=u'default',
+        vocabulary=query_types
+    )

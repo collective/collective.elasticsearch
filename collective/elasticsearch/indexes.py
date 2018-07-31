@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from Acquisition import aq_parent
+from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch import logger
 from DateTime import DateTime
 from datetime import datetime
 from Missing import MV
 from plone.app.folder.nogopip import GopipIndex
+from plone.registry.interfaces import IRegistry
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
 from Products.PluginIndexes.common import safe_callable
@@ -15,7 +17,8 @@ from Products.PluginIndexes.FieldIndex.FieldIndex import FieldIndex
 from Products.PluginIndexes.KeywordIndex.KeywordIndex import KeywordIndex
 from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
 from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
-
+from zope.component import ComponentLookupError
+from zope.component import getUtility
 
 def _one(val):
     """
@@ -197,31 +200,66 @@ class EZCTextIndex(BaseIndex):
         if all_texts:
             return '\n'.join(all_texts)
 
+    def get_setting(self, name, default=None):
+        return
+
     def get_query(self, name, value):
+
+        try:
+            registry = getUtility(IRegistry)
+            try:
+                registry = registry.forInterface(
+                    IElasticSettings,
+                    check=False
+                )
+            except Exception:
+                registry = None
+        except ComponentLookupError:
+            registry = None
+
+        query_type = getattr(registry, 'query_type', 'default')
         value = self._normalize_query(value)
-        queries = [
-            {
-                "match_phrase": {
-                    name: {
-                        'query': value,
-                        'slop': 2
+
+        if query_type == 'default':
+            # EL doesn't care about * like zope catalog does
+            clean_value = value.strip('*') if value else ""
+            queries = [
+                {
+                    "match_phrase_prefix": {
+                        name: {
+                            'query': clean_value,
+                            'slop': 2
+                        }
                     }
                 }
-            }
-        ]
-        if name in ('Title', 'SearchableText'):
-            # titles have most importance... we override here...
-            queries.append({
-                "match_phrase_prefix": {
-                    'Title': {
-                        'query': value,
-                        'boost': 2
+            ]
+            if name in ('Title', 'SearchableText'):
+                # titles have most importance... we override here...
+                queries.append({
+                    "match_phrase_prefix": {
+                        'Title': {
+                            'query': clean_value,
+                            'boost': 2
+                        }
                     }
+                })
+            if name != 'Title':
+                queries.append({"query_string": {'default_field': name,
+                                                 'query': clean_value}})
+
+        if query_type == 'simple_query_string':
+            #TODO get explicit settings for simple query string
+
+            fields = [name]
+            if name in ('Title', 'SearchableText'):
+                fields.append('%s^2' % 'Title')
+
+            queries = [{
+                "simple_query_string":{
+                    "query": value,
+                    "fields": fields,
                 }
-            })
-        if name != 'Title':
-            queries.append({"query_string": {'default_field': name,
-                                             'query': value}})
+            }]
 
         return {
             "bool": {
