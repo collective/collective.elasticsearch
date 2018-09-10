@@ -54,7 +54,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
                 ('Elastic Search Version', info['version']['number']),
                 ('Number of docs', stats['docs']['count']),
                 ('Deleted docs', stats['docs']['deleted']),
-                ('Size', str(int(math.ceil(size_in_mb) + 'MB'))),
+                ('Size', str(int(math.ceil(size_in_mb))) + 'MB'),
             ]
         except Exception:
             return []
