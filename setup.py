@@ -43,19 +43,14 @@ setup(
     ],
     extras_require={
         'test': [
+            'docker',
             'plone.app.testing',
             'plone.testing',
             'unittest2',
-            'plone.app.contenttypes',
-            'collective.celery[test]'
-        ],
-        'test-wo-celery': [
-            'plone.app.testing',
-            'plone.testing',
-            'unittest2',
-            'plone.app.contenttypes',
+            'plone.app.contenttypes'
         ],
         'test-archetypes': [
+            'docker',
             'plone.app.testing',
             'plone.testing',
             'unittest2',

@@ -1,3 +1,7 @@
+sudo: required
+services:
+  - docker
+
 language: python
 python: 2.7
 before_script:
@@ -8,4 +12,4 @@ install:
   - bin/buildout -Nc travis.cfg
 script: bin/test
 before_install:
-  - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.3/elasticsearch-2.4.3.deb && sudo dpkg -i --force-confnew elasticsearch-2.4.3.deb && sudo service elasticsearch start
+  - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0

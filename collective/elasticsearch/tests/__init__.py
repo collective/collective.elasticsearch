@@ -26,12 +26,12 @@ class BaseTest(unittest.TestCase):
 
         registry = getUtility(IRegistry)
         settings = registry.forInterface(IElasticSettings, check=False)
+        settings.sniffer_timeout = None  # disable sniffing hosts in tests because docker...
         settings.enabled = True
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.catalog._elasticcustomindex = 'plone-test-index'
         self.es = ElasticSearchCatalog(self.catalog)
-        self.es.convertToElastic()
         self.catalog.manage_catalogRebuild()
         # need to commit here so all tests start with a baseline
         # of elastic enabled
@@ -47,7 +47,9 @@ class BaseTest(unittest.TestCase):
 
     def tearDown(self):
         super(BaseTest, self).tearDown()
-        self.es.connection.indices.delete(index=self.es.index_name)
+        self.es.connection.indices.delete_alias(
+            index=self.es.real_index_name, name=self.es.index_name)
+        self.es.connection.indices.delete(index=self.es.real_index_name)
         self.clearTransactionEntries()
 
 

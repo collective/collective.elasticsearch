@@ -75,13 +75,16 @@ into celery to be run asynchronously.
 Please see instructions for collective.celery to see how this works.
 
 
-TODO
-----
+Running tests
+-------------
 
-- Spellcheck
-- Custom Similarity
-- Faceting
+Run elasticsearch for tests to utilize:
 
+    docker run \
+        -e "cluster.name=docker-cluster" \
+        -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+        -p 9200:9200 \
+        docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
 
 Travis
 ------

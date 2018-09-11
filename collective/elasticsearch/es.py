@@ -9,7 +9,7 @@ from collective.elasticsearch.interfaces import IQueryAssembler
 from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import NotFoundError
+from elasticsearch.exceptions import NotFoundError, TransportError
 from plone import api
 from plone.registry.interfaces import IRegistry
 from Products.CMFCore.permissions import AccessInactivePortalContent
@@ -205,7 +205,7 @@ class ElasticSearchCatalog(object):
         return result
 
     def manage_catalogRebuild(self, *args, **kwargs):
-        if self.enabled:
+        if self.registry.enabled:
             self.recreateCatalog()
 
         return self.catalogtool._old_manage_catalogRebuild(*args, **kwargs)
@@ -218,10 +218,14 @@ class ElasticSearchCatalog(object):
 
     def recreateCatalog(self):
         conn = self.connection
+
         try:
             conn.indices.delete(index=self.real_index_name)
         except NotFoundError:
             pass
+        except:
+            import pdb; pdb.set_trace()
+            raise
         if self.index_version:
             try:
                 conn.indices.delete_alias(
@@ -302,6 +306,7 @@ class ElasticSearchCatalog(object):
         else:
             version += 1
         setattr(self.catalogtool, INDEX_VERSION_ATTR, version)
+        self.catalogtool._p_changed = True
         return version
 
     @property
