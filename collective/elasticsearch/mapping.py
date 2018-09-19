@@ -37,6 +37,21 @@ class MappingAdapter(object):
         }
     }
 
+    _search_attributes = [
+        'Title',
+        'Description',
+        'Subject',
+        'contentType',
+        'created',
+        'modified',
+        'effective',
+        'hasImage',
+        'is_folderish',
+        'portal_type',
+        'review_state',
+        'path.path'
+    ]
+
     def __init__(self, request, es):
         self.request = request
         self.es = es
@@ -72,5 +87,9 @@ class MappingAdapter(object):
                     body=self.get_index_creation_body())
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
+
+        for key in properties:
+            if key in self._search_attributes:
+                properties[key]['store'] = True
 
         return {'properties': properties}

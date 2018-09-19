@@ -141,6 +141,7 @@ class ElasticSearchCatalog(object):
         if 'start' in query_params:
             query_params['from_'] = query_params.pop('start')
 
+        query_params['stored_fields'] = query_params.get('stored_fields', 'path.path')
         query_params['size'] = self.get_setting('bulk_size', 50)
 
         return self.connection.search(index=self.index_name,
@@ -157,6 +158,7 @@ class ElasticSearchCatalog(object):
             By default, get the plone catalog brain.
         @param query_params:
             Parameters to pass to the search method
+            'stored_fields': the list of fields to get from stored source
         @return: LazyMap
         """
         result = ElasticResult(self, query, **query_params)

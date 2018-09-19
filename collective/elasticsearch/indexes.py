@@ -261,7 +261,7 @@ class EExtendedPathIndex(BaseIndex):
                     'type': 'text',
                     'index': True,
                     'analyzer': 'keyword',
-                    'store': False
+                    'store': True
                 },
                 'depth': {
                     'type': 'integer',
