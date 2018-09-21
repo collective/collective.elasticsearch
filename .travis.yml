@@ -1,11 +1,9 @@
 sudo: required
 services:
   - docker
-matrix:
-  - name: "Plone 5.1"
-    env: TEST_FILE=travis-5.1.cfg
-  - name: "Plone 5.0"
-    env: TEST_FILE=travis-5.0.cfg
+env:
+  - TEST_FILE=travis-5.1.cfg
+  - TEST_FILE=travis-5.0.cfg
 
 language: python
 python: 2.7
