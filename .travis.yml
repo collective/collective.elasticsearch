@@ -11,8 +11,8 @@ before_script:
   - sleep 10
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
-  - python bootstrap.py -c $(TEST_FILE)
-  - bin/buildout -Nc $(TEST_FILE)
+  - python bootstrap.py -c $TEST_FILE
+  - bin/buildout -Nc $TEST_FILE
 script: bin/test
 before_install:
   - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
