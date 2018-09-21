@@ -1,8 +1,11 @@
 Changelog
 =========
 
-2.0.2 (unreleased)
+3.0.0 (unreleased)
 ------------------
+
+- Support ES 6
+  [lucid-0]
 
 - Fix error causing "Server Status" on @@elastic-controlpanel to be empty.
   [fulv]
