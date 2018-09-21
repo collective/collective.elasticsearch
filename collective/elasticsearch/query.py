@@ -57,12 +57,12 @@ class QueryAssembler(object):
                 continue
 
             if index is not None and index.filter_query:
-                if type(qq) is list:
+                if isinstance(qq, list):
                     filters.extend(qq)
                 else:
                     filters.append(qq)
             else:
-                if type(qq) is list:
+                if isinstance(qq, list):
                     matches.extend(qq)
                 else:
                     matches.append(qq)

@@ -86,6 +86,13 @@ Run elasticsearch for tests to utilize:
         -p 9200:9200 \
         docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
 
+Then, you can use one of the travis buildout test files:
+
+    python bootstrap.py -c travis-5.0.cfg
+    ./bin/buildout -c travis-5.0.cfg
+    ./bin/test -s collective.elasticsearch
+
+
 Travis
 ------
 

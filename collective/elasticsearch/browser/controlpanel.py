@@ -58,12 +58,13 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
                     ('Size', str(int(math.ceil(size_in_mb))) + 'MB'),
                     ('Query Count', stats['search']['query_total'])
                 ]
-            except Exception:
+            except KeyError:
                 return [
                     ('Cluster Name', info.get('name')),
                     ('Elastic Search Version', info['version']['number'])
                 ]
         except Exception:
+            logger.warning('Error getting stats', exc_info=True)
             return []
 
     @property

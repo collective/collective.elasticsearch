@@ -14,26 +14,24 @@ class MappingAdapter(object):
             'index': True
         },
         'Title': {
-            'store': False,
+            'store': True,
             'type': 'text',
             'index': True
         },
         'Description': {
-            'store': False,
+            'store': True,
             'type': 'text',
             'index': True
         },
         'allowedRolesAndUsers': {
-            'store': False,
-            'type': 'text',
-            'index': True,
-            'analyzer': 'keyword'
+            'store': True,
+            'type': 'keyword',
+            'index': True
         },
         'portal_type': {
-            'store': False,
-            'type': 'text',
-            'index': True,
-            'analyzer': 'keyword'
+            'store': True,
+            'type': 'keyword',
+            'index': True
         }
     }
 

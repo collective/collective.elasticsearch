@@ -34,36 +34,30 @@ def _zdt(val):
         val = DateTime(val)
     return val
 
+keyword_fields = (
+    "allowedRolesAndUsers", "portal_type", "object_provides", "Type",
+    "id", "cmf_uid", "sync_uid", "getId", "meta_type", "review_state",
+    "in_reply_to", "UID", "getRawRelatedItems", "Subject")
+
 
 class BaseIndex(object):
     filter_query = True
+
 
     def __init__(self, catalog, index):
         self.catalog = catalog
         self.index = index
 
     def create_mapping(self, name):
-        if name == "allowedRolesAndUsers":
-            return {
-                'type': 'text',
-                'index': True,
-                'store': False,
-                'analyzer': 'keyword'
-            }
-        elif name == "Creator":
-            return {
-                'type': 'text',
-                'index': True
-            }
-        elif name == "portal_type":
+        if name in keyword_fields:
             return {
                 'type': 'keyword',
                 'index': True,
-                'store': False,
+                'store': True
             }
         return {
             'type': 'text',
-            'index': False,
+            'index': True,
             'store': False
         }
 
@@ -124,7 +118,7 @@ class EDateIndex(BaseIndex):
     def create_mapping(self, name):
         return {
             'type': 'date',
-            'store': False
+            'store': True
         }
 
     def get_value(self, object):
@@ -258,14 +252,13 @@ class EExtendedPathIndex(BaseIndex):
         return {
             'properties': {
                 'path': {
-                    'type': 'text',
+                    'type': 'keyword',
                     'index': True,
-                    'analyzer': 'keyword',
                     'store': True
                 },
                 'depth': {
                     'type': 'integer',
-                    'store': False
+                    'store': True
                 }
             }
         }
@@ -354,7 +347,7 @@ class EGopipIndex(BaseIndex):
     def create_mapping(self, name):
         return {
             'type': 'integer',
-            'store': False
+            'store': True
         }
 
     def get_value(self, object):
@@ -370,11 +363,11 @@ class EDateRangeIndex(BaseIndex):
             'properties': {
                 '%s1' % name: {
                     'type': 'date',
-                    'store': False
+                    'store': True
                 },
                 '%s2' % name: {
                     'type': 'date',
-                    'store': False
+                    'store': True
                 }
             }
         }

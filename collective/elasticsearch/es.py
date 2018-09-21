@@ -225,9 +225,11 @@ class ElasticSearchCatalog(object):
             conn.indices.delete(index=self.real_index_name)
         except NotFoundError:
             pass
-        except:
-            import pdb; pdb.set_trace()
-            raise
+        except TransportError as exc:
+            if exc.error != 'illegal_argument_exception':
+                raise
+            conn.indices.delete_alias(index="_all", name=self.real_index_name)
+
         if self.index_version:
             try:
                 conn.indices.delete_alias(
@@ -274,11 +276,10 @@ class ElasticSearchCatalog(object):
         logger.debug('Running query: %s' % repr(orig_query))
         try:
             results = self.search(query)
-            if None in results:
-                return self.catalogtool._old_searchResults(REQUEST, **kw)
             return results
-        except Exception:
-            logger.exception('Error running Query: {0!r}'.format(orig_query))
+        except Exception as exc:
+            logger.error(
+                'Error running Query: {0!r}'.format(orig_query), exc_info=True)
             return self.catalogtool._old_searchResults(REQUEST, **kw)
 
     def convertToElastic(self):
