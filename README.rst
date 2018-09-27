@@ -11,14 +11,14 @@ Less than 5 minutes:
     - Download & install Elastic Search
     - bin/elasticsearch
 
-Step by Step for Ubuntu:
-    - add-apt-repository ppa:webupd8team/java
-    - apt-get update
-    - apt-get install git curl oracle-java7-installer
-    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-2.4.3.tar.gz
-    - tar xfvz elasticsearch-2.4.3.tar.gz
-    - cd elasticsearch
-    - bin/elasticsearch &
+    Step by Step for Ubuntu:
+        - add-apt-repository ppa:webupd8team/java
+        - apt-get update
+        - apt-get install git curl oracle-java7-installer
+        - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.3.0.tar.gz
+        - tar xfvz elasticsearch-6.3.0.tar.gz
+        - cd elasticsearch
+        - bin/elasticsearch &
 
 Does it work?
     - curl http://localhost:9200/
@@ -56,7 +56,7 @@ Only tested with Plone 5 with Dexterity types.
 
 It should also work with Plone 4.3 and archetypes.
 
-Deployed with Elasticsearch 2.4.3
+Deployed with Elasticsearch 6.3.0
 
 State
 -----
