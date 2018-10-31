@@ -38,6 +38,7 @@ class QueryAssembler(object):
 
     def __call__(self, dquery):
         filters = []
+        matches = []
         catalog = self.catalogtool._catalog
         idxs = catalog.indexes.keys()
         query = {'match_all': {}}
@@ -56,17 +57,23 @@ class QueryAssembler(object):
                 continue
 
             if index is not None and index.filter_query:
-                filters.append(qq)
+                if isinstance(qq, list):
+                    filters.extend(qq)
+                else:
+                    filters.append(qq)
             else:
-                query = qq
-        if len(filters) == 0:
+                if isinstance(qq, list):
+                    matches.extend(qq)
+                else:
+                    matches.append(qq)
+        if len(filters) == 0 and len(matches) == 0:
             return query
         else:
-            return {
-                'filtered': {
-                    'filter': {
-                        'and': filters
-                    },
-                    'query': query
+            query = {
+                'bool': {
+                    'should': matches,
+                    'minimum_should_match': 1,
+                    'filter': filters
                 }
             }
+            return query

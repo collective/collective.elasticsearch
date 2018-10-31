@@ -34,18 +34,30 @@ def _zdt(val):
         val = DateTime(val)
     return val
 
+keyword_fields = (
+    "allowedRolesAndUsers", "portal_type", "object_provides", "Type",
+    "id", "cmf_uid", "sync_uid", "getId", "meta_type", "review_state",
+    "in_reply_to", "UID", "getRawRelatedItems", "Subject")
+
 
 class BaseIndex(object):
     filter_query = True
+
 
     def __init__(self, catalog, index):
         self.catalog = catalog
         self.index = index
 
     def create_mapping(self, name):
+        if name in keyword_fields:
+            return {
+                'type': 'keyword',
+                'index': True,
+                'store': True
+            }
         return {
-            'type': 'string',
-            'index': 'not_analyzed',
+            'type': 'text',
+            'index': True,
             'store': False
         }
 
@@ -83,12 +95,7 @@ class BaseIndex(object):
         elif type(value) in (list, tuple, set):
             if len(value) == 0:
                 return
-            queries = []
-            for val in value:
-                queries.append({'term': {name: val}})
-            return {
-                'or': queries
-            }
+            return {'terms': {name: value}}
         else:
             return {'term': {name: value}}
 
@@ -111,7 +118,7 @@ class EDateIndex(BaseIndex):
     def create_mapping(self, name):
         return {
             'type': 'date',
-            'store': False
+            'store': True
         }
 
     def get_value(self, object):
@@ -146,12 +153,13 @@ class EDateIndex(BaseIndex):
             return {'range': {name: {'lte': first}}}
         elif range_ == 'minmax' and type(query) in (list, tuple) and \
                 len(query) == 2:
-            return {
-                'and': [
-                    {'range': {name: {'gte': first}}},
-                    {'range': {name: {'lte': _zdt(query[1]).ISO8601()}}}
-                ]
-            }
+            return {'range':
+                     {name: {
+                       'gte': first,
+                       'lte': _zdt(query[1]).ISO8601()
+                       }
+                      }
+                    }
 
     def extract(self, name, data):
         try:
@@ -165,8 +173,8 @@ class EZCTextIndex(BaseIndex):
 
     def create_mapping(self, name):
         return {
-            'type': 'string',
-            'index': 'analyzed',
+            'type': 'text',
+            'index': True,
             'store': False
         }
 
@@ -199,7 +207,7 @@ class EZCTextIndex(BaseIndex):
 
     def get_query(self, name, value):
         value = self._normalize_query(value)
-        # EL doesn't care about * like zope catalog does
+        # ES doesn't care about * like zope catalog does
         clean_value = value.strip('*') if value else ""
         queries = [
             {
@@ -224,11 +232,7 @@ class EZCTextIndex(BaseIndex):
         if name != 'Title':
             queries.append({"match": {name: {'query': clean_value}}})
 
-        return {
-            "bool": {
-                "should": queries
-            }
-        }
+        return queries
 
 
 class EBooleanIndex(BaseIndex):
@@ -242,19 +246,19 @@ class EUUIDIndex(BaseIndex):
 
 
 class EExtendedPathIndex(BaseIndex):
+    filter_query = True
 
     def create_mapping(self, name):
         return {
             'properties': {
                 'path': {
-                    'type': 'string',
-                    'index': 'analyzed',
-                    'analyzer': 'keyword',
-                    'store': False
+                    'type': 'keyword',
+                    'index': True,
+                    'store': True
                 },
                 'depth': {
                     'type': 'integer',
-                    'store': False
+                    'store': True
                 }
             }
         }
@@ -312,12 +316,15 @@ class EExtendedPathIndex(BaseIndex):
                 end = start + depth
             if navtree or depth == -1:
                 gtcompare = 'gte'
-
             filters = []
             if depth == 0:
                 andfilters.append({
-                    'term': {
-                        name + '.path': path
+                    'bool': {
+                        'filter': {
+                            'term': {
+                                name + '.path': path
+                            }
+                        }
                     }
                 })
                 continue
@@ -327,13 +334,10 @@ class EExtendedPathIndex(BaseIndex):
                     {'range': {name + '.depth': {gtcompare: start}}}
                 ]
             if depth != -1:
-                filters.append(
-                    {'range': {name + '.depth': {'lte': end}}})
-            andfilters.append({'and': filters})
+                filters.append({'range': {name + '.depth': {'lte': end}}})
+            andfilters.append({'bool': {'must': filters}})
         if len(andfilters) > 1:
-            return {
-                'or': andfilters
-            }
+            return {'bool': {'should': andfilters}}
         else:
             return andfilters[0]
 
@@ -343,7 +347,7 @@ class EGopipIndex(BaseIndex):
     def create_mapping(self, name):
         return {
             'type': 'integer',
-            'store': False
+            'store': True
         }
 
     def get_value(self, object):
@@ -359,11 +363,11 @@ class EDateRangeIndex(BaseIndex):
             'properties': {
                 '%s1' % name: {
                     'type': 'date',
-                    'store': False
+                    'store': True
                 },
                 '%s2' % name: {
                     'type': 'date',
-                    'store': False
+                    'store': True
                 }
             }
         }
@@ -389,12 +393,10 @@ class EDateRangeIndex(BaseIndex):
     def get_query(self, name, value):
         value = self._normalize_query(value)
         date = value.ISO8601()
-        return {
-            'and': [
-                {'range': {'%s.%s1' % (name, name): {'lte': date}}},
-                {'range': {'%s.%s2' % (name, name): {'gte': date}}}
-            ]
-        }
+        return [
+            {'range': {'{}.{}1'.format(name, name): {'lte': date}}},
+            {'range': {'{}.{}2'.format(name, name): {'gte': date}}}
+        ]
 
 
 class ERecurringIndex(EDateIndex):

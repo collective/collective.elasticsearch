@@ -9,7 +9,7 @@ from collective.elasticsearch.interfaces import IQueryAssembler
 from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import NotFoundError
+from elasticsearch.exceptions import NotFoundError, TransportError
 from plone import api
 from plone.registry.interfaces import IRegistry
 from Products.CMFCore.permissions import AccessInactivePortalContent
@@ -141,7 +141,7 @@ class ElasticSearchCatalog(object):
         if 'start' in query_params:
             query_params['from_'] = query_params.pop('start')
 
-        query_params['fields'] = query_params.get('fields', 'path.path')
+        query_params['stored_fields'] = query_params.get('stored_fields', 'path.path')
         query_params['size'] = self.get_setting('bulk_size', 50)
 
         return self.connection.search(index=self.index_name,
@@ -158,7 +158,7 @@ class ElasticSearchCatalog(object):
             By default, get the plone catalog brain.
         @param query_params:
             Parameters to pass to the search method
-            'fields': the list of fields to get from stored source
+            'stored_fields': the list of fields to get from stored source
         @return: LazyMap
         """
         result = ElasticResult(self, query, **query_params)
@@ -207,7 +207,7 @@ class ElasticSearchCatalog(object):
         return result
 
     def manage_catalogRebuild(self, *args, **kwargs):
-        if self.enabled:
+        if self.registry.enabled:
             self.recreateCatalog()
 
         return self.catalogtool._old_manage_catalogRebuild(*args, **kwargs)
@@ -220,10 +220,16 @@ class ElasticSearchCatalog(object):
 
     def recreateCatalog(self):
         conn = self.connection
+
         try:
             conn.indices.delete(index=self.real_index_name)
         except NotFoundError:
             pass
+        except TransportError as exc:
+            if exc.error != 'illegal_argument_exception':
+                raise
+            conn.indices.delete_alias(index="_all", name=self.real_index_name)
+
         if self.index_version:
             try:
                 conn.indices.delete_alias(
@@ -269,9 +275,11 @@ class ElasticSearchCatalog(object):
         orig_query = query.copy()
         logger.debug('Running query: %s' % repr(orig_query))
         try:
-            return self.search(query)
-        except Exception:
-            logger.exception('Error running Query: {0!r}'.format(orig_query))
+            results = self.search(query)
+            return results
+        except Exception as exc:
+            logger.error(
+                'Error running Query: {0!r}'.format(orig_query), exc_info=True)
             return self.catalogtool._old_searchResults(REQUEST, **kw)
 
     def convertToElastic(self):
@@ -301,6 +309,7 @@ class ElasticSearchCatalog(object):
         else:
             version += 1
         setattr(self.catalogtool, INDEX_VERSION_ATTR, version)
+        self.catalogtool._p_changed = True
         return version
 
     @property

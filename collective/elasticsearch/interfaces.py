@@ -61,7 +61,8 @@ class IElasticSettings(Interface):
 
     sniffer_timeout = schema.Float(
         title=u'Sniffer timeout',
-        default=0.1)
+        required=False,
+        default=None)
 
     retry_on_timeout = schema.Bool(
         title=u'Retry on timeout',

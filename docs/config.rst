@@ -47,10 +47,10 @@ the _default_mapping attribute to add your own indexes::
     class MyMappingAdapter(object):
 
         _default_mapping = {
-            'SearchableText': {'store': False, 'type': 'string', 'index': 'analyzed'},
-            'Title': {'store': False, 'type': 'string', 'index': 'analyzed'},
-            'Description': {'store': False, 'type': 'string', 'index': 'analyzed'},
-            'MyOwnIndex': {'store': False, 'type': 'string', 'index': 'analyzed'},
+            'SearchableText': {'store': False, 'type': 'text', 'index': True},
+            'Title': {'store': False, 'type': 'text', 'index': True},
+            'Description': {'store': False, 'type': 'text', 'index': True},
+            'MyOwnIndex': {'store': False, 'type': 'text', 'index': True,
         }
 
 

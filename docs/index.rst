@@ -26,7 +26,7 @@ Only unit tested with Plone 5 with Dexterity types and archetypes.
 
 It should also work with Plone 4.3 and Plone 5.1.
 
-Deployed with Elasticsearch 2.4.3
+Deployed with Elasticsearch 6.3.0
 
 State
 -----
@@ -61,4 +61,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

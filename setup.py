@@ -5,7 +5,7 @@ from setuptools import setup
 import os
 
 
-version = '2.0.2.dev0'
+version = '3.0.0.dev0'
 
 setup(
     name='collective.elasticsearch',
@@ -36,26 +36,21 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'elasticsearch>=2.0.0,<3.0.0',
+        'elasticsearch>=6.0.0,<7.0.0',
         'plone.app.registry',
         'plone.api',
         'collective.monkeypatcher'
     ],
     extras_require={
         'test': [
+            'docker',
             'plone.app.testing',
             'plone.testing',
             'unittest2',
-            'plone.app.contenttypes',
-            'collective.celery[test]'
-        ],
-        'test-wo-celery': [
-            'plone.app.testing',
-            'plone.testing',
-            'unittest2',
-            'plone.app.contenttypes',
+            'plone.app.contenttypes'
         ],
         'test-archetypes': [
+            'docker',
             'plone.app.testing',
             'plone.testing',
             'unittest2',
