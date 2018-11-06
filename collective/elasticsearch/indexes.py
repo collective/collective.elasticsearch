@@ -5,7 +5,6 @@ from collective.elasticsearch import logger
 from DateTime import DateTime
 from datetime import datetime
 from Missing import MV
-from plone.app.folder.nogopip import GopipIndex
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
 from Products.PluginIndexes.common import safe_callable
@@ -15,6 +14,12 @@ from Products.PluginIndexes.FieldIndex.FieldIndex import FieldIndex
 from Products.PluginIndexes.KeywordIndex.KeywordIndex import KeywordIndex
 from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
 from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
+
+
+try:
+    from plone.app.folder.nogopip import GopipIndex
+except ImportError:
+    from plone.folder.nogopip import GopipIndex
 
 
 def _one(val):
@@ -30,9 +35,10 @@ def _one(val):
 def _zdt(val):
     if type(val) == datetime:
         val = DateTime(val)
-    elif isinstance(val, basestring):
+    elif isinstance(val, str):
         val = DateTime(val)
     return val
+
 
 keyword_fields = (
     "allowedRolesAndUsers", "portal_type", "object_provides", "Type",
@@ -42,7 +48,6 @@ keyword_fields = (
 
 class BaseIndex(object):
     filter_query = True
-
 
     def __init__(self, catalog, index):
         self.catalog = catalog
@@ -131,7 +136,7 @@ class EDateIndex(BaseIndex):
         if value in ('None', MV, None, ''):
             value = self.missing_date
 
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return DateTime(value).ISO8601()
         elif isinstance(value, DateTime):
             return value.ISO8601()
@@ -201,7 +206,7 @@ class EZCTextIndex(BaseIndex):
 
         # Check that we're sending only strings
         all_texts = filter(
-            lambda text: isinstance(text, basestring), all_texts)
+            lambda text: isinstance(text, str), all_texts)
         if all_texts:
             return '\n'.join(all_texts)
 
@@ -289,7 +294,7 @@ class EExtendedPathIndex(BaseIndex):
         return data[name]['path']
 
     def get_query(self, name, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             paths = value
             depth = -1
             navtree = False
@@ -301,7 +306,7 @@ class EExtendedPathIndex(BaseIndex):
             navtree_start = value.get('navtree_start', 0)
         if not paths:
             return
-        if isinstance(paths, basestring):
+        if isinstance(paths, str):
             paths = [paths]
         andfilters = []
         for path in paths:
