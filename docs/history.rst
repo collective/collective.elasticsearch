@@ -4,6 +4,9 @@ Changelog
 3.0.0 (unreleased)
 ------------------
 
+- Python 3 Support
+  [vangheem]
+
 - Support ES 6
   [lucid-0]
 

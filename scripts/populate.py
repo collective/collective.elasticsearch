@@ -128,11 +128,11 @@ def importit(app):
                         api.content.create(
                             type=random.choice(portal_types), id=pid, container=folder,
                             exclude_from_nav=True, **data.next())
-                        print 'created ', count
+                        print('created ', count)
                     except Exception:
-                        print 'skipping', count
+                        print('skipping', count)
             count = populate(folder, count, depth + 1)
-        print 'commiting'
+        print('commiting')
         transaction.commit()
         app._p_jar.cacheMinimize()
         return count
