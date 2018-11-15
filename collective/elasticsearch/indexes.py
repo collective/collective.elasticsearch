@@ -22,6 +22,12 @@ except ImportError:
     from plone.folder.nogopip import GopipIndex
 
 
+try:
+    text_type = basestring
+except NameError:
+    text_type = str
+
+
 def _one(val):
     """
     if list, return first
@@ -35,7 +41,7 @@ def _one(val):
 def _zdt(val):
     if type(val) == datetime:
         val = DateTime(val)
-    elif isinstance(val, str):
+    elif isinstance(val, text_type):
         val = DateTime(val)
     return val
 
@@ -136,7 +142,7 @@ class EDateIndex(BaseIndex):
         if value in ('None', MV, None, ''):
             value = self.missing_date
 
-        if isinstance(value, str):
+        if isinstance(value, text_type):
             return DateTime(value).ISO8601()
         elif isinstance(value, DateTime):
             return value.ISO8601()
@@ -206,7 +212,7 @@ class EZCTextIndex(BaseIndex):
 
         # Check that we're sending only strings
         all_texts = filter(
-            lambda text: isinstance(text, str), all_texts)
+            lambda text: isinstance(text, text_type), all_texts)
         if all_texts:
             return '\n'.join(all_texts)
 
@@ -294,7 +300,7 @@ class EExtendedPathIndex(BaseIndex):
         return data[name]['path']
 
     def get_query(self, name, value):
-        if isinstance(value, str):
+        if isinstance(value, text_type):
             paths = value
             depth = -1
             navtree = False
@@ -306,7 +312,7 @@ class EExtendedPathIndex(BaseIndex):
             navtree_start = value.get('navtree_start', 0)
         if not paths:
             return
-        if isinstance(paths, str):
+        if isinstance(paths, text_type):
             paths = [paths]
         andfilters = []
         for path in paths:
