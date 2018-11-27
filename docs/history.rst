@@ -4,6 +4,9 @@ Changelog
 3.0.0 (unreleased)
 ------------------
 
+- Handle upgrades with missing `es_only_indexes` properly
+  [vangheem]
+
 - Python 3 Support
   [vangheem]
 

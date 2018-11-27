@@ -23,6 +23,6 @@ def getESOnlyIndexes():
         return getUtility(IRegistry).forInterface(
             IElasticSettings,
             check=False
-        ).es_only_indexes
+        ).es_only_indexes or set()
     except (KeyError, AttributeError):
         return {'Title', 'Description', 'SearchableText'}
