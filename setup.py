@@ -5,7 +5,7 @@ from setuptools import setup
 import os
 
 
-version = '2.0.2.dev0'
+version = '2.0.2'
 
 setup(
     name='collective.elasticsearch',
