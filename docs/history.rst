@@ -4,6 +4,9 @@ Changelog
 2.0.2 (unreleased)
 ------------------
 
+- Fix error upgrading collective.elasticsearch
+  [vangheem]
+
 - Fix error causing "Server Status" on @@elastic-controlpanel to be empty.
   [fulv]
 
