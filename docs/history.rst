@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.0.3 (unreleased)
+2.0.3 (2018-12-04)
 ------------------
 
 - Add IReindexActive to request as a flag for other code
