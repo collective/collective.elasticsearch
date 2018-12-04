@@ -5,7 +5,7 @@ before_script:
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
   - pip install -r requirements.txt
-  - bin/buildout -Nc travis.cfg
+  - buildout -Nc travis.cfg
 script: bin/test
 before_install:
   - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.3.5/elasticsearch-2.3.5.deb && sudo dpkg -i --force-confnew elasticsearch-2.3.5.deb && sudo service elasticsearch start
