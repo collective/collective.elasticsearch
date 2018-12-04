@@ -7,6 +7,14 @@ Changelog
 - Handle upgrades with missing `es_only_indexes` properly
   [vangheem]
 
+- Add IReindexActive to request as a flag for other code
+  [lucid-0]
+
+
+2.0.2 (2018-11-27)
+------------------
+
+
 - Python 3 Support
   [vangheem]
 
