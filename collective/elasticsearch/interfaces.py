@@ -24,6 +24,10 @@ class IAdditionalIndexDataProvider(Interface):
         pass
 
 
+class IReindexActive(Interface):
+    pass
+
+
 class IQueryAssembler(Interface):
     def normalize(query):
         pass

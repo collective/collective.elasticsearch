@@ -6,6 +6,7 @@ from collective.elasticsearch.interfaces import IElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.interfaces import IMappingProvider
 from collective.elasticsearch.interfaces import IQueryAssembler
+from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
@@ -21,6 +22,7 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.interface import implementer
+from zope.interface import alsoProvides
 
 
 CONVERTED_ATTR = '_elasticconverted'
@@ -210,6 +212,7 @@ class ElasticSearchCatalog(object):
         if self.registry.enabled:
             self.recreateCatalog()
 
+        alsoProvides(getRequest(), IReindexActive)
         return self.catalogtool._old_manage_catalogRebuild(*args, **kwargs)
 
     def manage_catalogClear(self, *args, **kwargs):
