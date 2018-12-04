@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-from collective.elasticsearch import hook
-from collective.elasticsearch import logger
+from collective.elasticsearch import hook, logger
 from collective.elasticsearch.brain import BrainFactory
-from collective.elasticsearch.interfaces import IElasticSearchCatalog
-from collective.elasticsearch.interfaces import IElasticSettings
-from collective.elasticsearch.interfaces import IMappingProvider
-from collective.elasticsearch.interfaces import IQueryAssembler
-from collective.elasticsearch.interfaces import IReindexActive
+from collective.elasticsearch.interfaces import (IElasticSearchCatalog,
+                                                 IElasticSettings,
+                                                 IMappingProvider,
+                                                 IQueryAssembler)
 from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
@@ -14,15 +12,11 @@ from elasticsearch.exceptions import NotFoundError
 from plone import api
 from plone.registry.interfaces import IRegistry
 from Products.CMFCore.permissions import AccessInactivePortalContent
-from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import _getAuthenticatedUser
+from Products.CMFCore.utils import _checkPermission, _getAuthenticatedUser
 from Products.ZCatalog.Lazy import LazyMap
-from zope.component import ComponentLookupError
-from zope.component import getMultiAdapter
-from zope.component import getUtility
+from zope.component import ComponentLookupError, getMultiAdapter, getUtility
 from zope.globalrequest import getRequest
 from zope.interface import implementer
-from zope.interface import alsoProvides
 
 
 CONVERTED_ATTR = '_elasticconverted'
@@ -211,8 +205,6 @@ class ElasticSearchCatalog(object):
     def manage_catalogRebuild(self, *args, **kwargs):
         if self.enabled:
             self.recreateCatalog()
-
-        alsoProvides(getRequest(), IReindexActive)
         return self.catalogtool._old_manage_catalogRebuild(*args, **kwargs)
 
     def manage_catalogClear(self, *args, **kwargs):
