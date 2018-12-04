@@ -4,7 +4,8 @@ Changelog
 2.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add IReindexActive to request as a flag for other code
+  [lucid-0]
 
 
 2.0.2 (2018-11-27)
