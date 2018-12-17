@@ -4,7 +4,8 @@ Changelog
 2.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix date queries to work with `min:max` as well as `minmax`
+  [vangheem]
 
 
 2.0.3 (2018-12-04)
