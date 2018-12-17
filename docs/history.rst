@@ -4,6 +4,9 @@ Changelog
 3.0.0 (unreleased)
 ------------------
 
+- Fix date queries to work with `min:max` as well as `minmax`
+  [vangheem]
+
 - Handle upgrades with missing `es_only_indexes` properly
   [vangheem]
 
