@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from copy import deepcopy
+
 from collective.elasticsearch import hook, logger
 from collective.elasticsearch.brain import BrainFactory
 from collective.elasticsearch.interfaces import (IElasticSearchCatalog,
@@ -18,22 +20,21 @@ from zope.component import ComponentLookupError, getMultiAdapter, getUtility
 from zope.globalrequest import getRequest
 from zope.interface import implementer
 
-
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 INDEX_VERSION_ATTR = '_elasticindexversion'
 
 
 def _reversed_sort(sort):
-    criterion, order = sort.split(':')
-    if order == 'desc':
-        order = 'asc'
-    elif order == 'asc':
-        order = 'desc'
-    else:
-        raise ValueError("Invalid order: %s" % order)
+    sort = deepcopy(sort)
+    for sort_item in sort:
+        if isinstance(sort_item, dict):
+            if sort_item['order'] == 'desc':
+                sort_item['order'] = 'asc'
+            else:
+                sort_item['order'] = 'desc'
 
-    return "%s:%s" % (criterion, order)
+    return sort
 
 
 class ElasticResult(object):
@@ -44,20 +45,18 @@ class ElasticResult(object):
         self.es = es
         self.bulk_size = es.get_setting('bulk_size', 50)
         qassembler = getMultiAdapter((getRequest(), es), IQueryAssembler)
-        dquery, sort = qassembler.normalize(query)
-        equery = qassembler(dquery)
+        dquery, self.sort = qassembler.normalize(query)
+        self.query = qassembler(dquery)
 
         # results are stored in a dictionary, keyed
         # but the start index of the bulk size for the
         # results it holds. This way we can skip around
         # for result data in a result object
-        self.query = equery
-        result = es._search(self.query, sort=sort, **query_params)['hits']
+        result = es._search(self.query, sort=self.sort, **query_params)['hits']
         self.results = {
             0: result['hits']
         }
         self.count = result['total']
-        self.sort = sort
         self.query_params = query_params
 
     def __getitem__(self, key):
@@ -131,7 +130,7 @@ class ElasticSearchCatalog(object):
             )
         return self._conn
 
-    def _search(self, query, **query_params):
+    def _search(self, query, sort=None, **query_params):
         '''
         '''
         if 'start' in query_params:
@@ -140,9 +139,13 @@ class ElasticSearchCatalog(object):
         query_params['fields'] = query_params.get('fields', 'path.path')
         query_params['size'] = self.get_setting('bulk_size', 50)
 
+        body = {'query': query}
+        if sort is not None:
+            body['sort'] = sort
+
         return self.connection.search(index=self.index_name,
                                       doc_type=self.doc_type,
-                                      body={'query': query},
+                                      body=body,
                                       **query_params)
 
     def search(self, query, factory=None, **query_params):
