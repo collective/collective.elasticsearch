@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from copy import deepcopy
-
 from collective.elasticsearch import hook, logger
 from collective.elasticsearch.brain import BrainFactory
 from collective.elasticsearch.interfaces import (IElasticSearchCatalog,
@@ -26,15 +24,18 @@ INDEX_VERSION_ATTR = '_elasticindexversion'
 
 
 def _reversed_sort(sort):
-    sort = deepcopy(sort)
+    result = []
     for sort_item in sort:
         if isinstance(sort_item, dict):
-            if sort_item['order'] == 'desc':
-                sort_item['order'] = 'asc'
-            else:
-                sort_item['order'] = 'desc'
+            sort_item = sort_item.copy()
+            for field, value in sort_item.items():
+                if value == 'desc':
+                    sort_item[field] = 'asc'
+                else:
+                    sort_item[field] = 'desc'
+        result.append(sort_item)
 
-    return sort
+    return result
 
 
 class ElasticResult(object):
@@ -81,7 +82,7 @@ class ElasticResult(object):
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
                     self.query, sort=sort, start=start, **self.query_params
-                )['hits']['hits']
+                )['hits']['hits'])
 
             return self.results[result_key][result_index]
 
