@@ -27,6 +27,7 @@ class BaseTest(unittest.TestCase):
         registry = getUtility(IRegistry)
         settings = registry.forInterface(IElasticSettings, check=False)
         settings.enabled = True
+        settings.sniffer_timeout = 0.0
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.catalog._elasticcustomindex = 'plone-test-index'
