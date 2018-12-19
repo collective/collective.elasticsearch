@@ -184,6 +184,7 @@ class TestQueries(BaseFunctionalTest):
         brain = el_results2[1]
         self.assertEqual(brain.getId, 'event')
 
+        # negative indexing broken?
         brain = el_results2[-1]
         self.assertEqual(brain.getId, 'event')
         brain = el_results2[-2]
