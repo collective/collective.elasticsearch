@@ -158,6 +158,7 @@ class TestQueries(BaseFunctionalTest):
         self.commit()
         self.es.connection.indices.flush()
         el_results = self.catalog(portal_type='Event', Title='Some Event')
+        self.assertEqual(len(el_results), 1)
         brain = el_results[0]
         self.assertEqual(brain.getObject(), event)
         self.assertEqual(brain.portal_type, 'Event')
@@ -179,16 +180,19 @@ class TestQueries(BaseFunctionalTest):
             Title='Some Event',
             sort_on='getId',
             sort_order='descending')
+        self.assertEqual(len(el_results2), 2)
         brain = el_results2[0]
         self.assertEqual(brain.getId, 'event2')
         brain = el_results2[1]
         self.assertEqual(brain.getId, 'event')
 
         # negative indexing broken?
-        print(el_results2)
+        print([(b.getId, b.Title) for b in el_results2])
         brain = el_results2[-1]
+        print(brain.getId)
         self.assertEqual(brain.getId, 'event')
         brain = el_results2[-2]
+        print(brain.getId)
         self.assertEqual(brain.getId, 'event2')
 
 
