@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import math
+
 from collective.elasticsearch import hook, logger
 from collective.elasticsearch.brain import BrainFactory
 from collective.elasticsearch.interfaces import (IElasticSearchCatalog,
@@ -23,21 +25,6 @@ CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 INDEX_VERSION_ATTR = '_elasticindexversion'
 
 
-def _reversed_sort(sort):
-    result = []
-    for sort_item in sort:
-        if isinstance(sort_item, dict):
-            sort_item = sort_item.copy()
-            for field, value in sort_item.items():
-                if value == 'desc':
-                    sort_item[field] = 'asc'
-                else:
-                    sort_item[field] = 'desc'
-        result.append(sort_item)
-
-    return result
-
-
 class ElasticResult(object):
 
     def __init__(self, es, query, **query_params):
@@ -60,7 +47,29 @@ class ElasticResult(object):
         self.count = result['total']
         self.query_params = query_params
 
+    def __len__(self):
+        return self.count
+
     def __getitem__(self, key):
+        '''
+        Lazy loading es results with negative index support.
+
+        We store the results in buckets of what the bulk size is.
+
+        This is so you can skip around in the indexes without needing
+        to load all the data.
+
+        Example(all zero based indexing here remember):
+            (525 results with bulk size 50)
+            - self[0]: 0 bucket, 0 item
+            - self[10]: 0 bucket, 10 item
+            - self[50]: 50 bucket: 0 item
+            - self[55]: 50 bucket: 5 item
+            - self[352]: 350 bucket: 2 item
+            - self[-1]: 500 bucket: 24 item
+            - self[-2]: 500 bucket: 23 item
+            - self[-55]: 450 bucket: 19 item
+        '''
         if isinstance(key, slice):
             return [self[i] for i in range(key.start, key.end)]
         else:
@@ -68,21 +77,28 @@ class ElasticResult(object):
                 raise IndexError
             elif key < 0 and abs(key) > self.count:
                 raise IndexError
-            elif key >= 0:
+
+            if key >= 0:
                 result_key = (key / self.bulk_size) * self.bulk_size
                 start = result_key
-                sort = self.sort
                 result_index = key % self.bulk_size
             elif key < 0:
-                result_key = - ((abs(key) / self.bulk_size) * self.bulk_size) - 1  # noqa
-                start = abs(result_key) - 1
-                sort = _reversed_sort(self.sort)
-                result_index = (abs(key) - 1) % self.bulk_size
+                last_key = int(math.floor(
+                    float(self.count) / float(self.bulk_size)
+                )) * self.bulk_size
+                start = result_key = last_key - (
+                        (abs(key) / self.bulk_size) * self.bulk_size)
+                if last_key == result_key:
+                    result_index = key
+                else:
+                    result_index = (key % self.bulk_size) - (
+                        self.bulk_size - (self.count % last_key)
+                    )
 
             if result_key not in self.results:
                 self.results[result_key] = self.es._search(
-                    self.query, sort=sort, start=start, **self.query_params
-                )['hits']['hits']
+                    self.query, sort=self.sort, start=start,
+                    **self.query_params)['hits']['hits']
 
             return self.results[result_key][result_index]
 
