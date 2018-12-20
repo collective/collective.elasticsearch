@@ -181,18 +181,21 @@ class TestQueries(BaseFunctionalTest):
             sort_on='getId',
             sort_order='descending')
         self.assertEqual(len(el_results2), 2)
+        print('1 {}'.format([(b.getId, b.Title) for b in el_results2]))
         brain = el_results2[0]
+        print('2 {}'.format(brain.getId))
         self.assertEqual(brain.getId, 'event2')
         brain = el_results2[1]
+        print('3 {}'.format(brain.getId))
         self.assertEqual(brain.getId, 'event')
 
         # negative indexing broken?
-        print([(b.getId, b.Title) for b in el_results2])
+        print('4 {}'.format([(b.getId, b.Title) for b in el_results2]))
         brain = el_results2[-1]
-        print(brain.getId)
+        print('5 {}'.format(brain.getId))
         self.assertEqual(brain.getId, 'event')
         brain = el_results2[-2]
-        print(brain.getId)
+        print('6 {}'.format(brain.getId))
         self.assertEqual(brain.getId, 'event2')
 
 
