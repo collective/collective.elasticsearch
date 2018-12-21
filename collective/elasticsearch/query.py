@@ -15,26 +15,28 @@ class QueryAssembler(object):
         self.request = request
 
     def normalize(self, query):
-        sort_on = ['_score']
+        sort_on = []
         sort = query.pop('sort_on', None)
-        if sort:
-            sort_on.extend(sort.split(','))
-        sort_order = query.pop('sort_order', 'descending')
-        if sort_on:
-            sortstr = ','.join(sort_on)
-            if sort_order in ('descending', 'reverse', 'desc'):
-                sortstr += ':desc'
-            else:
-                sortstr += ':asc'
+        # default plone is ascending
+        sort_order = query.pop('sort_order', 'asc')
+        if sort_order in ('descending', 'reverse', 'desc'):
+            sort_order = 'desc'
         else:
-            sortstr = ''
+            sort_order = 'asc'
+
+        if sort:
+            for sort_str in sort.split(','):
+                sort_on.append({
+                    sort_str: {"order": sort_order}
+                })
+        sort_on.append('_score')
         if 'b_size' in query:
             del query['b_size']
         if 'b_start' in query:
             del query['b_start']
         if 'sort_limit' in query:
             del query['sort_limit']
-        return query, sortstr
+        return query, sort_on
 
     def __call__(self, dquery):
         filters = []
