@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.0.5 (unreleased)
+2.0.5 (2018-12-20)
 ------------------
 
 - Fix sort order parsing and implementation
