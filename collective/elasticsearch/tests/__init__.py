@@ -28,6 +28,7 @@ class BaseTest(unittest.TestCase):
         settings = registry.forInterface(IElasticSettings, check=False)
         settings.sniffer_timeout = None  # disable sniffing hosts in tests because docker...
         settings.enabled = True
+        settings.sniffer_timeout = 0.0
 
         self.catalog = getToolByName(self.portal, 'portal_catalog')
         self.catalog._elasticcustomindex = 'plone-test-index'

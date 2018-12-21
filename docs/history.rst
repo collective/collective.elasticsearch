@@ -7,6 +7,9 @@ Changelog
 - Fix date queries to work with `min:max` as well as `minmax`
   [vangheem]
 
+- Fix sort order parsing and implementation
+  [vangheem]
+
 - Handle upgrades with missing `es_only_indexes` properly
   [vangheem]
 
