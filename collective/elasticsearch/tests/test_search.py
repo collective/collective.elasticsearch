@@ -158,6 +158,7 @@ class TestQueries(BaseFunctionalTest):
         self.commit()
         self.es.connection.indices.flush()
         el_results = self.catalog(portal_type='Event', Title='Some Event')
+        self.assertEqual(len(el_results), 1)
         brain = el_results[0]
         self.assertEqual(brain.getObject(), event)
         self.assertEqual(brain.portal_type, 'Event')
@@ -179,15 +180,34 @@ class TestQueries(BaseFunctionalTest):
             Title='Some Event',
             sort_on='getId',
             sort_order='descending')
+        self.assertEqual(len(el_results2), 2)
         brain = el_results2[0]
         self.assertEqual(brain.getId, 'event2')
         brain = el_results2[1]
         self.assertEqual(brain.getId, 'event')
 
+        # negative indexing broken?
         brain = el_results2[-1]
         self.assertEqual(brain.getId, 'event')
         brain = el_results2[-2]
         self.assertEqual(brain.getId, 'event2')
+
+    def test_brains_indexing(self):
+        for idx in range(120):
+            createObject(
+                self.portal, 'Document', '{0:04d}page'.format(idx),
+                title='Page {}'.format(idx))
+        self.commit()
+        el_results = self.catalog(
+            portal_type='Document',
+            sort_on='getId',
+            sort_order='asc')
+        self.assertEqual(len(el_results), 120)
+        self.assertEqual(el_results[0].getId, '0000page')
+        self.assertEqual(el_results[-1].getId, '0119page')
+        self.assertEqual(el_results[-50].getId, '0070page')
+        self.assertEqual(el_results[-55].getId, '0065page')
+        self.assertEqual(el_results[-100].getId, '0020page')
 
 
 if HAS_ATCONTENTTYPES:

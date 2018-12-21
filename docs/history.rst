@@ -4,7 +4,8 @@ Changelog
 2.0.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix sort order parsing and implementation
+  [vangheem]
 
 
 2.0.4 (2018-12-17)
