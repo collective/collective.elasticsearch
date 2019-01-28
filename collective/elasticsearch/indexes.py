@@ -49,7 +49,7 @@ def _zdt(val):
 keyword_fields = (
     "allowedRolesAndUsers", "portal_type", "object_provides", "Type",
     "id", "cmf_uid", "sync_uid", "getId", "meta_type", "review_state",
-    "in_reply_to", "UID", "getRawRelatedItems", "Subject")
+    "in_reply_to", "UID", "getRawRelatedItems", "Subject", "sortable_title")
 
 
 class BaseIndex(object):
