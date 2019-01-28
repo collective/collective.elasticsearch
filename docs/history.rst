@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.0 (unreleased)
+3.0.0 (2019-01-28)
 ------------------
 
 - Fix date queries to work with `min:max` as well as `minmax`
