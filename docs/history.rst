@@ -4,7 +4,8 @@ Changelog
 3.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix sortable_title search issue
+  [ewohnlich]
 
 
 3.0.0 (2019-01-28)
