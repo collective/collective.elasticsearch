@@ -3,7 +3,7 @@ from Acquisition import aq_base
 from Acquisition import aq_parent
 from collective.elasticsearch import logger
 from DateTime import DateTime
-from datetime import datetime
+from datetime import datetime, date
 from Missing import MV
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
@@ -41,6 +41,8 @@ def _one(val):
 def _zdt(val):
     if type(val) == datetime:
         val = DateTime(val)
+    elif type(val) == date:
+        val = DateTime(datetime.fromordinal(val.toordinal()))
     elif isinstance(val, text_type):
         val = DateTime(val)
     return val

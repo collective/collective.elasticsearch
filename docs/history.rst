@@ -4,7 +4,14 @@ Changelog
 3.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix Zope DateTime convert to also handle the datetime.date type [ewohnlich]
+
+
+3.0.1 (2019-01-28)
+------------------
+
+- Fix sortable_title search issue
+  [ewohnlich]
 
 
 3.0.1 (2019-01-28)
