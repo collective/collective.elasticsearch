@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.2 (unreleased)
+3.0.2 (2019-01-31)
 ------------------
 
 - Fix Zope DateTime convert to also handle the datetime.date type [ewohnlich]
