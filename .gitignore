@@ -10,6 +10,7 @@ develop-eggs/
 /venv/
 /.idea
 *.sublime-*
+/.vscode
 _build
 /include
 /lib
