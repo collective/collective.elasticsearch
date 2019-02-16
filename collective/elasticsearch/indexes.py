@@ -164,15 +164,16 @@ class EDateIndex(BaseIndex):
             return {'range': {name: {'gte': first}}}
         elif range_ == 'max':
             return {'range': {name: {'lte': first}}}
-        elif range_ in ('min:max', 'minmax') and type(query) in (list, tuple) and \
-                len(query) == 2:
-            return {'range':
-                     {name: {
+        elif range_ in ('min:max', 'minmax') and (
+                    type(query) in (list, tuple)) and len(query) == 2:
+            return {
+                'range': {
+                    name: {
                        'gte': first,
                        'lte': _zdt(query[1]).ISO8601()
-                       }
-                      }
                     }
+                }
+            }
 
     def extract(self, name, data):
         try:

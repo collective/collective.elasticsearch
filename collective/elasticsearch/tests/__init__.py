@@ -26,7 +26,8 @@ class BaseTest(unittest.TestCase):
 
         registry = getUtility(IRegistry)
         settings = registry.forInterface(IElasticSettings, check=False)
-        settings.sniffer_timeout = None  # disable sniffing hosts in tests because docker...
+        # disable sniffing hosts in tests because docker...
+        settings.sniffer_timeout = None
         settings.enabled = True
         settings.sniffer_timeout = 0.0
 

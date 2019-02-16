@@ -11,6 +11,7 @@ before_script:
   - sleep 10
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
+  - pip install flake8==3.7.5
   - python bootstrap.py -c $TEST_FILE
   - bin/buildout -Nc $TEST_FILE
 script: bin/test

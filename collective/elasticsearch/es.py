@@ -156,7 +156,8 @@ class ElasticSearchCatalog(object):
         if 'start' in query_params:
             query_params['from_'] = query_params.pop('start')
 
-        query_params['stored_fields'] = query_params.get('stored_fields', 'path.path')
+        query_params['stored_fields'] = query_params.get(
+            'stored_fields', 'path.path')
         query_params['size'] = self.get_setting('bulk_size', 50)
 
         body = {'query': query}
@@ -297,7 +298,7 @@ class ElasticSearchCatalog(object):
         try:
             results = self.search(query)
             return results
-        except Exception as exc:
+        except Exception:
             logger.error(
                 'Error running Query: {0!r}'.format(orig_query), exc_info=True)
             return self.catalogtool._old_searchResults(REQUEST, **kw)
