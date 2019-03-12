@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.3 (unreleased)
+3.0.3 (2019-03-12)
 ------------------
 
 - Add missing import logger
