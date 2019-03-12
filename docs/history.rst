@@ -4,7 +4,8 @@ Changelog
 3.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add missing import logger
+  [nazrulworld]
 
 
 3.0.2 (2019-01-31)
