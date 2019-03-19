@@ -5,7 +5,6 @@ from collective.elasticsearch import logger
 from DateTime import DateTime
 from datetime import datetime
 from Missing import MV
-from plone.app.folder.nogopip import GopipIndex
 from Products.ExtendedPathIndex.ExtendedPathIndex import ExtendedPathIndex
 from Products.PluginIndexes.BooleanIndex.BooleanIndex import BooleanIndex
 from Products.PluginIndexes.common import safe_callable
@@ -15,6 +14,17 @@ from Products.PluginIndexes.FieldIndex.FieldIndex import FieldIndex
 from Products.PluginIndexes.KeywordIndex.KeywordIndex import KeywordIndex
 from Products.PluginIndexes.UUIDIndex.UUIDIndex import UUIDIndex
 from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
+
+
+try:
+    from plone.folder.nogopip import GopipIndex
+except ImportError:
+    from plone.app.folder.nogopip import GopipIndex
+
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 def _one(val):
