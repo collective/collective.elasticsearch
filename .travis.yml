@@ -1,11 +1,34 @@
 language: python
-python: 2.7
+
+matrix:
+  include:
+    - name: Plone 5.0
+      python: 2.7
+      env: PLONE_VERSION=50
+    - name: Plone 5.1
+      python: 2.7
+      env: PLONE_VERSION=51
+    - name: Plone 5.2/2.7
+      python: 2.7
+      env: PLONE_VERSION=52
+    - name: Plone 5.2/3.6
+      python: 3.6
+      env: PLONE_VERSION=52
+
 before_script:
   - sleep 10
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
   - pip install -r requirements.txt
-  - buildout -Nc travis.cfg
+  - if [ "$PLONE_VERSION" != "50" ]; then
+    buildout -Nc travis-5.0.cfg
+    fi
+  - if [ "$PLONE_VERSION" != "51" ]; then
+    buildout -Nc travis-5.1.cfg
+    fi
+  - if [ "$PLONE_VERSION" != "52" ]; then
+    buildout -Nc travis.cfg
+    fi
 script: bin/test
 before_install:
   - curl -O https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.3.5/elasticsearch-2.3.5.deb && sudo dpkg -i --force-confnew elasticsearch-2.3.5.deb && sudo service elasticsearch start
