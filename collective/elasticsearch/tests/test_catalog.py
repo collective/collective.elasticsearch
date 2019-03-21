@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.testing import createObject
-from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import getUID
 from plone import api
@@ -47,14 +46,6 @@ class TestQueries(BaseFunctionalTest):
         self.portal.manage_delObjects(['event_to_delete'])
         self.assertEqual(self.get_hook().index, {})
         self.assertEqual(self.get_hook().remove, {obj_uid})
-
-
-if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
-
-    class TestQueriesAT(TestQueries):
-
-        layer = ElasticSearch_FUNCTIONAL_TESTING_AT
 
 
 def test_suite():

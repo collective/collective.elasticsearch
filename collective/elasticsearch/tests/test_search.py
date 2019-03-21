@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from collective.elasticsearch.testing import createObject
-from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
 from collective.elasticsearch.tests import BaseFunctionalTest
 from DateTime import DateTime
 
@@ -208,19 +207,6 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(el_results[-50].getId, '0070page')
         self.assertEqual(el_results[-55].getId, '0065page')
         self.assertEqual(el_results[-100].getId, '0020page')
-
-
-if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
-
-    EVENT_KLASS_AT = 'Products.ATContentTypes.interfaces.event.IATEvent'
-    DOCUMENT_KLASS_AT = 'Products.ATContentTypes.interfaces.document.IATDocument'  # noqa
-
-    class TestQueriesAT(TestQueries):
-        layer = ElasticSearch_FUNCTIONAL_TESTING_AT
-
-        event_klass = EVENT_KLASS_AT
-        document_klass = DOCUMENT_KLASS_AT
 
 
 def test_suite():
