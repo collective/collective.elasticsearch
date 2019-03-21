@@ -54,6 +54,7 @@
          .interfaces.IElasticSearchCatalog" />
   
   <utility
+    zcml:condition="have plone-52"
     provides="Products.CMFCore.interfaces.IIndexQueueProcessor"
     name="collective.elasticsearch"
     factory=".qp.ESCatalogProcessor" />
