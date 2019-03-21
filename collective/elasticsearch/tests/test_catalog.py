@@ -3,6 +3,7 @@ from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.testing import createObject
 from collective.elasticsearch.tests import BaseTest
 from collective.elasticsearch.utils import getUID
+from collective.elasticsearch.tests.utils import flush_queue
 from plone import api
 
 import unittest2 as unittest
@@ -20,9 +21,11 @@ class TestQueries(BaseTest):
     def test_has_right_brain_data(self):
         current_length = len(self.catalog._catalog.uids)
         obj = createObject(self.portal, 'Event', 'event', title='Some Event')
+        flush_queue()
         self.assertEqual(current_length + 1, len(self.catalog._catalog.uids))
         self.assertEqual(self.get_hook().index, {getUID(obj): obj})
         self.portal.manage_delObjects(['event'])
+        flush_queue()
         self.assertEqual(current_length, len(self.catalog._catalog.uids))
         self.assertEqual(self.get_hook().remove, {getUID(obj)})
         self.assertEqual(self.get_hook().index, {})
@@ -33,6 +36,7 @@ class TestQueries(BaseTest):
         obj_uid = getUID(obj)
         self.assertEqual(current_length + 1, len(self.catalog._catalog.uids))
         api.content.rename(self.portal.event1, new_id='event2')
+        flush_queue()
         self.assertEqual(self.get_hook().remove, set())
         self.assertEqual(self.get_hook().index, {obj_uid: obj})
 
@@ -44,6 +48,7 @@ class TestQueries(BaseTest):
             title='Some Event')
         obj_uid = getUID(obj)
         self.portal.manage_delObjects(['event_to_delete'])
+        flush_queue()
         self.assertEqual(self.get_hook().index, {})
         self.assertEqual(self.get_hook().remove, {obj_uid})
 
