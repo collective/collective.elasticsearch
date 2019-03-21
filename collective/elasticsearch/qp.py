@@ -9,7 +9,6 @@ class ESCatalogProcessor:
        the `CatalogMultiplex` and `CMFCatalogAware` mixin classes """
 
     def index(self, obj, attributes=None):
-        print('hi')
         hook.add_object(None, obj)
 
     def reindex(self, obj, attributes=None, update_metadata=1):

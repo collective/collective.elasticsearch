@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.testing import createObject
-from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.tests import BaseTest
 from collective.elasticsearch.utils import getUID
 from plone import api
 
@@ -12,7 +12,7 @@ EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
 DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
 
 
-class TestQueries(BaseFunctionalTest):
+class TestQueries(BaseTest):
 
     def get_hook(self):
         return getHook(es=self.es)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collective.elasticsearch.testing import createObject
-from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.tests import BaseTest
 from DateTime import DateTime
 
 import time
@@ -11,7 +11,7 @@ EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
 DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
 
 
-class TestQueries(BaseFunctionalTest):
+class TestQueries(BaseTest):
 
     event_klass = EVENT_KLASS
     document_klass = DOCUMENT_KLASS

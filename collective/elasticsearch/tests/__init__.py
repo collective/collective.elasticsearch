@@ -4,7 +4,6 @@ from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
-from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
 from plone.registry.interfaces import IRegistry
 from Products.CMFCore.utils import getToolByName
 from zope.component import getUtility
@@ -15,7 +14,7 @@ import unittest2 as unittest
 
 class BaseTest(unittest.TestCase):
 
-    layer = ElasticSearch_INTEGRATION_TESTING
+    layer = ElasticSearch_FUNCTIONAL_TESTING
 
     def setUp(self):
         super(BaseTest, self).setUp()
@@ -50,8 +49,3 @@ class BaseTest(unittest.TestCase):
         super(BaseTest, self).tearDown()
         self.es.connection.indices.delete(index=self.es.index_name)
         self.clearTransactionEntries()
-
-
-class BaseFunctionalTest(BaseTest):
-
-    layer = ElasticSearch_FUNCTIONAL_TESTING
