@@ -5,6 +5,7 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:monkey="http://namespaces.plone.org/monkey"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     i18n_domain="collective.elasticsearch">
 
   <five:registerPackage package="." initialize=".initialize" />
@@ -51,6 +52,11 @@
     provides=".interfaces.IQueryAssembler"
     for="zope.interface.Interface
          .interfaces.IElasticSearchCatalog" />
+  
+  <utility
+    provides="Products.CMFCore.interfaces.IIndexQueueProcessor"
+    name="collective.elasticsearch"
+    factory=".qp.ESCatalogProcessor" />
 
 
   <!-- CMFPlone CatalogTool patches -->
@@ -66,20 +72,6 @@
     class="Products.CMFPlone.CatalogTool.CatalogTool"
     original="__call__"
     replacement=".patches.safeSearchResults"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="catalog_object"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="catalog_object"
-    replacement=".patches.catalog_object"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="uncatalog_object"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="uncatalog_object"
-    replacement=".patches.uncatalog_object"
     preserveOriginal="True"
     />
   <monkey:patch
@@ -111,14 +103,32 @@
     preserveOriginal="True"
     />
 
-  <!-- CMFCore CatalogTool patches -->
+
   <monkey:patch
+    zcml:condition="not-have plone-52"
+    description="catalog_object"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="catalog_object"
+    replacement=".patches.catalog_object"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    zcml:condition="not-have plone-52"
+    description="uncatalog_object"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="uncatalog_object"
+    replacement=".patches.uncatalog_object"
+    preserveOriginal="True"
+    />
+  <monkey:patch
+    zcml:condition="not-have plone-52"
     description="unindexObject"
     class="Products.CMFPlone.CatalogTool.CatalogTool"
     original="unindexObject"
     replacement=".patches.unindexObject"
     preserveOriginal="True"
     />
+
 
   <monkey:patch
     description="moveObjectsByDelta"

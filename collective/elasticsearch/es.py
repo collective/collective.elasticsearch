@@ -87,7 +87,7 @@ class ElasticResult(object):
                     float(self.count) / float(self.bulk_size)
                 )) * self.bulk_size
                 start = result_key = last_key - (
-                        (abs(key) / self.bulk_size) * self.bulk_size)
+                    (abs(key) / self.bulk_size) * self.bulk_size)
                 if last_key == result_key:
                     result_index = key
                 else:

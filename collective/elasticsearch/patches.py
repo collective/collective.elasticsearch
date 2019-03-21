@@ -13,17 +13,6 @@ def _apply_indexing_active():
         alsoProvides(req, IReindexActive)
 
 
-def catalog_object(self, object, uid=None, idxs=[],
-                   update_metadata=1, pghandler=None):
-    es = ElasticSearchCatalog(self)
-    return es.catalog_object(object, uid, idxs, update_metadata, pghandler)
-
-
-def uncatalog_object(self, uid, obj=None, *args, **kwargs):
-    es = ElasticSearchCatalog(self)
-    return es.uncatalog_object(uid, obj, *args, **kwargs)
-
-
 def unrestrictedSearchResults(self, REQUEST=None, **kw):
     es = ElasticSearchCatalog(self)
     return es.searchResults(REQUEST, check_perms=False, **kw)
@@ -51,6 +40,17 @@ def manage_catalogClear(self, *args, **kwargs):
     """ need to be publishable """
     es = ElasticSearchCatalog(self)
     return es.manage_catalogClear(*args, **kwargs)
+
+
+def catalog_object(self, object, uid=None, idxs=[],
+                   update_metadata=1, pghandler=None):
+    es = ElasticSearchCatalog(self)
+    return es.catalog_object(object, uid, idxs, update_metadata, pghandler)
+
+
+def uncatalog_object(self, uid, obj=None, *args, **kwargs):
+    es = ElasticSearchCatalog(self)
+    return es.uncatalog_object(uid, obj, *args, **kwargs)
 
 
 def unindexObject(self, ob):

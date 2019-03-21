@@ -22,6 +22,15 @@ import transaction
 import urllib3
 
 
+try:
+    unicode
+except NameError:
+    def unicode(val, enc, error):
+        if isinstance(val, bytes):
+            return val.decode(enc, error)
+        return val
+
+
 logger = logging.getLogger('collective.elasticsearch')
 
 
@@ -161,7 +170,7 @@ def get_index_data(obj, es):
 
             # Ignore errors in converting to unicode, so json.dumps
             # does not barf when we're trying to send data to ES.
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 value = unicode(value, 'utf-8', 'ignore')
 
             index_data[index_name] = value
@@ -227,8 +236,12 @@ class CommitHook(object):
         self.es = es
 
     def schedule_celery(self):
+        # clear out obj values to not send for payload
+        index = {}
+        for k in self.index.keys():
+            index[k] = None
         index_batch_async.apply_async(
-            args=[self.remove, self.index.keys(), self.positions],
+            args=[self.remove, index, self.positions],
             kwargs={},
             without_transaction=True)
 
@@ -267,6 +280,8 @@ def getHook(es=None):
 
 def remove_object(es, obj):
     hook = getHook(es)
+    if hook is None:
+        return
     uid = getUID(obj)
     if uid is None:
         logger.error("Tried to unindex an object of None uid")
@@ -279,9 +294,12 @@ def remove_object(es, obj):
 
 def add_object(es, obj):
     hook = getHook(es)
+    if hook is None:
+        return
     uid = getUID(obj)
     if uid is None:
-        logger.error("Tried to index an object of None uid")
+        logger.warning(
+            "Tried to index an object of None uid: {}".format(obj))
         return
 
     hook.index[uid] = obj
@@ -291,11 +309,14 @@ def add_object(es, obj):
 
 def index_positions(obj, ids):
     hook = getHook()
+    if hook is None:
+        return
     if ISiteRoot.providedBy(obj):
         hook.positions['/'] = ids
     else:
         uid = getUID(obj)
         if uid is None:
-            logger.error("Tried to index an object of None uid")
+            logger.warning(
+                "Tried to index an object of None uid".format(obj))
             return
         hook.positions[getUID(obj)] = ids
