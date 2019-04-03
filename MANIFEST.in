@@ -1,5 +1,4 @@
 include *.py
-include tests-plone4.3.cfg
 include travis.cfg
 recursive-include collective *.pt
 recursive-include collective *.xml

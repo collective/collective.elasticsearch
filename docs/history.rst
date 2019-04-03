@@ -1,10 +1,41 @@
 Changelog
 =========
 
-2.0.2 (unreleased)
+2.0.6 (unreleased)
 ------------------
 
 - Nothing changed yet.
+
+
+2.0.5 (2018-12-20)
+------------------
+
+- Fix sort order parsing and implementation
+  [vangheem]
+
+
+2.0.4 (2018-12-17)
+------------------
+
+- Fix date queries to work with `min:max` as well as `minmax`
+  [vangheem]
+
+
+2.0.3 (2018-12-04)
+------------------
+
+- Add IReindexActive to request as a flag for other code
+  [lucid-0]
+
+
+2.0.2 (2018-11-27)
+------------------
+
+- Fix error upgrading collective.elasticsearch
+  [vangheem]
+
+- Fix error causing "Server Status" on @@elastic-controlpanel to be empty.
+  [fulv]
 
 
 2.0.1 (2018-01-05)

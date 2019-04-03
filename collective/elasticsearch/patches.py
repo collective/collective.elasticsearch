@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
+from collective.elasticsearch.interfaces import IReindexActive
+from zope.globalrequest import getRequest
+from zope.interface import alsoProvides
 from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog
 from plone import api
+
+
+def _apply_indexing_active():
+    req = getRequest()
+    if req is not None:
+        alsoProvides(req, IReindexActive)
 
 
 def catalog_object(self, object, uid=None, idxs=[],
@@ -27,8 +36,15 @@ def safeSearchResults(self, REQUEST=None, **kw):
 
 def manage_catalogRebuild(self, *args, **kwargs):
     """ need to be publishable """
+    _apply_indexing_active()
     es = ElasticSearchCatalog(self)
     return es.manage_catalogRebuild(**kwargs)
+
+
+def manage_catalogReindex(self, REQUEST, RESPONSE, URL1):
+    """ need to be publishable """
+    _apply_indexing_active()
+    return self._old_manage_catalogReindex(REQUEST, RESPONSE, URL1)
 
 
 def manage_catalogClear(self, *args, **kwargs):

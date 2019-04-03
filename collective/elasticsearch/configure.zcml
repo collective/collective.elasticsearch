@@ -110,6 +110,13 @@
     preserveOriginal="True"
     />
   <monkey:patch
+    description="manage_catalogReindex"
+    class="Products.CMFPlone.CatalogTool.CatalogTool"
+    original="manage_catalogReindex"
+    replacement=".patches.manage_catalogReindex"
+    preserveOriginal="True"
+    />
+  <monkey:patch
     description="manage_catalogClear"
     class="Products.CMFPlone.CatalogTool.CatalogTool"
     original="manage_catalogClear"
