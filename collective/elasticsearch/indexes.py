@@ -203,7 +203,7 @@ class EZCTextIndex(BaseIndex):
     def get_setting(self, name, default=None):
         return
 
-    def get_query(self, name, value):
+    def get_query(self, name, value, es_only_indexes=None):
 
         try:
             registry = getUtility(IRegistry)
@@ -219,7 +219,13 @@ class EZCTextIndex(BaseIndex):
 
         query_type = getattr(registry, 'query_type', 'default')
         value = self._normalize_query(value)
+        if es_only_indexes is not None:
+            extra_fields = {i: value for i, value in
+                            es_only_indexes.iteritems() if i != name}
 
+        boost = 0
+        if es_only_indexes.get(name):
+            boost = es_only_indexes[name]
         if query_type == 'default':
             # EL doesn't care about * like zope catalog does
             clean_value = value.strip('*') if value else ""
@@ -228,21 +234,23 @@ class EZCTextIndex(BaseIndex):
                     "match_phrase_prefix": {
                         name: {
                             'query': clean_value,
-                            'slop': 2
+                            'slop': 2,
+                            'boost': boost
                         }
                     }
                 }
             ]
             if name in ('Title', 'SearchableText'):
-                # titles have most importance... we override here...
-                queries.append({
-                    "match_phrase_prefix": {
-                        'Title': {
-                            'query': clean_value,
-                            'boost': 2
+                # Add all of the extra fields we have been asked to search on
+                for field, field_boost in extra_fields.iteritems():
+                    queries.append({
+                        "match_phrase_prefix": {
+                            field: {
+                                'query': clean_value,
+                                'boost': field_boost
+                            }
                         }
-                    }
-                })
+                    })
             if name != 'Title':
                 queries.append({"query_string": {'default_field': name,
                                                  'query': clean_value}})
@@ -250,10 +258,10 @@ class EZCTextIndex(BaseIndex):
         if query_type == 'simple_query_string':
             #TODO get explicit settings for simple query string
 
-            fields = [name]
+            fields = ['%s^%s' % (name, boost)]
             if name in ('Title', 'SearchableText'):
-                fields.append('%s^2' % 'Title')
-
+                for field, field_boost in extra_fields.iteritems():
+                    fields.append('%s^%s' % (field, field_boost))
             queries = [{
                 "simple_query_string":{
                     "query": value,
