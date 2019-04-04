@@ -56,7 +56,9 @@ class IElasticSettings(Interface):
 
     es_only_indexes = schema.Set(
         title=u'Indexes for which all searches are done through ElasticSearch',
-        default={'Title', 'Description', 'SearchableText'},
+        description=u"You can optionally add a colon and a number to any index "
+                    u"which will boost that index in the query.",
+        default={'Title:2', 'Description', 'SearchableText'},
         value_type=schema.TextLine(title=u'Index'),
     )
 
