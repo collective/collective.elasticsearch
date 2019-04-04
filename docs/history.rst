@@ -4,7 +4,8 @@ Changelog
 2.0.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix issue where indexes in settings aren't searched.
+  [instification]
 
 
 2.0.5 (2018-12-20)

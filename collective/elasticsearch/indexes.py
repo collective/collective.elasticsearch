@@ -197,9 +197,12 @@ class EZCTextIndex(BaseIndex):
         if all_texts:
             return '\n'.join(all_texts)
 
-    def get_query(self, name, value):
+    def get_query(self, name, value, es_only_indexes=None):
         value = self._normalize_query(value)
-        # EL doesn't care about * like zope catalog does
+        if es_only_indexes is not None:
+            extra_fields = {i: value for i, value in
+                            es_only_indexes.iteritems() if i != name}
+        # ES doesn't care about * like zope catalog does
         clean_value = value.strip('*') if value else ""
         queries = [
             {
@@ -212,10 +215,11 @@ class EZCTextIndex(BaseIndex):
             }
         ]
         if name in ('Title', 'SearchableText'):
-            # titles have most importance... we override here...
+            # Add all of the extra fields we have been asked to search on
+            for field, field_boost in extra_fields.iteritems():
             queries.append({
                 "match_phrase_prefix": {
-                    'Title': {
+                    field: {
                         'query': clean_value,
                         'boost': 2
                     }
