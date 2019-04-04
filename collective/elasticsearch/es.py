@@ -265,7 +265,7 @@ class ElasticSearchCatalog(object):
         if self.enabled:
             # need to also check if it is a search result we care about
             # using EL for
-            if getESOnlyIndexes().intersection(kw.keys()):
+            if set(getESOnlyIndexes().keys()).intersection(kw.keys()):
                 enabled = True
         if not enabled:
             if check_perms:

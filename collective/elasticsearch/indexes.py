@@ -224,6 +224,11 @@ class EZCTextIndex(BaseIndex):
         if es_only_indexes is not None:
             extra_fields = {i: value for i, value in
                             es_only_indexes.iteritems() if i != name}
+
+        boost = 0
+        if es_only_indexes.get(name):
+            boost = es_only_indexes[name]
+
         # ES doesn't care about * like zope catalog does
         clean_value = value.strip('*') if value else ""
         queries = [
@@ -231,7 +236,8 @@ class EZCTextIndex(BaseIndex):
                 "match_phrase": {
                     name: {
                         'query': clean_value,
-                        'slop': 2
+                        'slop': 2,
+                        'boost': boost
                     }
                 }
             }
@@ -239,14 +245,14 @@ class EZCTextIndex(BaseIndex):
         if name in ('Title', 'SearchableText'):
             # Add all of the extra fields we have been asked to search on
             for field, field_boost in extra_fields.iteritems():
-            queries.append({
-                "match_phrase_prefix": {
+                queries.append({
+                    "match_phrase_prefix": {
                     field: {
                         'query': clean_value,
-                        'boost': 2
+                        'boost': field_boost
                     }
-                }
-            })
+                    }
+                 })
         if name != 'Title':
             queries.append({"match": {name: {'query': clean_value}}})
 

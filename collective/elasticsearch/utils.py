@@ -19,10 +19,22 @@ def getUID(obj):
 
 
 def getESOnlyIndexes():
+    default = {'Title': 2, 'Description': 0, 'SearchableText': 0}
     try:
-        return getUtility(IRegistry).forInterface(
+        indexes = getUtility(IRegistry).forInterface(
             IElasticSettings,
             check=False
-        ).es_only_indexes or set()
+        ).es_only_indexes
+        values = {}
+        for i in indexes:
+            name = i.split(':')[0]
+            values[name] = 0
+            if len(i.split(':')) == 2:
+                try:
+                    values[name] = float(i.split(':')[1])
+                except ValueError:
+                    pass
+        return values
+
     except (KeyError, AttributeError):
-        return {'Title', 'Description', 'SearchableText'}
+        return default
