@@ -48,6 +48,19 @@ text are in the query. Otherwise, the plone's default catalog will be used.
 This is because Plone's default catalog is faster on normal queries than using
 ElasticSearch.
 
+Boosting an Index
+-----------------
+
+You can boost an individual index and control which indexes are searched from
+the control panel. This is done by placing a colon and a number after the
+index. eg:
+
+```
+Description:5
+Title: 20
+SearchableText:0
+```
+
 
 Compatibility
 -------------

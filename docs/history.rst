@@ -6,6 +6,8 @@ Changelog
 
 - Fix issue where indexes in settings aren't searched.
   [instification]
+- Allow boost to be added to indexes in the settings control panel.
+  [instification]
 
 
 2.0.5 (2018-12-20)
