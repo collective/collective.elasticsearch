@@ -54,7 +54,12 @@ class QueryAssembler(object):
                 # deleted index for plone performance but still need on ES
                 index = EZCTextIndex(catalog, key)
 
-            qq = index.get_query(key, value)
+            if key in es_only_indexes:
+                qq = index.get_query(key,
+                                     value,
+                                     es_only_indexes=es_only_indexes)
+            else:
+                qq = index.get_query(key, value)
             if qq is None:
                 continue
 

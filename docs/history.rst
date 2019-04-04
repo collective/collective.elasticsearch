@@ -4,7 +4,8 @@ Changelog
 3.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix issue where indexes in settings aren't searched.
+  [instification]
 
 
 3.0.3 (2019-03-12)
