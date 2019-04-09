@@ -72,10 +72,12 @@ class QueryAssembler(object):
             return query
         else:
             query = {
-                'bool': {
-                    'should': matches,
-                    'minimum_should_match': 1,
-                    'filter': filters
-                }
+                'bool': dict()
             }
+            if len(filters) > 0:
+                query['bool']['filter'] = filters
+
+            if len(matches) > 0:
+                query['bool']['should'] = matches
+                query['bool']['minimum_should_match'] = 1
             return query
