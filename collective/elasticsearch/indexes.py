@@ -226,9 +226,9 @@ class EZCTextIndex(BaseIndex):
         boost = 0
         if es_only_indexes.get(name):
             boost = es_only_indexes[name]
+        # EL doesn't care about * like zope catalog does
+        clean_value = value.strip('*') if value else ""
         if query_type == 'default':
-            # EL doesn't care about * like zope catalog does
-            clean_value = value.strip('*') if value else ""
             queries = [
                 {
                     "match_phrase_prefix": {
@@ -264,7 +264,7 @@ class EZCTextIndex(BaseIndex):
                     fields.append('%s^%s' % (field, field_boost))
             queries = [{
                 "simple_query_string":{
-                    "query": value,
+                    "query": clean_value,
                     "fields": fields,
                 }
             }]
