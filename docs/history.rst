@@ -4,7 +4,7 @@ Changelog
 3.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Now possible to search by other than `Title`, `Description` and `SearchableText` indexes. [nazrulworld]
 
 
 3.0.3 (2019-03-12)
