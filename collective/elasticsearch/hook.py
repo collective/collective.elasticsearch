@@ -16,6 +16,7 @@ from zope.component.hooks import setSite
 
 import logging
 import random
+import six
 import time
 import traceback
 import transaction
@@ -161,8 +162,12 @@ def get_index_data(obj, es):
 
             # Ignore errors in converting to unicode, so json.dumps
             # does not barf when we're trying to send data to ES.
-            if isinstance(value, str):
-                value = unicode(value, 'utf-8', 'ignore')
+            if six.PY2:
+                if isinstance(value, str):
+                    value = six.text_type(value, 'utf-8', 'ignore')
+            else:
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8', 'ignore')
 
             index_data[index_name] = value
 
@@ -175,8 +180,12 @@ def get_index_data(obj, es):
         if indexer is not None:
             try:
                 val = indexer()
-                if isinstance(value, str):
-                    val = unicode(val, 'utf-8', 'ignore')
+                if six.PY2:
+                    if isinstance(value, str):
+                        value = six.text_type(value, 'utf-8', 'ignore')
+                else:
+                    if isinstance(value, bytes):
+                        value = value.decode('utf-8', 'ignore')
                 index_data[name] = val
             except Exception:
                 logger.error('Error indexing value: %s: %s\n%s' % (

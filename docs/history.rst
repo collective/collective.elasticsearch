@@ -4,6 +4,8 @@ Changelog
 3.0.4 (unreleased)
 ------------------
 
+- `Issue#63 <https://github.com/collective/collective.elasticsearch/issues/63>`_ Now ensuring unicode value would for both python2 and python3 case. [nazrulworld]
+
 - Now possible to search by other than `Title`, `Description` and `SearchableText` indexes. [nazrulworld]
 
 

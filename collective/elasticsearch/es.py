@@ -82,7 +82,7 @@ class ElasticResult(object):
                 raise IndexError
 
             if key >= 0:
-                result_key = (key / self.bulk_size) * self.bulk_size
+                result_key = int(key / self.bulk_size) * self.bulk_size
                 start = result_key
                 result_index = key % self.bulk_size
             elif key < 0:
