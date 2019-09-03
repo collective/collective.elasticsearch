@@ -56,6 +56,12 @@ def index_batch(remove, index, positions, es=None):
         bulk_data = []
 
         for uid, obj in index.items():
+            # If content has been moved (ie by a contentrule) then the object
+            # passed here is the original object, not the moved one. By getting
+            # the object from the uuid, we avoid the issues this causes...
+            # See https://github.com/collective/collective.elasticsearch/issues/65 # noqa
+            if uid is not None:
+                obj = uuidToObject(uid)
             if obj is None:
                 obj = uuidToObject(uid)
                 if obj is None:
