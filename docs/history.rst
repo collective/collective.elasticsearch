@@ -4,7 +4,8 @@ Changelog
 2.0.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix commit hook bug when content has been moved
+  [instification]
 
 
 2.0.5 (2018-12-20)
