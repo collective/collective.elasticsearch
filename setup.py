@@ -5,7 +5,7 @@ from setuptools import setup
 import os
 
 
-version = '3.0.5.dev0'
+version = '3.0.5'
 
 setup(
     name='collective.elasticsearch',
@@ -36,7 +36,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'elasticsearch>=6.0.0,<7.0.0',
+        'elasticsearch>=7.1.0',
         'plone.app.registry',
         'plone.api',
         'collective.monkeypatcher'

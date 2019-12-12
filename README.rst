@@ -15,8 +15,8 @@ Less than 5 minutes:
         - add-apt-repository ppa:webupd8team/java
         - apt-get update
         - apt-get install git curl oracle-java7-installer
-        - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.3.0.tar.gz
-        - tar xfvz elasticsearch-6.3.0.tar.gz
+        - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.5.0.tar.gz
+        - tar xfvz elasticsearch-7.5.0.tar.gz
         - cd elasticsearch
         - bin/elasticsearch &
 
@@ -56,7 +56,7 @@ Only tested with Plone 5 with Dexterity types.
 
 It should also work with Plone 4.3 and archetypes.
 
-Deployed with Elasticsearch 6.3.0
+Deployed with Elasticsearch 7.5.0
 
 State
 -----
@@ -84,7 +84,7 @@ Run elasticsearch for tests to utilize:
         -e "cluster.name=docker-cluster" \
         -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
         -p 9200:9200 \
-        docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
+        docker.elastic.co/elasticsearch/elasticsearch-oss:7.5.0
 
 Then, you can use one of the travis buildout test files:
 

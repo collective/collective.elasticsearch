@@ -63,7 +63,9 @@ class MappingAdapter(object):
         for name in self.catalog.indexes.keys():
             index = getIndex(self.catalog, name)
             if index is not None:
-                properties[name] = index.create_mapping(name)
+                # prevent create default mapping analyzers
+                if name not in properties:
+                    properties[name] = index.create_mapping(name)
             else:
                 raise Exception('Can not locate index for %s' % (
                     name))

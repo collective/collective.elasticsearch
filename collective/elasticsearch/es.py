@@ -90,7 +90,7 @@ class ElasticResult(object):
                     float(self.count) / float(self.bulk_size)
                 )) * self.bulk_size
                 start = result_key = last_key - (
-                        (abs(key) / self.bulk_size) * self.bulk_size)
+                    (abs(key) / self.bulk_size) * self.bulk_size)
                 if last_key == result_key:
                     result_index = key
                 else:
@@ -165,7 +165,6 @@ class ElasticSearchCatalog(object):
             body['sort'] = sort
 
         return self.connection.search(index=self.index_name,
-                                      doc_type=self.doc_type,
                                       body=body,
                                       **query_params)
 

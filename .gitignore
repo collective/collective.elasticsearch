@@ -16,3 +16,5 @@ _build
 /lib
 /local
 pip-selfcheck.json
+eggs
+.history/

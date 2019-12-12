@@ -41,13 +41,11 @@ def index_batch(remove, index, positions, es=None):
             bulk_data.append({
                 'delete': {
                     '_index': es.index_name,
-                    '_type': es.doc_type,
                     '_id': uid
                 }
             })
         es.connection.bulk(
             index=es.index_name,
-            doc_type=es.doc_type,
             body=bulk_data)
 
     if len(index) > 0:
@@ -71,21 +69,18 @@ def index_batch(remove, index, positions, es=None):
             bulk_data.extend([{
                 'index': {
                     '_index': es.index_name,
-                    '_type': es.doc_type,
                     '_id': uid
                 }
             }, get_index_data(obj, es)])
             if len(bulk_data) % bulk_size == 0:
                 conn.bulk(
                     index=es.index_name,
-                    doc_type=es.doc_type,
                     body=bulk_data)
                 bulk_data = []
 
         if len(bulk_data) > 0:
             conn.bulk(
                 index=es.index_name,
-                doc_type=es.doc_type,
                 body=bulk_data)
 
     if len(positions) > 0:
@@ -109,7 +104,6 @@ def index_batch(remove, index, positions, es=None):
                 bulk_data.extend([{
                     'update': {
                         '_index': es.index_name,
-                        '_type': es.doc_type,
                         '_id': IUUID(ob)
                     }
                 }, {
@@ -120,14 +114,12 @@ def index_batch(remove, index, positions, es=None):
                 if len(bulk_data) % bulk_size == 0:
                     conn.bulk(
                         index=es.index_name,
-                        doc_type=es.doc_type,
                         body=bulk_data)
                     bulk_data = []
 
         if len(bulk_data) > 0:
             conn.bulk(
                 index=es.index_name,
-                doc_type=es.doc_type,
                 body=bulk_data)
 
 

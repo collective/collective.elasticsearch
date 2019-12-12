@@ -4,8 +4,8 @@ Changelog
 3.0.5 (unreleased)
 ------------------
 
-- Fix commit hook bug when content has been moved
-  [instification]
+- Update to work in Elastic Search version 7.x (testing in 7.4 and 7.5 works fine)
+- Fix to create index in ES with analyzed properties to the default plone fields like (SearchableText, title, etc...)
 
 
 3.0.4 (2019-08-21)
