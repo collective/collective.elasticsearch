@@ -16,4 +16,4 @@ install:
   - bin/buildout -Nc $TEST_FILE
 script: bin/test
 before_install:
-  - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:7.5.0
+  - docker run -d -e "discovery.type=single-node" -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:7.5.0

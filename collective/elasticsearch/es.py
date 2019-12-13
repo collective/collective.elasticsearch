@@ -308,7 +308,6 @@ class ElasticSearchCatalog(object):
         adapter = getMultiAdapter((getRequest(), self), IMappingProvider)
         mapping = adapter()
         self.connection.indices.put_mapping(
-            doc_type=self.doc_type,
             body=mapping,
             index=self.index_name)
 
