@@ -76,9 +76,9 @@ class ElasticResult(object):
         if isinstance(key, slice):
             return [self[i] for i in range(key.start, key.end)]
         else:
-            if key + 1 > self.count['value']:
+            if key + 1 > self.count:
                 raise IndexError
-            elif key < 0 and abs(key) > self.count['value']:
+            elif key < 0 and abs(key) > self.count:
                 raise IndexError
 
             if key >= 0:
@@ -87,7 +87,7 @@ class ElasticResult(object):
                 result_index = key % self.bulk_size
             elif key < 0:
                 last_key = int(math.floor(
-                    float(self.count['value']) / float(self.bulk_size)
+                    float(self.count) / float(self.bulk_size)
                 )) * self.bulk_size
                 start = result_key = last_key - (
                     (abs(key) / self.bulk_size) * self.bulk_size)
@@ -95,7 +95,7 @@ class ElasticResult(object):
                     result_index = key
                 else:
                     result_index = (key % self.bulk_size) - (
-                        self.bulk_size - (self.count['value'] % last_key)
+                        self.bulk_size - (self.count % last_key)
                     )
 
             if result_key not in self.results:
