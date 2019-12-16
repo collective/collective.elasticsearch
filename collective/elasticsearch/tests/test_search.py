@@ -37,6 +37,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Document', 'page', title='New Content')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(
             object_provides=[self.event_klass, self.document_klass],
             SearchableText='new content')
