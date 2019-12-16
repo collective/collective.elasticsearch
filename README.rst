@@ -81,6 +81,7 @@ Running tests
 Run elasticsearch for tests to utilize:
 
     docker run \
+        -e "discovery.type=single-node" \
         -e "cluster.name=docker-cluster" \
         -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
         -p 9200:9200 \

@@ -129,5 +129,4 @@ def createObject(context, _type, id, delete_first=True,
         context.manage_delObjects([id])
     if not check_for_first or id not in context:
         return context[context.invokeFactory(_type, id, **kwargs)]
-
     return context[id]

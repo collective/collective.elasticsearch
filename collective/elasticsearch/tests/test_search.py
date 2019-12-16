@@ -2,7 +2,9 @@
 from collective.elasticsearch.testing import createObject
 from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch import logger
 from DateTime import DateTime
+import json, ast
 
 import time
 import unittest2 as unittest
@@ -22,7 +24,7 @@ class TestQueries(BaseFunctionalTest):
         self.commit()
         self.es.connection.indices.flush()
         el_results = self.catalog(portal_type='Event', Title='some event')
-        self.assertEqual(len(el_results), 1)
+        self.assertEqual(el_results._len['value'], 1)
 
     def test_keyword_index_query(self):
         createObject(self.portal, 'Event', 'event', title='Some Event')
@@ -31,17 +33,18 @@ class TestQueries(BaseFunctionalTest):
         el_results = self.catalog(
             object_provides=[self.event_klass],
             SearchableText='Event')
-        self.assertEqual(len(el_results), 1)
+        self.assertEqual(el_results._len['value'], 1)
 
     def test_multi_keyword_index_query(self):
         createObject(self.portal, 'Event', 'event', title='New Content')
         createObject(self.portal, 'Document', 'page', title='New Content')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(
             object_provides=[self.event_klass, self.document_klass],
             SearchableText='new content')
-        self.assertEqual(len(el_results), 2)
+        self.assertEqual(el_results._len['value'], 2)
 
     def test_date_index_query(self):
         start = DateTime()
@@ -95,9 +98,10 @@ class TestQueries(BaseFunctionalTest):
 
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
 
         el_results = self.catalog(Title='Some Event')
-        self.assertEqual(len(el_results), len(events))
+        self.assertEqual(el_results._len['value'], len(events))
 
         el_results = self.catalog(Title='Some Event 1',
                                   sort_on='getObjPositionInParent')
@@ -121,66 +125,68 @@ class TestQueries(BaseFunctionalTest):
 
         self.commit()
         self.es.connection.indices.flush()
-
+        time.sleep(1)
+        
         self.assertEqual(
-            len(self.catalog(path={'depth': 0, 'query': '/plone/folder0'},
-                             SearchableText='new content')), 1)
+            self.catalog(path={'depth': 0, 'query': '/plone/folder0'},
+                             SearchableText='new content')._len['value'], 1)
         self.assertEqual(
-            len(self.catalog(path={'depth': 1, 'query': '/plone/folder0'},
-                             SearchableText='new content')), 4)
+            self.catalog(path={'depth': 1, 'query': '/plone/folder0'},
+                             SearchableText='new content')._len['value'], 4)
         self.assertEqual(
-            len(self.catalog(path={'depth': -1,
+            self.catalog(path={'depth': -1,
                                    'query': '/plone/folder0'},
-                             SearchableText='new content')), 9)
+                             SearchableText='new content')._len['value'], 9)
         self.assertEqual(
-            len(self.catalog(path={'depth': 1, 'query': '/plone'},
-                             SearchableText='new content')), 1)
+            self.catalog(path={'depth': 1, 'query': '/plone'},
+                             SearchableText='new content')._len['value'], 1)
         # this proofs its wrong
         self.assertEqual(
-            len(self.catalog(path={'query': '/plone/folder0',
+            self.catalog(path={'query': '/plone/folder0',
                                    'navtree_start': 0, 'navtree': 1},
                              is_default_page=False,
-                             SearchableText='new content')), 9)
+                             SearchableText='new content')._len['value'], 9)
 
     def test_combined_query(self):
         createObject(self.portal, 'Folder', 'folder1', title='Folder 1')
         self.commit()
         self.es.connection.indices.flush()
-        self.assertEqual(
-            len(self.catalog(path={'depth': 1, 'query': '/plone'},
+        time.sleep(1)
+        el_results = self.catalog(path={'depth': 1, 'query': '/plone'},
                              portal_type='Folder',
                              is_default_page=False,
-                             SearchableText='folder')),
-            1)
+                             SearchableText='folder')
+        self.assertEqual(el_results._len['value'],1)
 
     def test_brains(self):
         event = createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(portal_type='Event', Title='Some Event')
-        self.assertEqual(len(el_results), 1)
+        self.assertEqual(el_results._len['value'], 1)
         brain = el_results[0]
         self.assertEqual(brain.getObject(), event)
         self.assertEqual(brain.portal_type, 'Event')
         self.assertEqual(brain.getURL(), 'http://nohost/plone/event')
         self.assertEqual(brain.getPath(), '/plone/event')
-
         brain = el_results[-1]
         self.assertEqual(brain.getObject(), event)
         self.assertEqual(brain.portal_type, 'Event')
         self.assertEqual(brain.getURL(), 'http://nohost/plone/event')
         self.assertEqual(brain.getPath(), '/plone/event')
-
-        createObject(self.portal, 'Event', 'event2', title='Some Event')
+        event = createObject(self.portal, 'Event', 'event2', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
 
         el_results2 = self.catalog(
             portal_type='Event',
             Title='Some Event',
             sort_on='getId',
             sort_order='descending')
-        self.assertEqual(len(el_results2), 2)
+
+        self.assertEqual(el_results2._len['value'], 2)
         brain = el_results2[0]
         self.assertEqual(brain.getId, 'event2')
         brain = el_results2[1]
