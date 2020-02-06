@@ -45,10 +45,13 @@ def index_batch(remove, index, positions, es=None):
                     '_id': uid
                 }
             })
-        es.connection.bulk(
+        result = es.connection.bulk(
             index=es.index_name,
             doc_type=es.doc_type,
             body=bulk_data)
+
+        if "errors" in result and result["errors"] is True:
+            logger.error("Error in bulk indexing removal: %s" % result)
 
     if len(index) > 0:
         if type(index) in (list, tuple, set):
@@ -76,17 +79,24 @@ def index_batch(remove, index, positions, es=None):
                 }
             }, get_index_data(obj, es)])
             if len(bulk_data) % bulk_size == 0:
-                conn.bulk(
+                result = conn.bulk(
                     index=es.index_name,
                     doc_type=es.doc_type,
                     body=bulk_data)
+
+                if "errors" in result and result["errors"] is True:
+                    logger.error("Error in bulk indexing: %s" % result)
+
                 bulk_data = []
 
         if len(bulk_data) > 0:
-            conn.bulk(
+            result = conn.bulk(
                 index=es.index_name,
                 doc_type=es.doc_type,
                 body=bulk_data)
+
+            if "errors" in result and result["errors"] is True:
+                logger.error("Error in bulk indexing: %s" % result)
 
     if len(positions) > 0:
         bulk_data = []
