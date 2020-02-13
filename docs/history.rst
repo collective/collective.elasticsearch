@@ -4,11 +4,11 @@ Changelog
 3.0.5 (unreleased)
 ------------------
 
-- Fix commit hook bug when content has been moved
-  [instification]
-
 - Explicit error logging added, if ES bulk action for indexing failed.
   [nazrulworld]
+
+- Fix commit hook bug when content has been moved
+  [instification]
 
 
 3.0.4 (2019-08-21)
