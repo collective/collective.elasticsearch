@@ -4,6 +4,9 @@ Changelog
 3.0.5 (unreleased)
 ------------------
 
+- Explicit error logging added, if ES bulk action for indexing failed.
+  [nazrulworld]
+
 - Fix commit hook bug when content has been moved
   [instification]
 
