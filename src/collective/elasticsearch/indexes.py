@@ -165,12 +165,12 @@ class EDateIndex(BaseIndex):
         elif range_ == 'max':
             return {'range': {name: {'lte': first}}}
         elif range_ in ('min:max', 'minmax') and (
-                    type(query) in (list, tuple)) and len(query) == 2:
+                type(query) in (list, tuple)) and len(query) == 2:
             return {
                 'range': {
                     name: {
-                       'gte': first,
-                       'lte': _zdt(query[1]).ISO8601()
+                        'gte': first,
+                        'lte': _zdt(query[1]).ISO8601()
                     }
                 }
             }

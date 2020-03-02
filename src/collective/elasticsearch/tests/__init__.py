@@ -9,6 +9,7 @@ from plone.registry.interfaces import IRegistry
 from Products.CMFCore.utils import getToolByName
 from zope.component import getUtility
 
+import time
 import transaction
 import unittest2 as unittest
 
@@ -53,6 +54,8 @@ class BaseTest(unittest.TestCase):
             index=self.es.real_index_name, name=self.es.index_name)
         self.es.connection.indices.delete(index=self.es.real_index_name)
         self.clearTransactionEntries()
+        # Wait ES remove the index
+        time.sleep(0.1)
 
 
 class BaseFunctionalTest(BaseTest):

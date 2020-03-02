@@ -1,19 +1,39 @@
-sudo: required
-services:
-  - docker
-env:
-  - TEST_FILE=travis-5.1.cfg
-  - TEST_FILE=travis-5.0.cfg
-
+dist: bionic
 language: python
-python: 2.7
+cache:
+  pip: true
+  directories:
+  - eggs
+python:
+  - "2.7"
+matrix:
+  include:
+    - python: "2.7"
+      env: PLONE_VERSION=50
+    - python: "2.7"
+      env: PLONE_VERSION=51
+  sudo: true
+  fast_finish: true
+before_install:
+  - virtualenv -p `which python` .
+  - bin/pip install -r requirements.txt -c constraints_plone$PLONE_VERSION.txt
+  - cp test_plone$PLONE_VERSION.cfg buildout.cfg
+  - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
+
+install:
+  - bin/buildout -N -t 3 code-analysis:return-status-codes=True annotate
+  - bin/buildout -N -t 3 code-analysis:return-status-codes=True
+
 before_script:
   - sleep 10
-install:
-  - mkdir -p buildout-cache/{eggs,downloads}
-  - pip install flake8==3.7.5
-  - python bootstrap.py -c $TEST_FILE
-  - bin/buildout -Nc $TEST_FILE
-script: bin/test
-before_install:
-  - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
+
+script:
+# Run code-analysis, except on Python 3.6, which mysteriously fails to find zc.buildout.
+  - python --version 2> /dev/stdout | grep 3.6 || bin/code-analysis
+  - bin/test --all
+
+after_success:
+  - bin/createcoverage --output-dir=parts/test/coverage
+  - bin/pip install coverage==4.4.2
+  - bin/pip install -q coveralls
+  - bin/coveralls

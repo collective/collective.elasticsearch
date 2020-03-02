@@ -88,9 +88,10 @@ Run elasticsearch for tests to utilize:
 
 Then, you can use one of the travis buildout test files:
 
-    python bootstrap.py -c travis-5.0.cfg
-    ./bin/buildout -c travis-5.0.cfg
-    ./bin/test -s collective.elasticsearch
+    virtualenv .
+    bin/pip install -r requirements.txt
+    ./bin/buildout
+    ./bin/test
 
 
 Travis

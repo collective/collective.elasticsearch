@@ -25,7 +25,6 @@ from zope.interface import implementer
 from zope.interface import alsoProvides
 import math
 
-
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 INDEX_VERSION_ATTR = '_elasticindexversion'
@@ -90,7 +89,7 @@ class ElasticResult(object):
                     float(self.count) / float(self.bulk_size)
                 )) * self.bulk_size
                 start = result_key = last_key - (
-                        (abs(key) / self.bulk_size) * self.bulk_size)
+                    (abs(key) / self.bulk_size) * self.bulk_size)
                 if last_key == result_key:
                     result_index = key
                 else:
@@ -192,11 +191,10 @@ class ElasticSearchCatalog(object):
 
     @property
     def enabled(self):
-        return (
-            self.registry and
-            self.registry.enabled and
-            self.catalog_converted
-        )
+        return (self.registry
+                and self.registry.enabled
+                and self.catalog_converted
+                )
 
     def get_setting(self, name, default=None):
         return getattr(self.registry, name, default)
