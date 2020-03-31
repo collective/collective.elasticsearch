@@ -100,7 +100,6 @@ class TestQueries(BaseFunctionalTest):
         self.es.connection.indices.flush()
         time.sleep(1)
 
-
         el_results = self.catalog(Title='Some Event')
         self.assertEqual(len(el_results), len(events))
 
