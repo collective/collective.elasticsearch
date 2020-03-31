@@ -4,6 +4,12 @@ Changelog
 3.0.5 (unreleased)
 ------------------
 
+- Make changes for ES 7.x
+  [bduncan137]
+
+-Slow down tests to allow them to complete correctly
+  [bduncan137]
+
 - Explicit error logging added, if ES bulk action for indexing failed.
   [nazrulworld]
 
