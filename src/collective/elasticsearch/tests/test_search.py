@@ -21,6 +21,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(portal_type='Event', Title='some event')
         self.assertEqual(len(el_results), 1)
 
@@ -28,6 +29,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(
             object_provides=[self.event_klass],
             SearchableText='Event')
@@ -38,6 +40,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Document', 'page', title='New Content')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(
             object_provides=[self.event_klass, self.document_klass],
             SearchableText='new content')
@@ -95,6 +98,8 @@ class TestQueries(BaseFunctionalTest):
 
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
+
 
         el_results = self.catalog(Title='Some Event')
         self.assertEqual(len(el_results), len(events))
@@ -121,6 +126,7 @@ class TestQueries(BaseFunctionalTest):
 
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
 
         self.assertEqual(
             len(self.catalog(path={'depth': 0, 'query': '/plone/folder0'},
@@ -146,6 +152,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Folder', 'folder1', title='Folder 1')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         self.assertEqual(
             len(self.catalog(path={'depth': 1, 'query': '/plone'},
                              portal_type='Folder',
@@ -157,6 +164,7 @@ class TestQueries(BaseFunctionalTest):
         event = createObject(self.portal, 'Event', 'event', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
         el_results = self.catalog(portal_type='Event', Title='Some Event')
         self.assertEqual(len(el_results), 1)
         brain = el_results[0]
@@ -174,6 +182,7 @@ class TestQueries(BaseFunctionalTest):
         createObject(self.portal, 'Event', 'event2', title='Some Event')
         self.commit()
         self.es.connection.indices.flush()
+        time.sleep(1)
 
         el_results2 = self.catalog(
             portal_type='Event',
