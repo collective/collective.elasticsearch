@@ -26,7 +26,7 @@ Only unit tested with Plone 5 with Dexterity types and archetypes.
 
 It should also work with Plone 4.3 and Plone 5.1.
 
-Deployed with Elasticsearch 6.3.0
+Deployed with Elasticsearch 7.6.0
 
 State
 -----
