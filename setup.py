@@ -48,7 +48,7 @@ setup(
     python_requires="==2.7",
     install_requires=[
         'setuptools',
-        'elasticsearch>=6.0.0,<7.0.0',
+        'elasticsearch>=7.0.0,<=7.6.0',
         'plone.app.registry',
         'plone.api',
         'collective.monkeypatcher',
