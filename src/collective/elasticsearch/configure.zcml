@@ -1,8 +1,7 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:five="http://namespaces.zope.org/five"
-    xmlns:i18n="http://namespaces.zope.org/i18n"
-    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:monkey="http://namespaces.plone.org/monkey"
     i18n_domain="collective.elasticsearch">
@@ -105,13 +104,24 @@
     />
 
   <!-- CMFCore CatalogTool patches -->
-  <monkey:patch
-    description="unindexObject"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="unindexObject"
-    replacement=".patches.unindexObject"
-    preserveOriginal="True"
-    />
+  <configure zcml:condition="have plone-51">
+    <monkey:patch
+      description="unindexObject"
+      class="Products.CMFPlone.CatalogTool.CatalogTool"
+      original="_unindexObject"
+      replacement=".patches.unindexObject"
+      preserveOriginal="True"
+      />
+  </configure>
+  <configure zcml:condition="not-have plone-51">
+    <monkey:patch
+      description="unindexObject"
+      class="Products.CMFPlone.CatalogTool.CatalogTool"
+      original="unindexObject"
+      replacement=".patches.unindexObject"
+      preserveOriginal="True"
+      />
+  </configure>
 
   <monkey:patch
     description="moveObjectsByDelta"
