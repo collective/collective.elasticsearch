@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest2 as unittest
+
 try:
     from Products.CMFCore.indexing import processQueue
 except ImportError:
@@ -31,8 +32,8 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(current_length + 1, len(self.catalog._catalog.uids))
         self.assertEqual(self.get_hook().index, {getUID(obj): obj})
         self.portal.manage_delObjects(['event'])
-        processQueue()  # uid not actually removed until this
-                        # if catalog optimized
+        # uid not actually removed until this if catalog optimized
+        processQueue()
         self.assertEqual(current_length, len(self.catalog._catalog.uids))
         self.assertEqual(self.get_hook().remove, {getUID(obj)})
         self.assertEqual(self.get_hook().index, {})
@@ -82,7 +83,6 @@ class TestQueries(BaseFunctionalTest):
 if HAS_ATCONTENTTYPES:
     from collective.elasticsearch.testing import \
         ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
-
 
     class TestQueriesAT(TestQueries):
         layer = ElasticSearch_FUNCTIONAL_TESTING_AT
