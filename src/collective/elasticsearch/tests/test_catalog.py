@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import unittest2 as unittest
-from Products.CMFCore.indexing import processQueue
+try:
+    from Products.CMFCore.indexing import processQueue
+except ImportError:
+    def processQueue():
+        pass
 from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
 from collective.elasticsearch.testing import createObject
@@ -27,7 +31,8 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(current_length + 1, len(self.catalog._catalog.uids))
         self.assertEqual(self.get_hook().index, {getUID(obj): obj})
         self.portal.manage_delObjects(['event'])
-        processQueue()  # uid not actually removed until this, if catalog optimized
+        processQueue()  # uid not actually removed until this
+                        # if catalog optimized
         self.assertEqual(current_length, len(self.catalog._catalog.uids))
         self.assertEqual(self.get_hook().remove, {getUID(obj)})
         self.assertEqual(self.get_hook().index, {})
@@ -54,9 +59,13 @@ class TestQueries(BaseFunctionalTest):
         self.assertEqual(self.get_hook().remove, {obj_uid})
 
     def test_moved_content(self):
-        """ content moved by content rules should remove the original catalog entry """
-        target = api.content.create(container=self.portal, type='Folder', id='target')
-        source = api.content.create(container=self.portal, type='Folder', id='source')
+        """ content moved by content rules should remove the original catalog
+            entry
+        """
+        target = api.content.create(container=self.portal, type='Folder',
+                                    id='target')
+        source = api.content.create(container=self.portal, type='Folder',
+                                    id='source')
         e = MoveAction()
         e.target_folder = '/target'
 
@@ -64,12 +73,15 @@ class TestQueries(BaseFunctionalTest):
         ex = getMultiAdapter((target, e, DummyEvent(obj)), IExecutable)
         self.assertEqual(True, ex())
         catalog = api.portal.get_tool('portal_catalog')
-        self.assertEqual(len(catalog(portal_type='Document', path='/plone/source')), 0)
-        self.assertEqual(len(catalog(portal_type='Document', path='/plone/target')), 1)
+        self.assertEqual(len(catalog(portal_type='Document',
+                                     path='/plone/source')), 0)
+        self.assertEqual(len(catalog(portal_type='Document',
+                                     path='/plone/target')), 1)
 
 
 if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
+    from collective.elasticsearch.testing import \
+        ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
 
 
     class TestQueriesAT(TestQueries):
