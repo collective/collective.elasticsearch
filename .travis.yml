@@ -21,8 +21,8 @@ before_install:
   - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
 
 install:
-  - bin/buildout -N -t 3 code-analysis:return-status-codes=True annotate
-  - bin/buildout -N -t 3 code-analysis:return-status-codes=True
+  - bin/buildout -t 3 code-analysis:return-status-codes=True annotate
+  - bin/buildout -t 3 code-analysis:return-status-codes=True
 
 before_script:
   - sleep 10

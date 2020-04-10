@@ -52,3 +52,4 @@ pip-selfcheck.json
 !.gitkeep
 !.travis.yml
 !src/collective
+/local
