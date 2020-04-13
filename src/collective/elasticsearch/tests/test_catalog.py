@@ -76,8 +76,8 @@ class TestQueries(BaseFunctionalTest):
         catalog = api.portal.get_tool('portal_catalog')
         self.assertEqual(len(catalog(portal_type='Document',
                                      path='/plone/source')), 0)
-        self.assertEqual(len(catalog(portal_type='Document',
-                                     path='/plone/target')), 1)
+        self.assertEqual(
+            len(catalog(portal_type='Document', path='/plone/target')), 1)
 
 
 if HAS_ATCONTENTTYPES:
