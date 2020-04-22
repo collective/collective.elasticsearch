@@ -118,8 +118,8 @@
     <monkey:patch
       description="unindexObject"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
-      original="_unindexObject"
-      replacement=".patches.unindexObject"
+      original="unindexObject"
+      replacement=".patches._unindexObject"
       preserveOriginal="True"
       />
   </configure>
