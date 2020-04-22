@@ -4,14 +4,13 @@ Changelog
 3.0.5 (unreleased)
 ------------------
 
+- `Issue#76 <https://github.com/collective/collective.elasticsearch/issues/76>`_ In 5.1+ we want to patch _unindexObject not unindexObject [ewohnlich]
+
 - Explicit error logging added, if ES bulk action for indexing failed.
   [nazrulworld]
 
 - Fix commit hook bug when content has been moved
   [instification]
-
-- `Issue#76 <https://github.com/collective/collective.elasticsearch/issues/76>`_ In 5.1+ we want to patch _unindexObject not unindexObject [ewohnlich]
-
 
 3.0.4 (2019-08-21)
 ------------------
