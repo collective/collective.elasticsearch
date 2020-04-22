@@ -85,7 +85,6 @@ if HAS_ATCONTENTTYPES:
     from collective.elasticsearch.testing import \
         ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
 
-
     class TestQueriesAT(TestQueries):
         layer = ElasticSearch_FUNCTIONAL_TESTING_AT
 
