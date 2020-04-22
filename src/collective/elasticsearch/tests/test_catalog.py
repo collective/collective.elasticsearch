@@ -4,6 +4,7 @@ import unittest2 as unittest
 try:
     from Products.CMFCore.indexing import processQueue
 except ImportError:
+    # BBB processQueue does not exist in Plone 5.0 and earlier
     def processQueue():
         pass
 from collective.elasticsearch.hook import getHook
@@ -63,10 +64,10 @@ class TestQueries(BaseFunctionalTest):
         """ content moved by content rules should remove the original catalog
             entry
         """
-        target = api.content.create(container=self.portal, type='Folder',
-                                    id='target')
-        source = api.content.create(container=self.portal, type='Folder',
-                                    id='source')
+        target = api.content.create(
+            container=self.portal, type='Folder', id='target')
+        source = api.content.create(
+            container=self.portal, type='Folder', id='source')
         e = MoveAction()
         e.target_folder = '/target'
 
@@ -74,8 +75,8 @@ class TestQueries(BaseFunctionalTest):
         ex = getMultiAdapter((target, e, DummyEvent(obj)), IExecutable)
         self.assertEqual(True, ex())
         catalog = api.portal.get_tool('portal_catalog')
-        self.assertEqual(len(catalog(portal_type='Document',
-                                     path='/plone/source')), 0)
+        self.assertEqual(
+            len(catalog(portal_type='Document', path='/plone/source')), 0)
         self.assertEqual(
             len(catalog(portal_type='Document', path='/plone/target')), 1)
 
@@ -83,6 +84,7 @@ class TestQueries(BaseFunctionalTest):
 if HAS_ATCONTENTTYPES:
     from collective.elasticsearch.testing import \
         ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
+
 
     class TestQueriesAT(TestQueries):
         layer = ElasticSearch_FUNCTIONAL_TESTING_AT

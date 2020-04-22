@@ -37,7 +37,7 @@ def manage_catalogClear(self, *args, **kwargs):
     return es.manage_catalogClear(*args, **kwargs)
 
 
-def unindexObject(self, ob):
+def _unindexObject(self, ob):
     # same reason as the patch above, we need the actual object passed along
     # this handle dexterity types
     path = '/'.join(ob.getPhysicalPath())

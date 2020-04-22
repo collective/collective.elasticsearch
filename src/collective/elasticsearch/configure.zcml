@@ -109,10 +109,11 @@
       description="unindexObject"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       original="_unindexObject"
-      replacement=".patches.unindexObject"
+      replacement=".patches._unindexObject"
       preserveOriginal="True"
       />
   </configure>
+  <!-- BBB in Plone 5.1 and below unindexObject is analogous to current _unindexObject -->
   <configure zcml:condition="not-have plone-51">
     <monkey:patch
       description="unindexObject"
