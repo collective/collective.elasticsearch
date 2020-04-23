@@ -63,6 +63,7 @@ setup(
             'plone.testing>=5.0.0',
             'unittest2',
             'plone.app.contenttypes',
+            'plone.app.contentrules'
         ],
         'test-archetypes': [
             'docker',
@@ -70,6 +71,7 @@ setup(
             'plone.testing>=5.0.0',
             'unittest2',
             'Products.ATContentTypes',
+            'plone.app.contentrules'
         ],
     },
     entry_points="""

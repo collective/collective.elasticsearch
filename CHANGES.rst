@@ -12,6 +12,7 @@ Changelog
 - Fix commit hook bug when content has been moved
   [instification]
 
+
 3.0.4 (2019-08-21)
 ------------------
 

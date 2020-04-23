@@ -106,7 +106,7 @@
   <!-- CMFCore CatalogTool patches -->
   <configure zcml:condition="have plone-51">
     <monkey:patch
-      description="unindexObject"
+      description="_unindexObject"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       original="_unindexObject"
       replacement=".patches._unindexObject"

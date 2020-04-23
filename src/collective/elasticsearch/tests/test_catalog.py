@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import unittest2 as unittest
-
 try:
     from Products.CMFCore.indexing import processQueue
 except ImportError:
@@ -17,6 +15,8 @@ from plone.app.contentrules.actions.move import MoveAction
 from plone.app.contentrules.tests.dummy import DummyEvent
 from plone.contentrules.rule.interfaces import IExecutable
 from zope.component import getMultiAdapter
+
+import unittest2 as unittest
 
 EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
 DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
@@ -82,8 +82,7 @@ class TestQueries(BaseFunctionalTest):
 
 
 if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import \
-        ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
+    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
 
     class TestQueriesAT(TestQueries):
         layer = ElasticSearch_FUNCTIONAL_TESTING_AT
