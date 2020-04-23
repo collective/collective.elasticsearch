@@ -4,6 +4,8 @@ Changelog
 3.0.5 (unreleased)
 ------------------
 
+- `Issue#76 <https://github.com/collective/collective.elasticsearch/issues/76>`_ In 5.1+ we want to patch _unindexObject not unindexObject [ewohnlich]
+
 - Explicit error logging added, if ES bulk action for indexing failed.
   [nazrulworld]
 
@@ -30,13 +32,6 @@ Changelog
 ------------------
 
 - Fix Zope DateTime convert to also handle the datetime.date type [ewohnlich]
-
-
-3.0.1 (2019-01-28)
-------------------
-
-- Fix sortable_title search issue
-  [ewohnlich]
 
 
 3.0.1 (2019-01-28)
