@@ -47,36 +47,31 @@ setup(
     zip_safe=False,
     python_requires="==2.7",
     install_requires=[
-        'setuptools',
-        'elasticsearch>=6.0.0,<7.0.0',
-        'plone.app.registry',
-        'plone.api',
         'collective.monkeypatcher',
+        'elasticsearch>=6.0.0,<7.0.0',
+        'plone.api',
+        'plone.app.registry',
+        'setuptools',
     ],
     extras_require={
         'test': [
-            'docker',
+            'plone.app.contentrules',
+            'plone.app.contenttypes',
             'plone.app.testing',
-            # Plone KGS does not use this version, because it would break
-            # Remove if your package shall be part of coredev.
-            # plone_coredev tests as of 2016-04-01.
             'plone.testing>=5.0.0',
             'unittest2',
-            'plone.app.contenttypes',
-            'plone.app.contentrules'
         ],
         'test-archetypes': [
-            'docker',
+            'plone.app.contentrules',
             'plone.app.testing',
             'plone.testing>=5.0.0',
-            'unittest2',
             'Products.ATContentTypes',
-            'plone.app.contentrules'
+            'unittest2',
         ],
     },
     entry_points="""
     [celery_tasks]
-    castle = collective.elasticsearch.hook    
+    castle = collective.elasticsearch.hook
     [z3c.autoinclude.plugin]
     target = plone
     [console_scripts]
