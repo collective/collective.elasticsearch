@@ -60,12 +60,6 @@ setup(
             'plone.app.contenttypes',
             'plone.app.testing',
             'plone.testing>=5.0.0',
-            'unittest2',
-        ],
-        'test-archetypes': [
-            'plone.app.contentrules',
-            'plone.app.testing',
-            'plone.testing>=5.0.0',
             'Products.ATContentTypes',
             'unittest2',
         ],
