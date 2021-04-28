@@ -14,7 +14,7 @@ long_description = '\n\n'.join([
 
 setup(
     name='collective.elasticsearch',
-    version='3.0.6.dev0',
+    version='4.0.0',
     description="elasticsearch integration with plone",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/

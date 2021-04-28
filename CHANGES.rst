@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.6 (unreleased)
+4.0.0 (2021-04-28)
 ------------------
 
 - BREAKING: Make changes for ES 7.x
