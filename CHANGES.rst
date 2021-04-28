@@ -12,6 +12,12 @@ Changelog
 
 - `Issue#76 <https://github.com/collective/collective.elasticsearch/issues/76>`_ In 5.1+ we want to patch _unindexObject not unindexObject [ewohnlich]
 
+- Make changes for ES 7.x
+  [bduncan137]
+
+-Slow down tests to allow them to complete correctly
+  [bduncan137]
+
 - Explicit error logging added, if ES bulk action for indexing failed.
   [nazrulworld]
 

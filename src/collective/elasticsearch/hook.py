@@ -41,13 +41,11 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
             bulk_data.append({
                 'delete': {
                     '_index': es.index_name,
-                    '_type': es.doc_type,
                     '_id': uid
                 }
             })
         result = es.connection.bulk(
             index=es.index_name,
-            doc_type=es.doc_type,
             body=bulk_data)
 
         if "errors" in result and result["errors"] is True:
@@ -74,14 +72,12 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
             bulk_data.extend([{
                 'index': {
                     '_index': es.index_name,
-                    '_type': es.doc_type,
                     '_id': uid
                 }
             }, get_index_data(obj, es)])
             if len(bulk_data) % bulk_size == 0:
                 result = conn.bulk(
                     index=es.index_name,
-                    doc_type=es.doc_type,
                     body=bulk_data)
 
                 if "errors" in result and result["errors"] is True:
@@ -92,7 +88,6 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
         if len(bulk_data) > 0:
             result = conn.bulk(
                 index=es.index_name,
-                doc_type=es.doc_type,
                 body=bulk_data)
 
             if "errors" in result and result["errors"] is True:
@@ -119,7 +114,6 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
                 bulk_data.extend([{
                     'update': {
                         '_index': es.index_name,
-                        '_type': es.doc_type,
                         '_id': IUUID(ob)
                     }
                 }, {
@@ -130,14 +124,12 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
                 if len(bulk_data) % bulk_size == 0:
                     conn.bulk(
                         index=es.index_name,
-                        doc_type=es.doc_type,
                         body=bulk_data)
                     bulk_data = []
 
         if len(bulk_data) > 0:
             conn.bulk(
                 index=es.index_name,
-                doc_type=es.doc_type,
                 body=bulk_data)
 
 

@@ -18,11 +18,12 @@ before_install:
   - virtualenv -p `which python` .
   - bin/pip install -r requirements.txt -c constraints_plone$PLONE_VERSION.txt
   - cp test_plone$PLONE_VERSION.cfg buildout.cfg
-  - docker run -d -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.0
+  - docker run -d -e "discovery.type=single-node" -e "cluster.name=docker-cluster" -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch-oss:7.6.0
 
 install:
-  - bin/buildout -t 3 code-analysis:return-status-codes=True annotate
-  - bin/buildout -t 3 code-analysis:return-status-codes=True
+# -N needed for plone 5.0 buildout to succeed
+  - bin/buildout -N -t 3 code-analysis:return-status-codes=True annotate
+  - bin/buildout -N -t 3 code-analysis:return-status-codes=True
 
 before_script:
   - sleep 10

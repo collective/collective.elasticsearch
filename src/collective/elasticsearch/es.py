@@ -49,7 +49,7 @@ class ElasticResult(object):
         self.results = {
             0: result['hits']
         }
-        self.count = result['total']
+        self.count = result['total']['value']
         self.query_params = query_params
 
     def __len__(self):
@@ -164,7 +164,6 @@ class ElasticSearchCatalog(object):
             body['sort'] = sort
 
         return self.connection.search(index=self.index_name,
-                                      doc_type=self.doc_type,
                                       body=body,
                                       **query_params)
 
@@ -307,7 +306,6 @@ class ElasticSearchCatalog(object):
         adapter = getMultiAdapter((getRequest(), self), IMappingProvider)
         mapping = adapter()
         self.connection.indices.put_mapping(
-            doc_type=self.doc_type,
             body=mapping,
             index=self.index_name)
 
@@ -336,7 +334,3 @@ class ElasticSearchCatalog(object):
         if self.index_version:
             return '%s_%i' % (self.index_name, self.index_version)
         return self.index_name
-
-    @property
-    def doc_type(self):
-        return self.catalogtool.getId().lower()
