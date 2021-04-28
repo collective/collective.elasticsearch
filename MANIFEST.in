@@ -2,3 +2,8 @@ graft src/collective
 graft docs
 include *.rst
 global-exclude *.pyc
+# added by check_manifest.py
+include *.GPL
+include *.txt
+include tox.ini
+recursive-include scripts *.py
