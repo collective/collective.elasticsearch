@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.5 (unreleased)
+3.0.5 (2021-04-28)
 ------------------
 
 - `Issue#76 <https://github.com/collective/collective.elasticsearch/issues/76>`_ In 5.1+ we want to patch _unindexObject not unindexObject [ewohnlich]
