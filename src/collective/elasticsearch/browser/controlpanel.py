@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collective.elasticsearch import logger
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
@@ -16,27 +15,27 @@ class ElasticControlPanelForm(RegistryEditForm):
     form.extends(RegistryEditForm)
     schema = IElasticSettings
 
-    label = u'Elastic Search Settings'
+    label = "Elastic Search Settings"
 
-    control_panel_view = '@@elastic-controlpanel'
+    control_panel_view = "@@elastic-controlpanel"
 
 
 class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
-    index = ViewPageTemplateFile('controlpanel_layout.pt')
+    index = ViewPageTemplateFile("controlpanel_layout.pt")
 
     def __init__(self, *args, **kwargs):
-        super(ElasticControlPanelFormWrapper, self).__init__(*args, **kwargs)
-        self.portal_catalog = getToolByName(self.context, 'portal_catalog')
+        super().__init__(*args, **kwargs)
+        self.portal_catalog = getToolByName(self.context, "portal_catalog")
         self.es = ElasticSearchCatalog(self.portal_catalog)
 
     @property
     def connection_status(self):
         try:
-            return self.es.connection.status()['ok']
+            return self.es.connection.status()["ok"]
         except AttributeError:
             try:
-                health_status = self.es.connection.cluster.health()['status']
-                return health_status in ('green', 'yellow')
+                health_status = self.es.connection.cluster.health()["status"]
+                return health_status in ("green", "yellow")
             except Exception:
                 return False
         except Exception:
@@ -47,32 +46,32 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
         try:
             info = self.es.connection.info()
             try:
-                stats = self.es.connection.indices.stats(
-                    index=self.es.real_index_name
-                )['indices'][self.es.real_index_name]['primaries']
-                size_in_mb = stats['store']['size_in_bytes'] / 1024.0 / 1024.0
+                stats = self.es.connection.indices.stats(index=self.es.real_index_name)[
+                    "indices"
+                ][self.es.real_index_name]["primaries"]
+                size_in_mb = stats["store"]["size_in_bytes"] / 1024.0 / 1024.0
                 return [
-                    ('Cluster Name', info.get('name')),
-                    ('Elastic Search Version', info['version']['number']),
-                    ('Number of docs', stats['docs']['count']),
-                    ('Deleted docs', stats['docs']['deleted']),
-                    ('Size', str(int(math.ceil(size_in_mb))) + 'MB'),
-                    ('Query Count', stats['search']['query_total'])
+                    ("Cluster Name", info.get("name")),
+                    ("Elastic Search Version", info["version"]["number"]),
+                    ("Number of docs", stats["docs"]["count"]),
+                    ("Deleted docs", stats["docs"]["deleted"]),
+                    ("Size", str(int(math.ceil(size_in_mb))) + "MB"),
+                    ("Query Count", stats["search"]["query_total"]),
                 ]
             except KeyError:
                 return [
-                    ('Cluster Name', info.get('name')),
-                    ('Elastic Search Version', info['version']['number'])
+                    ("Cluster Name", info.get("name")),
+                    ("Elastic Search Version", info["version"]["number"]),
                 ]
         except Exception:
-            logger.warning('Error getting stats', exc_info=True)
+            logger.warning("Error getting stats", exc_info=True)
             return []
 
     @property
     def active(self):
-        return self.es.get_setting('enabled')
+        return self.es.get_setting("enabled")
 
 
 ElasticControlPanelView = layout.wrap_form(
-    ElasticControlPanelForm,
-    ElasticControlPanelFormWrapper)
+    ElasticControlPanelForm, ElasticControlPanelFormWrapper
+)

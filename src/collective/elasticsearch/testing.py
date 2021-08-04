@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from plone.app.testing import applyProfile
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
@@ -15,116 +14,133 @@ from zope.configuration import xmlconfig
 
 try:
     import Products.ATContentTypes
+
     HAS_ATCONTENTTYPES = True
 except ImportError:
     HAS_ATCONTENTTYPES = False
 
 
 class ElasticSearch(PloneSandboxLayer):
-    defaultBases = (PLONE_FIXTURE, )
+    defaultBases = (PLONE_FIXTURE,)
 
     def setUpZope(self, app, configurationContext):
-        super(ElasticSearch, self).setUpZope(app, configurationContext)
+        super().setUpZope(app, configurationContext)
         # load ZCML
 
         import plone.app.contenttypes
-        xmlconfig.file('configure.zcml', plone.app.contenttypes,
-                       context=configurationContext)
-        z2.installProduct(app, 'plone.app.contenttypes')
+
+        xmlconfig.file(
+            "configure.zcml", plone.app.contenttypes, context=configurationContext
+        )
+        z2.installProduct(app, "plone.app.contenttypes")
 
         import plone.app.event.dx
-        self.loadZCML(package=plone.app.event.dx,
-                      context=configurationContext)
+
+        self.loadZCML(package=plone.app.event.dx, context=configurationContext)
 
         import plone.app.registry
-        xmlconfig.file('configure.zcml', plone.app.registry,
-                       context=configurationContext)
-        z2.installProduct(app, 'plone.app.registry')
+
+        xmlconfig.file(
+            "configure.zcml", plone.app.registry, context=configurationContext
+        )
+        z2.installProduct(app, "plone.app.registry")
 
         import collective.elasticsearch
-        xmlconfig.file('configure.zcml', collective.elasticsearch,
-                       context=configurationContext)
-        z2.installProduct(app, 'Products.DateRecurringIndex')
-        z2.installProduct(app, 'collective.elasticsearch')
+
+        xmlconfig.file(
+            "configure.zcml", collective.elasticsearch, context=configurationContext
+        )
+        z2.installProduct(app, "Products.DateRecurringIndex")
+        z2.installProduct(app, "collective.elasticsearch")
 
     def setUpPloneSite(self, portal):
-        super(ElasticSearch, self).setUpPloneSite(portal)
+        super().setUpPloneSite(portal)
         # install into the Plone site
-        applyProfile(portal, 'plone.app.registry:default')
-        applyProfile(portal, 'plone.app.contenttypes:default')
-        applyProfile(portal, 'collective.elasticsearch:default')
-        setRoles(portal, TEST_USER_ID, ('Member', 'Manager'))
-        workflowTool = getToolByName(portal, 'portal_workflow')
-        workflowTool.setDefaultChain('plone_workflow')
+        applyProfile(portal, "plone.app.registry:default")
+        applyProfile(portal, "plone.app.contenttypes:default")
+        applyProfile(portal, "collective.elasticsearch:default")
+        setRoles(portal, TEST_USER_ID, ("Member", "Manager"))
+        workflowTool = getToolByName(portal, "portal_workflow")
+        workflowTool.setDefaultChain("plone_workflow")
 
     def tearDownPloneSite(self, portal):
-        super(ElasticSearch, self).tearDownPloneSite(portal)
-        applyProfile(portal, 'plone.app.contenttypes:uninstall')
+        super().tearDownPloneSite(portal)
+        applyProfile(portal, "plone.app.contenttypes:uninstall")
 
 
 ElasticSearch_FIXTURE = ElasticSearch()
 ElasticSearch_INTEGRATION_TESTING = IntegrationTesting(
-    bases=(ElasticSearch_FIXTURE,), name='ElasticSearch:Integration')
+    bases=(ElasticSearch_FIXTURE,), name="ElasticSearch:Integration"
+)
 ElasticSearch_FUNCTIONAL_TESTING = FunctionalTesting(
-    bases=(ElasticSearch_FIXTURE,), name='ElasticSearch:Functional')
+    bases=(ElasticSearch_FIXTURE,), name="ElasticSearch:Functional"
+)
 
 
 if HAS_ATCONTENTTYPES:
+
     class ElasticSearchAT(PloneSandboxLayer):
-        defaultBases = (PLONE_FIXTURE, )
+        defaultBases = (PLONE_FIXTURE,)
 
         def setUpZope(self, app, configurationContext):
-            super(ElasticSearchAT, self).setUpZope(app, configurationContext)
+            super().setUpZope(app, configurationContext)
             # load ZCML
 
-            xmlconfig.file('configure.zcml', Products.ATContentTypes,
-                           context=configurationContext)
-            z2.installProduct(app, 'Products.ATContentTypes')
+            xmlconfig.file(
+                "configure.zcml", Products.ATContentTypes, context=configurationContext
+            )
+            z2.installProduct(app, "Products.ATContentTypes")
 
             import plone.app.registry
-            xmlconfig.file('configure.zcml', plone.app.registry,
-                           context=configurationContext)
-            z2.installProduct(app, 'plone.app.registry')
+
+            xmlconfig.file(
+                "configure.zcml", plone.app.registry, context=configurationContext
+            )
+            z2.installProduct(app, "plone.app.registry")
 
             import collective.elasticsearch
-            xmlconfig.file('configure.zcml', collective.elasticsearch,
-                           context=configurationContext)
-            z2.installProduct(app, 'Products.DateRecurringIndex')
-            z2.installProduct(app, 'collective.elasticsearch')
+
+            xmlconfig.file(
+                "configure.zcml", collective.elasticsearch, context=configurationContext
+            )
+            z2.installProduct(app, "Products.DateRecurringIndex")
+            z2.installProduct(app, "collective.elasticsearch")
 
         def setUpPloneSite(self, portal):
-            super(ElasticSearchAT, self).setUpPloneSite(portal)
+            super().setUpPloneSite(portal)
             # install into the Plone site
-            applyProfile(portal, 'plone.app.registry:default')
-            applyProfile(portal, 'Products.ATContentTypes:default')
-            applyProfile(portal, 'collective.elasticsearch:default')
-            setRoles(portal, TEST_USER_ID, ('Member', 'Manager'))
-            workflowTool = getToolByName(portal, 'portal_workflow')
-            workflowTool.setDefaultChain('plone_workflow')
+            applyProfile(portal, "plone.app.registry:default")
+            applyProfile(portal, "Products.ATContentTypes:default")
+            applyProfile(portal, "collective.elasticsearch:default")
+            setRoles(portal, TEST_USER_ID, ("Member", "Manager"))
+            workflowTool = getToolByName(portal, "portal_workflow")
+            workflowTool.setDefaultChain("plone_workflow")
 
     ElasticSearch_FIXTURE_AT = ElasticSearchAT()
     ElasticSearch_FUNCTIONAL_TESTING_AT = FunctionalTesting(
-        bases=(ElasticSearch_FIXTURE_AT,), name='ElasticSearch:FunctionalAT')
+        bases=(ElasticSearch_FIXTURE_AT,), name="ElasticSearch:FunctionalAT"
+    )
 
 
 def browserLogin(portal, browser, username=None, password=None):
     handleErrors = browser.handleErrors
     try:
         browser.handleErrors = False
-        browser.open(portal.absolute_url() + '/login_form')
+        browser.open(portal.absolute_url() + "/login_form")
         if username is None:
             username = TEST_USER_NAME
         if password is None:
             password = TEST_USER_PASSWORD
-        browser.getControl(name='__ac_name').value = username
-        browser.getControl(name='__ac_password').value = password
-        browser.getControl(name='submit').click()
+        browser.getControl(name="__ac_name").value = username
+        browser.getControl(name="__ac_password").value = password
+        browser.getControl(name="submit").click()
     finally:
         browser.handleErrors = handleErrors
 
 
-def createObject(context, _type, id, delete_first=True,
-                 check_for_first=False, **kwargs):
+def createObject(
+    context, _type, id, delete_first=True, check_for_first=False, **kwargs
+):
     if delete_first and id in context:
         context.manage_delObjects([id])
     if not check_for_first or id not in context:
