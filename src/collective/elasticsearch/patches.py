@@ -4,13 +4,15 @@ from collective.elasticsearch.es import ElasticSearchCatalog
 from plone import api
 
 
-def catalog_object(self, object, uid=None, idxs=[],
+def catalog_object(self, obj, uid=None, idxs=None,
                    update_metadata=1, pghandler=None):
+    if idxs is None:
+        idxs = []
     es = ElasticSearchCatalog(self)
-    return es.catalog_object(object, uid, idxs, update_metadata, pghandler)
+    return es.catalog_object(obj, uid, idxs, update_metadata, pghandler)
 
 
-def uncatalog_object(self, uid, obj=None, *args, **kwargs):
+def uncatalog_object(self, uid, obj=None, *args, **kwargs):  # NOQA W1113
     es = ElasticSearchCatalog(self)
     return es.uncatalog_object(uid, obj, *args, **kwargs)
 
@@ -25,7 +27,7 @@ def safeSearchResults(self, REQUEST=None, **kw):
     return es.searchResults(REQUEST, check_perms=True, **kw)
 
 
-def manage_catalogRebuild(self, *args, **kwargs):
+def manage_catalogRebuild(self, *args, **kwargs):  # NOQA W0613
     """ need to be publishable """
     es = ElasticSearchCatalog(self)
     return es.manage_catalogRebuild(**kwargs)

@@ -1,97 +1,111 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
-      xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:metal="http://xml.zope.org/namespaces/metal"
-      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      lang="en"
-      metal:use-macro="here/prefs_main_template/macros/master"
-      i18n:domain="plone">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" xmlns:tal="http://xml.zope.org/namespaces/tal"
+    xmlns:metal="http://xml.zope.org/namespaces/metal" xmlns:i18n="http://xml.zope.org/namespaces/i18n" lang="en"
+    metal:use-macro="here/prefs_main_template/macros/master" i18n:domain="plone">
 
 <body>
+    <div metal:fill-slot="prefs_configlet_main" tal:define="status view/connection_status">
+        <style>
+            #actions form {
+                display: inline;
+            }
 
-<div metal:fill-slot="prefs_configlet_main"
-    tal:define="status view/connection_status">
+            #actions {
+                margin-bottom: 10px;
+            }
 
-    <style>
-      #status{
+            hr {
+                margin-bottom: 10px;
+            }
 
-      }
-      #actions form{
-        display: inline;
-      }
-      #actions{
-        margin-bottom: 10px;
-      }
-      hr{
-        margin-bottom: 10px;
-      }
-      #actions .rebuild{
-        padding: 5px;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
-      }
-    </style>
+            #actions .rebuild {
+                padding: 5px;
+                border: 1px solid #ccc;
+                background-color: #f1f1f1;
+            }
 
-    <a href=""
-       id="setup-link"
-       tal:attributes="href string:$portal_url/plone_control_panel"
-       i18n:translate="">
-        Site Setup
-    </a> &rsaquo;
+            .card {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+                word-wrap: break-word;
+                background-color: #fff;
+                background-clip: border-box;
+                border: 1px solid rgba(0, 0, 0, .125);
+                border-radius: .25rem;
+                margin-bottom: 1em;
+            }
 
-    <h1 class="documentFirstHeading" tal:content="view/label">View Title</h1>
+            .card-header {
+                padding: .5rem 1rem;
+                margin-bottom: 0;
+                background-color: rgba(0, 0, 0, .03);
+                border-bottom: 1px solid rgba(0, 0, 0, .125);
+            }
 
-    <div metal:use-macro="context/global_statusmessage/macros/portal_message">
-      Portal status message
-    </div>
-
-    <dl class="portalMessage warning" tal:condition="python: not status">
-        <dt>
-            Warning
-        </dt>
-        <dd>
+            .card-body {
+                flex: 1 1 auto;
+                padding: 1rem 1rem;
+            }
+        </style>
+        <a href="${portal_url}/@@overview-controlpanel" id="setup-link" class="link-parent" i18n:translate="">
+            Site Setup
+        </a> &rsaquo;
+        <h1 class="documentFirstHeading">${view/label}</h1>
+        <div class="portalMessage warning" role="status" tal:condition="python: not status">
+            <strong>Warning</strong>
             Could not connect to specified elastic search server.
-        </dd>
-    </dl>
-
-    <div id="layout-contents">
-        <span tal:replace="structure view/contents" />
+        </div>
+        <div id="layout-contents">
+            <span tal:replace="structure view/contents" />
+        </div>
+        <tal:el tal:condition="view/active">
+            <div class="card" tal:define="purl string:${view/portal_catalog/absolute_url}" tal:condition="status">
+                <div class="card-header">
+                    Actions
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <form method="POST" action="${purl}/@@elastic-convert">
+                                <span tal:replace="structure context/@@authenticator/authenticator" />
+                                <button type="submit" name="convert">Convert Catalog</button>
+                            </form>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="col-md-2">
+                                <form method="POST" class="rebuild" action="${purl}/@@elastic-rebuild">
+                                    <span tal:replace="structure context/@@authenticator/authenticator" />
+                                    <button type="submit" name="convert">Rebuild Catalog</button>
+                                </form>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="portalMessage warning" role="status" style="padding-top:5px;padding-bottom:5px;">
+                                    <strong>Warning</strong>
+                                    Could take a very long time. Use carefully.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div tal:condition="status" id="status" tal:define="shards status/_shards/total|python:0;">
+                <table class="listing">
+                    <thead>
+                        <th colspan="2">
+                            Server status
+                        </th>
+                    </thead>
+                    <tbody>
+                        <tr tal:repeat="data view/es_info">
+                            <td>${python: data[0]}</td>
+                            <td>${python: data[1]}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </tal:el>
     </div>
-
-    <tal:el tal:condition="view/active">
-      <div id="actions" tal:define="purl string:${view/portal_catalog/absolute_url}"
-            tal:condition="status">
-        <hr />
-        <form method="POST"
-              tal:attributes="action string:${purl}/@@elastic-convert">
-          <span tal:replace="structure context/@@authenticator/authenticator"/>
-          <input type="submit" name="convert" value="Convert Catalog" />
-        </form> |
-        <form method="POST" class="rebuild"
-              tal:attributes="action string:${purl}/@@elastic-rebuild">
-          <span tal:replace="structure context/@@authenticator/authenticator"/>
-          <input type="submit" name="convert" value="Rebuild Catalog" />
-          <span>Could take a very long time. Use carefully.</span>
-        </form>
-      </div>
-
-      <div tal:condition="status" id="status"
-        tal:define="shards status/_shards/total|python:0;">
-        <table class="listing">
-          <thead>
-            <th colspan="2">
-              Server status
-            </th>
-          </thead>
-          <tbody>
-            <tr tal:repeat="data view/es_info">
-              <td tal:content="python: data[0]" />
-              <td tal:content="python: data[1]" />
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </tal:el>
-
-</div>
 </body>
+
 </html>

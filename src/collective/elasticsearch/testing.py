@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
-from plone.app.testing import applyProfile
+from Products.CMFCore.utils import getToolByName
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
 from plone.app.testing import PLONE_FIXTURE
 from plone.app.testing import PloneSandboxLayer
-from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from plone.app.testing import TEST_USER_NAME
 from plone.app.testing import TEST_USER_PASSWORD
+from plone.app.testing import applyProfile
+from plone.app.testing import setRoles
 from plone.testing import z2
-from Products.CMFCore.utils import getToolByName
 from zope.configuration import xmlconfig
-
 
 try:
     import Products.ATContentTypes
+
     HAS_ATCONTENTTYPES = True
 except ImportError:
     HAS_ATCONTENTTYPES = False
 
 
 class ElasticSearch(PloneSandboxLayer):
-    defaultBases = (PLONE_FIXTURE, )
+    defaultBases = (PLONE_FIXTURE,)
 
     def setUpZope(self, app, configurationContext):
-        super(ElasticSearch, self).setUpZope(app, configurationContext)
+        super().setUpZope(app, configurationContext)
         # load ZCML
 
         import plone.app.contenttypes
@@ -48,7 +48,7 @@ class ElasticSearch(PloneSandboxLayer):
         z2.installProduct(app, 'collective.elasticsearch')
 
     def setUpPloneSite(self, portal):
-        super(ElasticSearch, self).setUpPloneSite(portal)
+        super().setUpPloneSite(portal)
         # install into the Plone site
         applyProfile(portal, 'plone.app.registry:default')
         applyProfile(portal, 'plone.app.contenttypes:default')
@@ -58,7 +58,7 @@ class ElasticSearch(PloneSandboxLayer):
         workflowTool.setDefaultChain('plone_workflow')
 
     def tearDownPloneSite(self, portal):
-        super(ElasticSearch, self).tearDownPloneSite(portal)
+        super().tearDownPloneSite(portal)
         applyProfile(portal, 'plone.app.contenttypes:uninstall')
 
 
@@ -68,13 +68,12 @@ ElasticSearch_INTEGRATION_TESTING = IntegrationTesting(
 ElasticSearch_FUNCTIONAL_TESTING = FunctionalTesting(
     bases=(ElasticSearch_FIXTURE,), name='ElasticSearch:Functional')
 
-
 if HAS_ATCONTENTTYPES:
     class ElasticSearchAT(PloneSandboxLayer):
-        defaultBases = (PLONE_FIXTURE, )
+        defaultBases = (PLONE_FIXTURE,)
 
         def setUpZope(self, app, configurationContext):
-            super(ElasticSearchAT, self).setUpZope(app, configurationContext)
+            super().setUpZope(app, configurationContext)
             # load ZCML
 
             xmlconfig.file('configure.zcml', Products.ATContentTypes,
@@ -93,7 +92,7 @@ if HAS_ATCONTENTTYPES:
             z2.installProduct(app, 'collective.elasticsearch')
 
         def setUpPloneSite(self, portal):
-            super(ElasticSearchAT, self).setUpPloneSite(portal)
+            super().setUpPloneSite(portal)
             # install into the Plone site
             applyProfile(portal, 'plone.app.registry:default')
             applyProfile(portal, 'Products.ATContentTypes:default')
@@ -123,7 +122,7 @@ def browserLogin(portal, browser, username=None, password=None):
         browser.handleErrors = handleErrors
 
 
-def createObject(context, _type, id, delete_first=True,
+def createObject(context, _type, id, delete_first=True, # NOQA W0622
                  check_for_first=False, **kwargs):
     if delete_first and id in context:
         context.manage_delObjects([id])

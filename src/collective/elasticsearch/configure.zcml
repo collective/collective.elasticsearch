@@ -6,138 +6,148 @@
     xmlns:monkey="http://namespaces.plone.org/monkey"
     i18n_domain="collective.elasticsearch">
 
-  <five:registerPackage package="." initialize=".initialize" />
+    <five:registerPackage package="." initialize=".initialize"/>
 
-  <include package="plone.app.registry" />
-  <include package="plone.app.layout" />
+    <include package="plone.app.registry"/>
+    <include package="plone.app.layout"/>
 
-  <genericsetup:registerProfile
-    name="default"
-    title="Elastic Search"
-    directory="profiles/default"
-    description="Installs the Elastic Search plone integration package"
-    provides="Products.GenericSetup.interfaces.EXTENSION"
+    <genericsetup:registerProfile
+        name="default"
+        title="Elastic Search"
+        directory="profiles/default"
+        description="Installs the Elastic Search plone integration package"
+        provides="Products.GenericSetup.interfaces.EXTENSION"
+        post_handler=".setuphandlers.post_install"
     />
 
-  <genericsetup:upgradeSteps
+    <genericsetup:registerProfile
+        name="uninstall"
+        title="Elastic Search (uninstall)"
+        directory="profiles/uninstall"
+        description="Uninstalls package Elastic Search."
+        provides="Products.GenericSetup.interfaces.EXTENSION"
+        post_handler=".setuphandlers.uninstall"
+    />
+
+    <genericsetup:upgradeSteps
         source="*"
         destination="1"
         profile="collective.elasticsearch:default">
-  </genericsetup:upgradeSteps>
+    </genericsetup:upgradeSteps>
 
-  <genericsetup:upgradeSteps
+    <genericsetup:upgradeSteps
         source="1"
         destination="2"
         profile="collective.elasticsearch:default">
 
-    <genericsetup:upgradeStep
-         title="Update registry."
-         description=""
-         handler=".upgrades.update_registry"
-         />
+        <genericsetup:upgradeStep
+            title="Update registry."
+            description=""
+            handler=".upgrades.update_registry"
+        />
 
-  </genericsetup:upgradeSteps>
+    </genericsetup:upgradeSteps>
 
-  <include package=".browser" />
+    <include package=".browser"/>
 
-  <adapter
-    factory=".mapping.MappingAdapter"
-    provides=".interfaces.IMappingProvider"
-    for="zope.interface.Interface
-         .interfaces.IElasticSearchCatalog" />
-  <adapter
-    factory=".query.QueryAssembler"
-    provides=".interfaces.IQueryAssembler"
-    for="zope.interface.Interface
-         .interfaces.IElasticSearchCatalog" />
+    <adapter
+        factory=".mapping.MappingAdapter"
+        provides=".interfaces.IMappingProvider"
+        for="zope.interface.Interface
+         .interfaces.IElasticSearchCatalog"/>
+    <adapter
+        factory=".query.QueryAssembler"
+        provides=".interfaces.IQueryAssembler"
+        for="zope.interface.Interface
+         .interfaces.IElasticSearchCatalog"/>
 
 
-  <!-- CMFPlone CatalogTool patches -->
-  <monkey:patch
-    description="searchResults"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="searchResults"
-    replacement=".patches.safeSearchResults"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="searchResults"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="__call__"
-    replacement=".patches.safeSearchResults"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="catalog_object"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="catalog_object"
-    replacement=".patches.catalog_object"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="uncatalog_object"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="uncatalog_object"
-    replacement=".patches.uncatalog_object"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="unrestrictedSearchResults"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="unrestrictedSearchResults"
-    replacement=".patches.unrestrictedSearchResults"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="manage_catalogRebuild"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="manage_catalogRebuild"
-    replacement=".patches.manage_catalogRebuild"
-    preserveOriginal="True"
-    />
-  <monkey:patch
-    description="manage_catalogClear"
-    class="Products.CMFPlone.CatalogTool.CatalogTool"
-    original="manage_catalogClear"
-    replacement=".patches.manage_catalogClear"
-    preserveOriginal="True"
-    />
-
-  <!-- CMFCore CatalogTool patches -->
-  <configure zcml:condition="have plone-51">
+    <!-- CMFPlone CatalogTool patches -->
     <monkey:patch
-      description="_unindexObject"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      original="_unindexObject"
-      replacement=".patches._unindexObject"
-      preserveOriginal="True"
-      />
-  </configure>
-  <!-- BBB in Plone 5.1 and below unindexObject is analogous to current _unindexObject -->
-  <configure zcml:condition="not-have plone-51">
+        description="searchResults"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="searchResults"
+        replacement=".patches.safeSearchResults"
+        preserveOriginal="True"
+    />
     <monkey:patch
-      description="unindexObject"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      original="unindexObject"
-      replacement=".patches._unindexObject"
-      preserveOriginal="True"
-      />
-  </configure>
-
-  <monkey:patch
-    description="moveObjectsByDelta"
-    class="Products.CMFPlone.Portal.PloneSite"
-    original="moveObjectsByDelta"
-    replacement=".patches.PloneSite_moveObjectsByDelta"
-    preserveOriginal="True"
+        description="searchResults"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="__call__"
+        replacement=".patches.safeSearchResults"
+        preserveOriginal="True"
+    />
+    <monkey:patch
+        description="catalog_object"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="catalog_object"
+        replacement=".patches.catalog_object"
+        preserveOriginal="True"
+    />
+    <monkey:patch
+        description="uncatalog_object"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="uncatalog_object"
+        replacement=".patches.uncatalog_object"
+        preserveOriginal="True"
+    />
+    <monkey:patch
+        description="unrestrictedSearchResults"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="unrestrictedSearchResults"
+        replacement=".patches.unrestrictedSearchResults"
+        preserveOriginal="True"
+    />
+    <monkey:patch
+        description="manage_catalogRebuild"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="manage_catalogRebuild"
+        replacement=".patches.manage_catalogRebuild"
+        preserveOriginal="True"
+    />
+    <monkey:patch
+        description="manage_catalogClear"
+        class="Products.CMFPlone.CatalogTool.CatalogTool"
+        original="manage_catalogClear"
+        replacement=".patches.manage_catalogClear"
+        preserveOriginal="True"
     />
 
-  <monkey:patch
-    description="moveObjectsByDelta"
-    class="plone.folder.default.DefaultOrdering"
-    original="moveObjectsByDelta"
-    replacement=".patches.moveObjectsByDelta"
-    preserveOriginal="True"
+    <!-- CMFCore CatalogTool patches -->
+    <configure zcml:condition="have plone-51">
+        <monkey:patch
+            description="_unindexObject"
+            class="Products.CMFPlone.CatalogTool.CatalogTool"
+            original="_unindexObject"
+            replacement=".patches._unindexObject"
+            preserveOriginal="True"
+        />
+    </configure>
+    <!-- BBB in Plone 5.1 and below unindexObject is analogous to current _unindexObject -->
+    <configure zcml:condition="not-have plone-51">
+        <monkey:patch
+            description="unindexObject"
+            class="Products.CMFPlone.CatalogTool.CatalogTool"
+            original="unindexObject"
+            replacement=".patches._unindexObject"
+            preserveOriginal="True"
+        />
+    </configure>
+
+    <monkey:patch
+        description="moveObjectsByDelta"
+        class="Products.CMFPlone.Portal.PloneSite"
+        original="moveObjectsByDelta"
+        replacement=".patches.PloneSite_moveObjectsByDelta"
+        preserveOriginal="True"
+    />
+
+    <monkey:patch
+        description="moveObjectsByDelta"
+        class="plone.folder.default.DefaultOrdering"
+        original="moveObjectsByDelta"
+        replacement=".patches.moveObjectsByDelta"
+        preserveOriginal="True"
     />
 
 </configure>

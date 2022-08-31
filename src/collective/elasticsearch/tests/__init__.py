@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 # coding: utf-8
+import time
+
+import transaction
+import unittest2 as unittest
+from Products.CMFCore.utils import getToolByName
 from collective.elasticsearch import hook
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
 from plone.registry.interfaces import IRegistry
-from Products.CMFCore.utils import getToolByName
 from zope.component import getUtility
-
-import time
-import transaction
-import unittest2 as unittest
 
 
 class BaseTest(unittest.TestCase):
-
     layer = ElasticSearch_INTEGRATION_TESTING
 
     def setUp(self):
-        super(BaseTest, self).setUp()
+        super().setUp()
         self.portal = self.layer['portal']
         self.request = self.layer['request']
         self.request.environ['testing'] = True
@@ -40,7 +39,8 @@ class BaseTest(unittest.TestCase):
         # of elastic enabled
         self.commit()
 
-    def commit(self):
+    @staticmethod
+    def commit():
         transaction.commit()
 
     def clearTransactionEntries(self):
@@ -49,7 +49,7 @@ class BaseTest(unittest.TestCase):
         _hook.index = {}
 
     def tearDown(self):
-        super(BaseTest, self).tearDown()
+        super().tearDown()
         self.es.connection.indices.delete_alias(
             index=self.es.real_index_name, name=self.es.index_name)
         self.es.connection.indices.delete(index=self.es.real_index_name)
@@ -59,5 +59,4 @@ class BaseTest(unittest.TestCase):
 
 
 class BaseFunctionalTest(BaseTest):
-
     layer = ElasticSearch_FUNCTIONAL_TESTING

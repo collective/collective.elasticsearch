@@ -5,6 +5,7 @@ except ImportError:
     # BBB processQueue does not exist in Plone 5.0 and earlier
     def processQueue():
         pass
+import unittest2 as unittest
 from collective.elasticsearch.hook import getHook
 from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
 from collective.elasticsearch.testing import createObject
@@ -15,8 +16,6 @@ from plone.app.contentrules.actions.move import MoveAction
 from plone.app.contentrules.tests.dummy import DummyEvent
 from plone.contentrules.rule.interfaces import IExecutable
 from zope.component import getMultiAdapter
-
-import unittest2 as unittest
 
 EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
 DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
@@ -82,10 +81,11 @@ class TestQueries(BaseFunctionalTest):
 
 
 if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
+    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # NOQA C0301 C0412
 
-    class TestQueriesAT(TestQueries):
-        layer = ElasticSearch_FUNCTIONAL_TESTING_AT
+
+class TestQueriesAT(TestQueries):
+    layer = ElasticSearch_FUNCTIONAL_TESTING_AT
 
 
 def test_suite():

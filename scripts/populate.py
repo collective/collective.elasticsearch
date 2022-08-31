@@ -1,26 +1,25 @@
+import os
+import random
+from multiprocessing import Pool
+
+import requests
+import transaction
 from AccessControl.SecurityManagement import newSecurityManager
 from AccessControl.SecurityManager import setSecurityPolicy
+from Products.CMFCore.tests.base.security import OmnipotentUser
+from Products.CMFCore.tests.base.security import PermissiveSecurityPolicy
+from Testing.makerequest import makerequest
 from lxml.html import fromstring
 from lxml.html import tostring
 from plone import api
 from plone.app.textfield.value import RichTextValue
-from Products.CMFCore.tests.base.security import OmnipotentUser
-from Products.CMFCore.tests.base.security import PermissiveSecurityPolicy
-from Testing.makerequest import makerequest
 from unidecode import unidecode
 from zope.component.hooks import setSite
-
-import multiprocessing
-import os
-import random
-import requests
-import transaction
-
 
 SITE_ID = 'Plone3'
 
 
-def spoofRequest(app):
+def spoofRequest(app):  # NOQA W0621
     """
     Make REQUEST variable to be available on the Zope application server.
 
@@ -31,13 +30,14 @@ def spoofRequest(app):
     newSecurityManager(None, OmnipotentUser().__of__(app.acl_users))
     return makerequest(app)
 
+
 # Enable Faux HTTP request object
 app = spoofRequest(app)  # noqa
 
 _dir = os.path.join(os.getcwd(), 'src')
 
-_links = []
-_toparse = []
+_links = []  # type: list
+_toparse = []  # type: list
 
 
 def parse_url(url):
@@ -45,12 +45,12 @@ def parse_url(url):
     return resp.content
 
 
-pool = multiprocessing.Pool(processes=8)
 def parse_urls(urls):
-    return pool.map(parse_url, urls)
+    with Pool(8) as pool:
+        return pool.map(parse_url, urls)
 
 
-class DataReader(object):
+class DataReader:
     base_url = 'https://en.wikipedia.org'
     base_content_url = base_url + '/wiki/'
     start_page = base_content_url + 'Main_Page'
@@ -62,18 +62,19 @@ class DataReader(object):
         self.toparse = [self.start_page]
         self.toprocess = []
 
-    def get_content(self, html, selector, text=False):
+    def get_content(self, html, selector, text=False):  # NOQA R0201
         els = html.cssselect(selector)
         if len(els) > 0:
             if text:
                 return unidecode(els[0].text_content())
-            else:
-                return tostring(els[0])
+            return tostring(els[0])
+        return None
 
     def __iter__(self):
         while len(self.toparse) > 0:
             if len(self.toprocess) == 0:
-                toparse = [self.toparse.pop(0) for _ in range(min(20, len(self.toparse)))]
+                toparse = [self.toparse.pop(0) for _ in
+                           range(min(20, len(self.toparse)))]
                 self.toprocess = parse_urls(toparse)
                 self.parsed.extend(toparse)
             html = fromstring(self.toprocess.pop(0))
@@ -83,7 +84,8 @@ class DataReader(object):
                 url = el.attrib.get('href', '')
                 if url.startswith('/'):
                     url = self.base_url + url
-                if url.startswith(self.base_content_url) and url not in self.parsed:
+                if url.startswith(
+                        self.base_content_url) and url not in self.parsed:
                     self.toparse.append(url)
 
             title = self.get_content(html, self.title_selector, text=True)
@@ -98,8 +100,7 @@ class DataReader(object):
             }
 
 
-def importit(app):
-
+def importit(app):  # NOQA W0621
     site = app[SITE_ID]
     setSite(site)
     per_folder = 50
@@ -113,29 +114,32 @@ def importit(app):
             return count
         for fidx in range(num_folders):
             count += 1
-            fid = 'folder%i' % fidx
+            fid = f'folder{fidx}'
             if fid in parent.objectIds():
                 folder = parent[fid]
             else:
                 folder = api.content.create(
-                    type='Folder', title="Folder %i" % fidx, id=fid,
+                    type='Folder', title=f'Folder {fidx}', id=fid,
                     exclude_from_nav=True, container=parent)
             for didx in range(per_folder):
                 count += 1
-                pid = 'page%i' % didx
+                pid = f'page{didx}'
                 if pid not in folder.objectIds():
                     try:
                         api.content.create(
-                            type=random.choice(portal_types), id=pid, container=folder,
+                            type=random.choice(portal_types), id=pid,
+                            container=folder,
                             exclude_from_nav=True, **data.next())
                         print('created ', count)
-                    except Exception:
+                    except Exception:  # NOQA W0703
                         print('skipping', count)
             count = populate(folder, count, depth + 1)
         print('commiting')
         transaction.commit()
         app._p_jar.cacheMinimize()
         return count
+
     populate(site)
+
 
 importit(app)

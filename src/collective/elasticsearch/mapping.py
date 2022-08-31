@@ -5,8 +5,7 @@ from zope.interface import implementer
 
 
 @implementer(IMappingProvider)
-class MappingAdapter(object):
-
+class MappingAdapter:
     _default_mapping = {
         'SearchableText': {
             'store': False,
@@ -55,7 +54,7 @@ class MappingAdapter(object):
         self.es = es
         self.catalog = es.catalog
 
-    def get_index_creation_body(self):
+    def get_index_creation_body(self):  # NOQA E0211
         return {}
 
     def __call__(self):
@@ -65,8 +64,7 @@ class MappingAdapter(object):
             if index is not None:
                 properties[name] = index.create_mapping(name)
             else:
-                raise Exception('Can not locate index for %s' % (
-                    name))
+                raise Exception(f'Can not locate index for {name}')
 
         conn = self.es.connection
         index_name = self.es.index_name
@@ -78,7 +76,7 @@ class MappingAdapter(object):
             if not self.es.index_version:
                 # need to initialize version value
                 self.es.bump_index_version()
-            index_name_v = '%s_%i' % (index_name, self.es.index_version)
+            index_name_v = f'{index_name}_{self.es.index_version}'
             if not conn.indices.exists(index_name_v):
                 conn.indices.create(
                     index_name_v,

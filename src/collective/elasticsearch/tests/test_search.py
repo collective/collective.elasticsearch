@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-from collective.elasticsearch.testing import createObject
-from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
-from collective.elasticsearch.tests import BaseFunctionalTest
-from DateTime import DateTime
-
 import time
-import unittest2 as unittest
 
+import unittest2 as unittest
+from DateTime import DateTime
+from collective.elasticsearch.testing import HAS_ATCONTENTTYPES
+from collective.elasticsearch.testing import createObject
+from collective.elasticsearch.tests import BaseFunctionalTest
 
 EVENT_KLASS = 'plone.app.event.dx.interfaces.IDXEvent'
 DOCUMENT_KLASS = 'plone.app.contenttypes.interfaces.IDocument'
 
 
 class TestQueries(BaseFunctionalTest):
-
     event_klass = EVENT_KLASS
     document_klass = DOCUMENT_KLASS
 
@@ -51,10 +49,9 @@ class TestQueries(BaseFunctionalTest):
         time.sleep(1)
         events = []
         for idx in range(5):
-            event = createObject(
-                self.portal, 'Event',
-                'event%i' % idx, title='Some Event %i' % idx,
-                effective=DateTime('2015/09/25 20:00'))
+            event = createObject(self.portal, 'Event', f'event{idx}',
+                                 title=f'Some Event {idx}',
+                                 effective=DateTime('2015/09/25 20:00'))
             events.append(event)
 
         self.commit()
@@ -85,15 +82,13 @@ class TestQueries(BaseFunctionalTest):
 
     def test_text_index_query(self):
         for idx in range(5):
-            createObject(
-                self.portal, 'Document',
-                'page%i' % idx, title='Page %i' % idx)
+            createObject(self.portal, 'Document', f'page{idx}',
+                         title=f'Page {idx}')
             # should not show up in results
         events = []
         for idx in range(5):
-            event = createObject(
-                self.portal, 'Event',
-                'event%i' % idx, title='Some Event %i' % idx)
+            event = createObject(self.portal, 'Event', f'event{idx}',
+                                 title=f'Some Event {idx}')
             events.append(event)
 
         self.commit()
@@ -201,9 +196,8 @@ class TestQueries(BaseFunctionalTest):
 
     def test_brains_indexing(self):
         for idx in range(120):
-            createObject(
-                self.portal, 'Document', '{0:04d}page'.format(idx),
-                title='Page {}'.format(idx))
+            createObject(self.portal, 'Document', f'{idx:04d}page',
+                         title=f'Page {idx}')
         self.commit()
         el_results = self.catalog(
             portal_type='Document',
@@ -218,14 +212,14 @@ class TestQueries(BaseFunctionalTest):
 
 
 if HAS_ATCONTENTTYPES:
-    from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
+    from collective.elasticsearch.testing import \
+        ElasticSearch_FUNCTIONAL_TESTING_AT  # noqa
 
     EVENT_KLASS_AT = 'Products.ATContentTypes.interfaces.event.IATEvent'
     DOCUMENT_KLASS_AT = 'Products.ATContentTypes.interfaces.document.IATDocument'  # noqa
 
     class TestQueriesAT(TestQueries):
         layer = ElasticSearch_FUNCTIONAL_TESTING_AT
-
         event_klass = EVENT_KLASS_AT
         document_klass = DOCUMENT_KLASS_AT
 

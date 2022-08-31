@@ -7,14 +7,14 @@ from zope.interface import implementer
 
 
 @implementer(IQueryAssembler)
-class QueryAssembler(object):
+class QueryAssembler:
 
     def __init__(self, request, es):
         self.es = es
         self.catalogtool = es.catalogtool
         self.request = request
 
-    def normalize(self, query):
+    def normalize(self, query):  # NOQA R0201
         sort_on = []
         sort = query.pop('sort_on', None)
         # default plone is ascending
@@ -27,7 +27,7 @@ class QueryAssembler(object):
         if sort:
             for sort_str in sort.split(','):
                 sort_on.append({
-                    sort_str: {"order": sort_order}
+                    sort_str: {'order': sort_order}
                 })
         sort_on.append('_score')
         if 'b_size' in query:
@@ -48,16 +48,13 @@ class QueryAssembler(object):
         for key, value in dquery.items():
             if key not in idxs and key not in es_only_indexes:
                 continue
-
             index = getIndex(catalog, key)
             if index is None and key in es_only_indexes:
                 # deleted index for plone performance but still need on ES
                 index = EZCTextIndex(catalog, key)
-
             qq = index.get_query(key, value)
             if qq is None:
                 continue
-
             if index is not None and index.filter_query:
                 if isinstance(qq, list):
                     filters.extend(qq)
@@ -70,14 +67,13 @@ class QueryAssembler(object):
                     matches.append(qq)
         if len(filters) == 0 and len(matches) == 0:
             return query
-        else:
-            query = {
-                'bool': dict()
-            }
-            if len(filters) > 0:
-                query['bool']['filter'] = filters
+        query = {
+            'bool': {}
+        }
+        if len(filters) > 0:
+            query['bool']['filter'] = filters
 
-            if len(matches) > 0:
-                query['bool']['should'] = matches
-                query['bool']['minimum_should_match'] = 1
-            return query
+        if len(matches) > 0:
+            query['bool']['should'] = matches
+            query['bool']['minimum_should_match'] = 1
+        return query

@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
+import math
+
+from Products.CMFCore.utils import getToolByName
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from collective.elasticsearch import logger
 from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
+from elasticsearch.exceptions import ConnectionError as conerror
+from elasticsearch.exceptions import NotFoundError
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.z3cform import layout
-from Products.CMFCore.utils import getToolByName
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from urllib3.exceptions import NewConnectionError
 from z3c.form import form
-
-import math
 
 
 class ElasticControlPanelForm(RegistryEditForm):
     form.extends(RegistryEditForm)
     schema = IElasticSettings
 
-    label = u'Elastic Search Settings'
+    label = 'Elastic Search Settings'
 
     control_panel_view = '@@elastic-controlpanel'
 
@@ -25,7 +28,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     index = ViewPageTemplateFile('controlpanel_layout.pt')
 
     def __init__(self, *args, **kwargs):
-        super(ElasticControlPanelFormWrapper, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.portal_catalog = getToolByName(self.context, 'portal_catalog')
         self.es = ElasticSearchCatalog(self.portal_catalog)
 
@@ -33,14 +36,22 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def connection_status(self):
         try:
             return self.es.connection.status()['ok']
-        except AttributeError:
+        except conerror:
+            return False
+        except (conerror,
+                ConnectionError,
+                NewConnectionError,
+                ConnectionRefusedError,
+                AttributeError):
             try:
                 health_status = self.es.connection.cluster.health()['status']
                 return health_status in ('green', 'yellow')
-            except Exception:
+            except (conerror,
+                    ConnectionError,
+                    NewConnectionError,
+                    ConnectionRefusedError,
+                    AttributeError):
                 return False
-        except Exception:
-            return False
 
     @property
     def es_info(self):
@@ -64,7 +75,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
                     ('Cluster Name', info.get('name')),
                     ('Elastic Search Version', info['version']['number'])
                 ]
-        except Exception:
+        except NotFoundError:
             logger.warning('Error getting stats', exc_info=True)
             return []
 
