@@ -6,6 +6,10 @@ jobs:
     services:
       elastic:
         image: elasticsearch:7.7.0
+        env:
+          discovery.type: single-node
+          cluster.name: docker-cluster
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
         ports:
           - 9200:9200
           - 9300:9300
