@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collective.elasticsearch.indexes import EZCTextIndex
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IQueryAssembler
@@ -8,7 +7,6 @@ from zope.interface import implementer
 
 @implementer(IQueryAssembler)
 class QueryAssembler:
-
     def __init__(self, request, es):
         self.es = es
         self.catalogtool = es.catalogtool
@@ -16,26 +14,24 @@ class QueryAssembler:
 
     def normalize(self, query):  # NOQA R0201
         sort_on = []
-        sort = query.pop('sort_on', None)
+        sort = query.pop("sort_on", None)
         # default plone is ascending
-        sort_order = query.pop('sort_order', 'asc')
-        if sort_order in ('descending', 'reverse', 'desc'):
-            sort_order = 'desc'
+        sort_order = query.pop("sort_order", "asc")
+        if sort_order in ("descending", "reverse", "desc"):
+            sort_order = "desc"
         else:
-            sort_order = 'asc'
+            sort_order = "asc"
 
         if sort:
-            for sort_str in sort.split(','):
-                sort_on.append({
-                    sort_str: {'order': sort_order}
-                })
-        sort_on.append('_score')
-        if 'b_size' in query:
-            del query['b_size']
-        if 'b_start' in query:
-            del query['b_start']
-        if 'sort_limit' in query:
-            del query['sort_limit']
+            for sort_str in sort.split(","):
+                sort_on.append({sort_str: {"order": sort_order}})
+        sort_on.append("_score")
+        if "b_size" in query:
+            del query["b_size"]
+        if "b_start" in query:
+            del query["b_start"]
+        if "sort_limit" in query:
+            del query["sort_limit"]
         return query, sort_on
 
     def __call__(self, dquery):
@@ -43,7 +39,7 @@ class QueryAssembler:
         matches = []
         catalog = self.catalogtool._catalog
         idxs = catalog.indexes.keys()
-        query = {'match_all': {}}
+        query = {"match_all": {}}
         es_only_indexes = getESOnlyIndexes()
         for key, value in dquery.items():
             if key not in idxs and key not in es_only_indexes:
@@ -67,13 +63,11 @@ class QueryAssembler:
                     matches.append(qq)
         if len(filters) == 0 and len(matches) == 0:
             return query
-        query = {
-            'bool': {}
-        }
+        query = {"bool": {}}
         if len(filters) > 0:
-            query['bool']['filter'] = filters
+            query["bool"]["filter"] = filters
 
         if len(matches) > 0:
-            query['bool']['should'] = matches
-            query['bool']['minimum_should_match'] = 1
+            query["bool"]["should"] = matches
+            query["bool"]["minimum_should_match"] = 1
         return query

@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-import logging
-import random
-import time
-import traceback
-
-import six
-import transaction
-import urllib3
-from Products.CMFCore.interfaces import ISiteRoot
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.utils import getESOnlyIndexes
@@ -17,38 +7,41 @@ from plone.app.uuid.utils import uuidToObject
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
 from plone.uuid.interfaces import IUUID
+from Products.CMFCore.interfaces import ISiteRoot
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
 from zope.component.hooks import getSite
 from zope.component.hooks import setSite
 
-logger = logging.getLogger('collective.elasticsearch')
+import logging
+import random
+import time
+import traceback
+import transaction
+import urllib3
+
+
+logger = logging.getLogger("collective.elasticsearch")
 
 
 def index_batch(remove, index, positions, es=None):  # noqa: C901
     if es is None:
         from collective.elasticsearch.es import ElasticSearchCatalog
-        es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
+
+        es = ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
 
     setSite(api.portal.get())
     conn = es.connection
-    bulk_size = es.get_setting('bulk_size', 50)
-
+    index_name = es.index_name
+    bulk_size = es.get_setting("bulk_size", 50)
     if len(remove) > 0:
         bulk_data = []
         for uid in remove:
-            bulk_data.append({
-                'delete': {
-                    '_index': es.index_name,
-                    '_id': uid
-                }
-            })
-        result = es.connection.bulk(
-            index=es.index_name,
-            body=bulk_data)
+            bulk_data.append({"delete": {"_index": index_name, "_id": uid}})
+        result = conn.bulk(index=index_name, body=bulk_data)
 
-        if 'errors' in result and result['errors'] is True:
-            logger.error('Error in bulk indexing removal: %s', result)
+        if "errors" in result and result["errors"] is True:
+            logger.error(f"Error in bulk indexing removal: {result}")
 
     if len(index) > 0:
         if type(index) in (list, tuple, set):
@@ -57,51 +50,45 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
         bulk_data = []
 
         for uid, obj in index.items():
+            portal_type = obj.portal_type
             # If content has been moved (ie by a contentrule) then the object
             # passed here is the original object, not the moved one.
             # So if there is a uuid, we use this to get the correct object.
             # See https://github.com/collective/collective.elasticsearch/issues/65 # noqa
-            if uid is not None:
+            if uid is not None and portal_type != "Plone Site":
                 obj = uuidToObject(uid)
 
             if obj is None:
                 obj = uuidToObject(uid)
                 if obj is None:
                     continue
-            bulk_data.extend([{
-                'index': {
-                    '_index': es.index_name,
-                    '_id': uid
-                }
-            }, get_index_data(obj, es)])
+            bulk_data.extend(
+                [{"index": {"_index": index_name, "_id": uid}}, get_index_data(obj, es)]
+            )
             if len(bulk_data) % bulk_size == 0:
-                result = conn.bulk(
-                    index=es.index_name,
-                    body=bulk_data)
+                result = conn.bulk(index=index_name, body=bulk_data)
 
-                if 'errors' in result and result['errors'] is True:
-                    logger.error('Error in bulk indexing: %s', result)
+                if "errors" in result and result["errors"] is True:
+                    logger.error(f"Error in bulk indexing: {result}")
 
                 bulk_data = []
 
         if len(bulk_data) > 0:
-            result = conn.bulk(
-                index=es.index_name,
-                body=bulk_data)
+            result = conn.bulk(index=index_name, body=bulk_data)
 
-            if 'errors' in result and result['errors'] is True:
-                logger.error('Error in bulk indexing: %s', result)
+            if "errors" in result and result["errors"] is True:
+                logger.error(f"Error in bulk indexing: {result}")
 
     if len(positions) > 0:
         bulk_data = []
-        index = getIndex(es.catalogtool._catalog, 'getObjPositionInParent')
+        index = getIndex(es.catalogtool._catalog, "getObjPositionInParent")
         for uid, ids in positions.items():
-            if uid == '/':
+            if uid == "/":
                 parent = getSite()
             else:
                 parent = uuidToObject(uid)
             if parent is None:
-                logger.warning('could not find object to index positions')
+                logger.warning("could not find object to index positions")
                 continue
             for _id in ids:
                 ob = parent[_id]
@@ -110,26 +97,18 @@ def index_batch(remove, index, positions, es=None):  # noqa: C901
                     value = index.get_value(wrapped_object)
                 except Exception:  # NOQA W0703
                     continue
-                bulk_data.extend([{
-                    'update': {
-                        '_index': es.index_name,
-                        '_id': IUUID(ob)
-                    }
-                }, {
-                    'doc': {
-                        'getObjPositionInParent': value
-                    }
-                }])
+                bulk_data.extend(
+                    [
+                        {"update": {"_index": index_name, "_id": IUUID(ob)}},
+                        {"doc": {"getObjPositionInParent": value}},
+                    ]
+                )
                 if len(bulk_data) % bulk_size == 0:
-                    conn.bulk(
-                        index=es.index_name,
-                        body=bulk_data)
+                    conn.bulk(index=index_name, body=bulk_data)
                     bulk_data = []
 
         if len(bulk_data) > 0:
-            conn.bulk(
-                index=es.index_name,
-                body=bulk_data)
+            conn.bulk(index=index_name, body=bulk_data)
     conn.transport.close()
 
 
@@ -138,12 +117,8 @@ def get_wrapped_object(obj, es):
     if not IIndexableObject.providedBy(obj):
         # This is the CMF 2.2 compatible approach, which should be used
         # going forward
-        wrapper = queryMultiAdapter((obj, es.catalogtool),
-                                    IIndexableObject)
-        if wrapper is not None:
-            wrapped_object = wrapper
-        else:
-            wrapped_object = obj
+        wrapper = queryMultiAdapter((obj, es.catalogtool), IIndexableObject)
+        wrapped_object = wrapper if wrapper is not None else obj
     else:
         wrapped_object = obj
     return wrapped_object
@@ -160,23 +135,19 @@ def get_index_data(obj, es):  # noqa: C901
             try:
                 value = index.get_value(wrapped_object)
             except Exception:  # NOQA W0703
-                logger.error('Error indexing value: %s: %s\n%s',
-                             '/'.join(obj.getPhysicalPath()),
-                             index_name,
-                             traceback.format_exc())
+                path = "/".join(obj.getPhysicalPath())
+                exception = traceback.format_exc()
+                logger.error(f"Error indexing value: {path}: {index_name}\n{exception}")
                 value = None
-            if value in (None, 'None'):
+            if value in (None, "None"):
                 # yes, we'll index null data...
                 value = None
 
             # Ignore errors in converting to unicode, so json.dumps
             # does not barf when we're trying to send data to ES.
-            if six.PY2:
-                if isinstance(value, str):
-                    value = six.text_type(value, 'utf-8', 'ignore')
-            else:
-                if isinstance(value, bytes):
-                    value = value.decode('utf-8', 'ignore')
+            value = (
+                value.decode("utf-8", "ignore") if isinstance(value, bytes) else value
+            )
 
             index_data[index_name] = value
 
@@ -189,18 +160,16 @@ def get_index_data(obj, es):  # noqa: C901
         if indexer is not None:
             try:
                 val = indexer()
-                if six.PY2:
-                    if isinstance(value, str):
-                        value = six.text_type(value, 'utf-8', 'ignore')
-                else:
-                    if isinstance(value, bytes):
-                        value = value.decode('utf-8', 'ignore')
+                value = (
+                    value.decode("utf-8", "ignore")
+                    if isinstance(value, bytes)
+                    else value
+                )
                 index_data[name] = val
             except Exception:  # NOQA W0703
-                logger.error('Error indexing value: %s: %s\n%s',
-                             '/'.join(obj.getPhysicalPath()),
-                             name,
-                             traceback.format_exc())
+                path = "/".join(obj.getPhysicalPath())
+                exception = traceback.format_exc()
+                logger.error("Error indexing value: {path}: {name}\n{exception}")
         else:
             val = getattr(obj, name, None)
             if callable(val):
@@ -237,7 +206,6 @@ except ImportError:
 
 
 class CommitHook:
-
     def __init__(self, es):
         self.remove = set()
         self.index = {}
@@ -248,7 +216,8 @@ class CommitHook:
         index_batch_async.apply_async(
             args=[self.remove, self.index.keys(), self.positions],
             kwargs={},
-            without_transaction=True)
+            without_transaction=True,
+        )
 
     def __call__(self, trns):
         if not trns:
@@ -267,7 +236,8 @@ class CommitHook:
 def getHook(es=None):
     if es is None:
         from collective.elasticsearch.es import ElasticSearchCatalog
-        es = ElasticSearchCatalog(api.portal.get_tool('portal_catalog'))
+
+        es = ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
     if not es.enabled:
         return None
     trns = transaction.get()
@@ -286,7 +256,7 @@ def remove_object(es, obj):
     hook = getHook(es)
     uid = getUID(obj)
     if uid is None:
-        logger.error('Tried to unindex an object of None uid')
+        logger.error("Tried to unindex an object of None uid")
         return
 
     hook.remove.add(uid)
@@ -298,7 +268,7 @@ def add_object(es, obj):
     hook = getHook(es)
     uid = getUID(obj)
     if uid is None:
-        logger.error('Tried to index an object of None uid')
+        logger.error("Tried to index an object of None uid")
         return
 
     hook.index[uid] = obj
@@ -309,10 +279,10 @@ def add_object(es, obj):
 def index_positions(obj, ids):
     hook = getHook()
     if ISiteRoot.providedBy(obj):
-        hook.positions['/'] = ids
+        hook.positions["/"] = ids
     else:
         uid = getUID(obj)
         if uid is None:
-            logger.error('Tried to index an object of None uid')
+            logger.error("Tried to index an object of None uid")
             return
         hook.positions[getUID(obj)] = ids

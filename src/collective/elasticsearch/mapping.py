@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IMappingProvider
 from zope.interface import implementer
@@ -7,46 +6,26 @@ from zope.interface import implementer
 @implementer(IMappingProvider)
 class MappingAdapter:
     _default_mapping = {
-        'SearchableText': {
-            'store': False,
-            'type': 'text',
-            'index': True
-        },
-        'Title': {
-            'store': True,
-            'type': 'text',
-            'index': True
-        },
-        'Description': {
-            'store': True,
-            'type': 'text',
-            'index': True
-        },
-        'allowedRolesAndUsers': {
-            'store': True,
-            'type': 'keyword',
-            'index': True
-        },
-        'portal_type': {
-            'store': True,
-            'type': 'keyword',
-            'index': True
-        }
+        "SearchableText": {"store": False, "type": "text", "index": True},
+        "Title": {"store": True, "type": "text", "index": True},
+        "Description": {"store": True, "type": "text", "index": True},
+        "allowedRolesAndUsers": {"store": True, "type": "keyword", "index": True},
+        "portal_type": {"store": True, "type": "keyword", "index": True},
     }
 
     _search_attributes = [
-        'Title',
-        'Description',
-        'Subject',
-        'contentType',
-        'created',
-        'modified',
-        'effective',
-        'hasImage',
-        'is_folderish',
-        'portal_type',
-        'review_state',
-        'path.path'
+        "Title",
+        "Description",
+        "Subject",
+        "contentType",
+        "created",
+        "modified",
+        "effective",
+        "hasImage",
+        "is_folderish",
+        "portal_type",
+        "review_state",
+        "path.path",
     ]
 
     def __init__(self, request, es):
@@ -64,7 +43,7 @@ class MappingAdapter:
             if index is not None:
                 properties[name] = index.create_mapping(name)
             else:
-                raise Exception(f'Can not locate index for {name}')
+                raise Exception(f"Can not locate index for {name}")
 
         conn = self.es.connection
         index_name = self.es.index_name
@@ -76,16 +55,14 @@ class MappingAdapter:
             if not self.es.index_version:
                 # need to initialize version value
                 self.es.bump_index_version()
-            index_name_v = f'{index_name}_{self.es.index_version}'
+            index_name_v = f"{index_name}_{self.es.index_version}"
             if not conn.indices.exists(index_name_v):
-                conn.indices.create(
-                    index_name_v,
-                    body=self.get_index_creation_body())
+                conn.indices.create(index_name_v, body=self.get_index_creation_body())
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
 
         for key in properties:
             if key in self._search_attributes:
-                properties[key]['store'] = True
+                properties[key]["store"] = True
 
-        return {'properties': properties}
+        return {"properties": properties}

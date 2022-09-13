@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
 from Products.CMFPlone.interfaces import INonInstallable
 from zope.interface import implementer
 
 
 @implementer(INonInstallable)
 class HiddenProfiles:
-
     @staticmethod
     def getNonInstallableProfiles():  # NOQA C0103
         """Hide uninstall profile from site-creation and quickinstaller."""
         return [
-            'collective.elasticsearch:uninstall',
+            "collective.elasticsearch:uninstall",
         ]
 
 
