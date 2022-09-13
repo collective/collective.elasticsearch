@@ -1,0 +1,67 @@
+name: Code Analysis
+on:
+  push:
+
+jobs:
+  black:
+    name: Black
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Run check
+        uses: plone/code-analysis-action@v2
+        with:
+          check: 'black'
+
+  flake8:
+    name: flake8
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Run check
+        uses: plone/code-analysis-action@v2
+        with:
+          check: 'flake8'
+
+  isort:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Run check
+        uses: plone/code-analysis-action@v2
+        with:
+          check: 'isort'
+
+  pyroma:
+    name: pyroma
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Run check
+        uses: plone/code-analysis-action@v2
+        with:
+          check: 'pyroma'
+
+  zpretty:
+    name: zpretty
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Run check
+        uses: plone/code-analysis-action@v2
+        with:
+          check: 'zpretty'

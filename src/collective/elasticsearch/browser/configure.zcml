@@ -1,44 +1,46 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
-    xmlns:zcml="http://namespaces.zope.org/zcml"
     xmlns:browser="http://namespaces.zope.org/browser"
-    i18n_domain="collective.elasticsearch">
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    i18n_domain="collective.elasticsearch"
+    >
 
   <browser:page
-    name="elastic-controlpanel"
-    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
-    permission="cmf.ManagePortal"
-    class=".controlpanel.ElasticControlPanelView"
-    layer="..interfaces.IElasticSearchLayer"
-    />
-
-  <browser:page
-    name="elastic-convert"
-    for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
-    class=".utilviews.Utils"
-    attribute="convert"
-    permission="cmf.ManagePortal"
-    layer="..interfaces.IElasticSearchLayer"
-    />
-
-  <browser:page
-    name="elastic-rebuild"
-    for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
-    class=".utilviews.Utils"
-    attribute="rebuild"
-    permission="cmf.ManagePortal"
-    layer="..interfaces.IElasticSearchLayer"
-    />
-
-  <configure zcml:condition="have plone-5" package="Products.CMFPlone.browser">
-    <browser:page
-      name="search"
-      class="collective.elasticsearch.browser.search.Search"
-      permission="zope2.View"
-      for="plone.app.layout.navigation.interfaces.INavigationRoot"
-      template="templates/search.pt"
-      layer="collective.elasticsearch.interfaces.IElasticSearchLayer"
+      name="elastic-controlpanel"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      class=".controlpanel.ElasticControlPanelView"
+      permission="cmf.ManagePortal"
+      layer="..interfaces.IElasticSearchLayer"
       />
-  </configure>
+
+  <browser:page
+      name="elastic-convert"
+      for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
+      class=".utilviews.Utils"
+      attribute="convert"
+      permission="cmf.ManagePortal"
+      layer="..interfaces.IElasticSearchLayer"
+      />
+
+  <browser:page
+      name="elastic-rebuild"
+      for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
+      class=".utilviews.Utils"
+      attribute="rebuild"
+      permission="cmf.ManagePortal"
+      layer="..interfaces.IElasticSearchLayer"
+      />
+
+  <!--    <configure zcml:condition="have plone-5"
+               package="Products.CMFPlone.browser">
+        <browser:page
+            name="search"
+            class="collective.elasticsearch.browser.search.Search"
+            permission="zope2.View"
+            for="plone.app.layout.navigation.interfaces.INavigationRoot"
+            template="templates/search.pt"
+            layer="collective.elasticsearch.interfaces.IElasticSearchLayer"
+        />
+    </configure>-->
 
 </configure>
