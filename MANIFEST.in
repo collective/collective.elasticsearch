@@ -1,6 +1,6 @@
 graft src/collective
 graft docs
-include *.rst
+include *.md
 global-exclude *.pyc
 # added by check_manifest.py
 include *.GPL

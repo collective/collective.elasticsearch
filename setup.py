@@ -1,22 +1,21 @@
 """Installer for the collective.elasticsearch package."""
+from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 
 
-long_description = "\n\n".join(
-    [
-        open("README.rst").read(),
-        open("CONTRIBUTORS.rst").read(),
-        open("CHANGES.rst").read(),
-    ]
-)
+long_description = f"""
+{Path("README.md").read_text()}\n
+{Path("CHANGELOG.md").read_text()}\n
+"""
 
 
 setup(
     name="collective.elasticsearch",
-    version="4.0.1.dev0",
+    version="5.0.0.dev0",
     description="elasticsearch integration with plone",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     # Get more from https://pypi.org/classifiers/
     classifiers=[
         "Development Status :: 5 - Production/Stable",

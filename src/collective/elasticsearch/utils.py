@@ -16,7 +16,7 @@ def get_settings():
     registry = getUtility(IRegistry)
     try:
         settings = registry.forInterface(IElasticSettings, check=False)
-    except:
+    except Exception:  # noQA
         settings = None
     return settings
 
