@@ -1,24 +1,16 @@
 from collective.elasticsearch import hook
+from collective.elasticsearch import interfaces
 from collective.elasticsearch import logger
+from collective.elasticsearch import utils
 from collective.elasticsearch.brain import BrainFactory
-from collective.elasticsearch.interfaces import IElasticSearchCatalog
-from collective.elasticsearch.interfaces import IElasticSettings
-from collective.elasticsearch.interfaces import IMappingProvider
-from collective.elasticsearch.interfaces import IQueryAssembler
-from collective.elasticsearch.interfaces import IReindexActive
-from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch.exceptions import TransportError
+from elasticsearch import exceptions
 from plone import api
-from plone.registry.interfaces import IRegistry
 from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import _getAuthenticatedUser
-from zope.component import ComponentLookupError
 from zope.component import getMultiAdapter
-from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
 from zope.interface import implementer
@@ -38,7 +30,7 @@ class ElasticResult:
         assert "start" not in query_params
         self.es = es
         self.bulk_size = es.get_setting("bulk_size", 50)
-        qassembler = getMultiAdapter((getRequest(), es), IQueryAssembler)
+        qassembler = getMultiAdapter((getRequest(), es), interfaces.IQueryAssembler)
         dquery, self.sort = qassembler.normalize(query)
         self.query = qassembler(dquery)
 
@@ -98,7 +90,7 @@ class ElasticResult:
         return self.results[result_key][result_index]
 
 
-@implementer(IElasticSearchCatalog)
+@implementer(interfaces.IElasticSearchCatalog)
 class ElasticSearchCatalog:
     """
     from patched methods
@@ -107,16 +99,7 @@ class ElasticSearchCatalog:
     def __init__(self, catalogtool):
         self.catalogtool = catalogtool
         self.catalog = catalogtool._catalog
-
-        try:
-            registry = getUtility(IRegistry)
-            try:
-                self.registry = registry.forInterface(IElasticSettings, check=False)
-            except Exception:  # NOQA W0703
-                self.registry = None
-        except ComponentLookupError:
-            self.registry = None
-
+        self.registry = utils.get_settings()
         self._conn = None
 
     @property
@@ -216,7 +199,7 @@ class ElasticSearchCatalog:
         if self.registry.enabled:
             self.recreateCatalog()
 
-        alsoProvides(getRequest(), IReindexActive)
+        alsoProvides(getRequest(), interfaces.IReindexActive)
         return self.catalogtool._old_manage_catalogRebuild(*args, **kwargs)
 
     def manage_catalogClear(self, *args, **kwargs):
@@ -230,9 +213,9 @@ class ElasticSearchCatalog:
 
         try:
             conn.indices.delete(index=self.real_index_name)
-        except NotFoundError:
+        except exceptions.NotFoundError:
             pass
-        except TransportError as exc:
+        except exceptions.TransportError as exc:
             if exc.error != "illegal_argument_exception":
                 raise
             conn.indices.delete_alias(index="_all", name=self.real_index_name)
@@ -240,7 +223,7 @@ class ElasticSearchCatalog:
         if self.index_version:
             try:
                 conn.indices.delete_alias(self.index_name, self.real_index_name)
-            except NotFoundError:
+            except exceptions.NotFoundError:
                 pass
         self.convertToElastic()
 
@@ -249,7 +232,7 @@ class ElasticSearchCatalog:
         if self.enabled:
             # need to also check if it is a search result we care about
             # using EL for
-            if getESOnlyIndexes().intersection(kw.keys()):
+            if utils.getESOnlyIndexes().intersection(kw.keys()):
                 enabled = True
         if not enabled:
             if check_perms:
@@ -277,18 +260,18 @@ class ElasticSearchCatalog:
             ):
                 query["effectiveRange"] = DateTime()
         orig_query = query.copy()
-        logger.debug("Running query: %s", repr(orig_query))
+        logger.debug(f"Running query: {orig_query}")
         try:
             results = self.search(query)
             return results
         except Exception:  # NOQA W0703
-            logger.error("Error running Query: {%r}", orig_query, exc_info=True)
+            logger.error(f"Error running Query: {orig_query}", exc_info=True)
             return self.catalogtool._old_searchResults(REQUEST, **kw)
 
     def convertToElastic(self):
         setattr(self.catalogtool, CONVERTED_ATTR, True)
         self.catalogtool._p_changed = True
-        adapter = getMultiAdapter((getRequest(), self), IMappingProvider)
+        adapter = getMultiAdapter((getRequest(), self), interfaces.IMappingProvider)
         mapping = adapter()
         self.connection.indices.put_mapping(body=mapping, index=self.index_name)
 

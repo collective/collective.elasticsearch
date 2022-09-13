@@ -1,3 +1,4 @@
+from collective.elasticsearch import logger
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.utils import getESOnlyIndexes
@@ -13,15 +14,11 @@ from zope.component import queryMultiAdapter
 from zope.component.hooks import getSite
 from zope.component.hooks import setSite
 
-import logging
 import random
 import time
 import traceback
 import transaction
 import urllib3
-
-
-logger = logging.getLogger("collective.elasticsearch")
 
 
 def index_batch(remove, index, positions, es=None):  # noqa: C901

@@ -11,10 +11,10 @@ def BrainFactory(catalog):
             try:
                 return catalog[rid]
             except TypeError:
-                logger.error("Got not integer key for result: {%s}", result)
+                logger.error(f"Got not integer key for result: {result}")
                 return None
             except KeyError:
-                logger.error("Couldn't get catalog entry for result: {%s}", result)
+                logger.error(f"Couldn't get catalog entry for result: {result}")
                 return None
         return None
 

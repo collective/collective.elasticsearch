@@ -18,13 +18,19 @@ def getUID(obj):
     return value
 
 
-def getESOnlyIndexes():
+def get_settings():
+    """Return IElasticSettings values."""
+    registry = getUtility(IRegistry)
     try:
-        return (
-            getUtility(IRegistry)
-            .forInterface(IElasticSettings, check=False)
-            .es_only_indexes
-            or set()
-        )
+        settings = registry.forInterface(IElasticSettings, check=False)
+    except:
+        settings = None
+    return settings
+
+
+def getESOnlyIndexes():
+    settings = get_settings()
+    try:
+        return settings.es_only_indexes or set()
     except (KeyError, AttributeError):
         return {"Title", "Description", "SearchableText"}
