@@ -157,11 +157,7 @@ def get_index_data(obj, es):  # noqa: C901
         if indexer is not None:
             try:
                 val = indexer()
-                value = (
-                    value.decode("utf-8", "ignore")
-                    if isinstance(value, bytes)
-                    else value
-                )
+                val = val.decode("utf-8", "ignore") if isinstance(val, bytes) else val
                 index_data[name] = val
             except Exception:  # NOQA W0703
                 path = "/".join(obj.getPhysicalPath())
