@@ -5,6 +5,8 @@
     i18n_domain="collective.elasticsearch"
     >
 
+  <include package="plone.app.layout" />
+
   <browser:page
       name="elastic-controlpanel"
       for="Products.CMFPlone.interfaces.IPloneSiteRoot"
@@ -30,17 +32,5 @@
       permission="cmf.ManagePortal"
       layer="..interfaces.IElasticSearchLayer"
       />
-
-  <!--    <configure zcml:condition="have plone-5"
-               package="Products.CMFPlone.browser">
-        <browser:page
-            name="search"
-            class="collective.elasticsearch.browser.search.Search"
-            permission="zope2.View"
-            for="plone.app.layout.navigation.interfaces.INavigationRoot"
-            template="templates/search.pt"
-            layer="collective.elasticsearch.interfaces.IElasticSearchLayer"
-        />
-    </configure>-->
 
 </configure>

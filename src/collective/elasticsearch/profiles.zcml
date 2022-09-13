@@ -1,0 +1,46 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="collective.elasticsearch"
+    >
+
+  <genericsetup:registerProfile
+      name="default"
+      title="Elastic Search"
+      description="Installs the Elastic Search plone integration package"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/default"
+      post_handler=".setuphandlers.post_install"
+      />
+
+  <genericsetup:registerProfile
+      name="uninstall"
+      title="Elastic Search (uninstall)"
+      description="Uninstalls package Elastic Search."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/uninstall"
+      post_handler=".setuphandlers.uninstall"
+      />
+
+  <genericsetup:upgradeSteps
+      profile="collective.elasticsearch:default"
+      source="*"
+      destination="1"
+      >
+  </genericsetup:upgradeSteps>
+
+  <genericsetup:upgradeSteps
+      profile="collective.elasticsearch:default"
+      source="1"
+      destination="2"
+      >
+
+    <genericsetup:upgradeStep
+        title="Update registry."
+        description=""
+        handler=".upgrades.update_registry"
+        />
+
+  </genericsetup:upgradeSteps>
+
+</configure>
