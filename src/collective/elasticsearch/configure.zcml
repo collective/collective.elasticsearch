@@ -9,6 +9,7 @@
   <include package="plone.app.registry" />
 
   <include package=".browser" />
+  <include package=".patches" />
 
   <adapter
       factory=".mapping.MappingAdapter"
@@ -24,6 +25,5 @@
       />
 
   <include file="profiles.zcml" />
-  <include file="patches.zcml" />
 
 </configure>

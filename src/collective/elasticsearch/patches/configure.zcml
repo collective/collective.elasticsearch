@@ -7,49 +7,49 @@
   <!-- CMFPlone CatalogTool patches -->
   <monkey:patch
       original="searchResults"
-      replacement=".patches.safeSearchResults"
+      replacement=".safeSearchResults"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="searchResults"
       preserveOriginal="True"
       />
   <monkey:patch
       original="__call__"
-      replacement=".patches.safeSearchResults"
+      replacement=".safeSearchResults"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="searchResults"
       preserveOriginal="True"
       />
   <monkey:patch
       original="catalog_object"
-      replacement=".patches.catalog_object"
+      replacement=".catalog_object"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="catalog_object"
       preserveOriginal="True"
       />
   <monkey:patch
       original="uncatalog_object"
-      replacement=".patches.uncatalog_object"
+      replacement=".uncatalog_object"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="uncatalog_object"
       preserveOriginal="True"
       />
   <monkey:patch
       original="unrestrictedSearchResults"
-      replacement=".patches.unrestrictedSearchResults"
+      replacement=".unrestrictedSearchResults"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="unrestrictedSearchResults"
       preserveOriginal="True"
       />
   <monkey:patch
       original="manage_catalogRebuild"
-      replacement=".patches.manage_catalogRebuild"
+      replacement=".manage_catalogRebuild"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="manage_catalogRebuild"
       preserveOriginal="True"
       />
   <monkey:patch
       original="manage_catalogClear"
-      replacement=".patches.manage_catalogClear"
+      replacement=".manage_catalogClear"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="manage_catalogClear"
       preserveOriginal="True"
@@ -58,7 +58,7 @@
   <!-- CMFCore CatalogTool patches -->
   <monkey:patch
       original="_unindexObject"
-      replacement=".patches._unindexObject"
+      replacement="._unindexObject"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="_unindexObject"
       preserveOriginal="True"
@@ -66,7 +66,7 @@
 
   <monkey:patch
       original="moveObjectsByDelta"
-      replacement=".patches.PloneSite_moveObjectsByDelta"
+      replacement=".PloneSite_moveObjectsByDelta"
       class="Products.CMFPlone.Portal.PloneSite"
       description="moveObjectsByDelta"
       preserveOriginal="True"
@@ -74,7 +74,7 @@
 
   <monkey:patch
       original="moveObjectsByDelta"
-      replacement=".patches.moveObjectsByDelta"
+      replacement=".moveObjectsByDelta"
       class="plone.folder.default.DefaultOrdering"
       description="moveObjectsByDelta"
       preserveOriginal="True"
