@@ -1,4 +1,5 @@
 from collective.elasticsearch import logger
+from collective.elasticsearch import utils
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.utils import getESOnlyIndexes
@@ -9,6 +10,7 @@ from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import ISiteRoot
+from typing import List
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
 from zope.component.hooks import getSite
@@ -21,92 +23,116 @@ import transaction
 import urllib3
 
 
-def index_batch(remove, index, positions, es=None):  # noqa: C901
-    if es is None:
-        from collective.elasticsearch.es import ElasticSearchCatalog
+def get_es_catalog():
+    from collective.elasticsearch.es import ElasticSearchCatalog
 
-        es = ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
+    return ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
 
-    setSite(api.portal.get())
-    conn = es.connection
-    index_name = es.index_name
-    bulk_size = es.get_setting("bulk_size", 50)
-    if len(remove) > 0:
-        bulk_data = []
-        for uid in remove:
-            bulk_data.append({"delete": {"_index": index_name, "_id": uid}})
-        result = conn.bulk(index=index_name, body=bulk_data)
 
-        if "errors" in result and result["errors"] is True:
-            logger.error(f"Error in bulk indexing removal: {result}")
+def _bulk_call(conn, index_name, raw_data):
+    """Bulk action on Elastic Search."""
+    data = []
+    for item in raw_data:
+        data.extend(item)
+    logger.debug(f"Bulk call with {len(raw_data)} entries and {len(data)} actions.")
+    result = conn.bulk(index=index_name, body=data)
+    if "errors" in result and result["errors"] is True:
+        logger.error(f"Error in bulk operation: {result}")
 
-    if len(index) > 0:
-        if type(index) in (list, tuple, set):
-            # does not contain objects, must be async, convert to dict
-            index = {k: None for k in index}
-        bulk_data = []
 
-        for uid, obj in index.items():
-            portal_type = obj.portal_type
+def _remove_payload(index_name: str, es, to_remove: List) -> List[List[dict]]:
+    """Payload for remove calls."""
+    data = []
+    for uid in to_remove:
+        data.append[{"delete": {"_index": index_name, "_id": uid}}]
+    return data
+
+
+def _index_payload(index_name: str, es, to_index: dict) -> List[List[dict]]:
+    """Payload for indexing calls."""
+    data = []
+    for uid, obj in to_index.items():
+        portal_type = obj.portal_type if obj else None
+        if portal_type != "Plone Site":
             # If content has been moved (ie by a contentrule) then the object
             # passed here is the original object, not the moved one.
             # So if there is a uuid, we use this to get the correct object.
             # See https://github.com/collective/collective.elasticsearch/issues/65 # noqa
-            if uid is not None and portal_type != "Plone Site":
+            if uid or obj is None:
                 obj = uuidToObject(uid)
 
             if obj is None:
-                obj = uuidToObject(uid)
-                if obj is None:
-                    continue
-            bulk_data.extend(
-                [{"index": {"_index": index_name, "_id": uid}}, get_index_data(obj, es)]
-            )
-            if len(bulk_data) % bulk_size == 0:
-                result = conn.bulk(index=index_name, body=bulk_data)
-
-                if "errors" in result and result["errors"] is True:
-                    logger.error(f"Error in bulk indexing: {result}")
-
-                bulk_data = []
-
-        if len(bulk_data) > 0:
-            result = conn.bulk(index=index_name, body=bulk_data)
-
-            if "errors" in result and result["errors"] is True:
-                logger.error(f"Error in bulk indexing: {result}")
-
-    if len(positions) > 0:
-        bulk_data = []
-        index = getIndex(es.catalogtool._catalog, "getObjPositionInParent")
-        for uid, ids in positions.items():
-            if uid == "/":
-                parent = getSite()
-            else:
-                parent = uuidToObject(uid)
-            if parent is None:
-                logger.warning("could not find object to index positions")
                 continue
-            for _id in ids:
-                ob = parent[_id]
-                wrapped_object = get_wrapped_object(ob, es)
-                try:
-                    value = index.get_value(wrapped_object)
-                except Exception:  # NOQA W0703
-                    continue
-                bulk_data.extend(
-                    [
-                        {"update": {"_index": index_name, "_id": IUUID(ob)}},
-                        {"doc": {"getObjPositionInParent": value}},
-                    ]
-                )
-                if len(bulk_data) % bulk_size == 0:
-                    conn.bulk(index=index_name, body=bulk_data)
-                    bulk_data = []
+        data.append(
+            [
+                {"index": {"_index": index_name, "_id": uid}},
+                get_index_data(obj, es),
+            ]
+        )
+    return data
 
-        if len(bulk_data) > 0:
-            conn.bulk(index=index_name, body=bulk_data)
+
+def _position_payload(index_name: str, es, to_up_position: dict) -> List[List[dict]]:
+    """Payload for position calls."""
+    data = []
+    if not to_up_position:
+        return data
+    index = getIndex(es.catalogtool._catalog, "getObjPositionInParent")
+    site = getSite()
+    for uid, ids in to_up_position.items():
+        parent = site if uid == "/" else uuidToObject(uid)
+        if parent is None:
+            logger.warning("could not find object to index positions")
+            continue
+        for _id in ids:
+            ob = parent[_id]
+            wrapped_object = get_wrapped_object(ob, es)
+            try:
+                value = index.get_value(wrapped_object)
+            except Exception:  # NOQA W0703
+                continue
+            data.append(
+                [
+                    {"update": {"_index": index_name, "_id": IUUID(ob)}},
+                    {"doc": {"getObjPositionInParent": value}},
+                ],
+            )
+    return data
+
+
+def index_batch(remove, index, positions, es=None):  # noqa: C901
+    calls = 0
+    setSite(api.portal.get())
+    es = get_es_catalog() if es is None else es
+    conn = es.connection
+    index_name = es.index_name
+    bulk_size = es.get_setting("bulk_size", 50)
+    bulk_data = []
+
+    to_remove = remove if remove else []
+    to_up_positions = positions if positions else {}
+    to_index = index if index else {}
+    if type(to_index) in (list, tuple, set):
+        # does not contain objects, must be async, convert to dict
+        to_index = {k: None for k in to_index}
+
+    process = [
+        (_remove_payload, to_remove),
+        (_position_payload, to_up_positions),
+        (_index_payload, to_index),
+    ]
+    for func, data in process:
+        raw_data = func(index_name, es, data)
+        if raw_data:
+            bulk_data.extend(raw_data)
+
+    # Run calls
+    for batch in utils.batches(bulk_data, bulk_size):
+        _bulk_call(conn, index_name, batch)
+        calls += 1
+
     conn.transport.close()
+    return calls
 
 
 def get_wrapped_object(obj, es):
@@ -212,6 +238,16 @@ class CommitHook:
             without_transaction=True,
         )
 
+    def index_batch(self):
+        to_remove = len(self.remove)
+        to_index = len(self.index)
+        to_positions = len(self.positions)
+        logger.debug(
+            f"Started batch calls: {to_remove} remove, {to_index} index, {to_positions} positions"  # noQA
+        )
+        total_calls = index_batch(self.remove, self.index, self.positions, self.es)
+        logger.debug(f"Completed {total_calls}batch calls")
+
     def __call__(self, trns):
         if not trns:
             return
@@ -219,18 +255,16 @@ class CommitHook:
         if CELERY_INSTALLED:
             self.schedule_celery()
         else:
-            index_batch(self.remove, self.index, self.positions, self.es)
+            self.index_batch()
 
+        # Cleanup
         self.index = {}
         self.remove = []
         self.positions = {}
 
 
 def getHook(es=None):
-    if es is None:
-        from collective.elasticsearch.es import ElasticSearchCatalog
-
-        es = ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
+    es = get_es_catalog() if es is None else es
     if not es.enabled:
         return None
     trns = transaction.get()

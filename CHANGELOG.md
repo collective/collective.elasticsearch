@@ -10,6 +10,8 @@
 
 - Drop support to Python 2.7 @ericof, @andreclimaco
 
+- Refactor hook.index_batch to reduce the number of calls do Elastic Search @ericof
+
 
 ## 4.0.0 (2021-04-28)
 
