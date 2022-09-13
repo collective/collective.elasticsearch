@@ -25,4 +25,4 @@ pylint = ["+*"]
 [tool.plone-code-analysis]
 checkers = ["black", "flake8", "isort", "pyroma", "zpretty"]
 formatters = ["black", "isort", "zpretty"]
-paths = "setup.py src/"
+paths = "setup.py src/ scripts/"

@@ -149,3 +149,7 @@ test: ## run tests
 .PHONY: start
 start: ## Start a Plone instance on localhost:8080
 	PYTHONWARNINGS=ignore ./bin/runwsgi etc/zope.ini
+
+.PHONY: populate
+populate: ## Populate site with wikipedia content
+	PYTHONWARNINGS=ignore ./bin/zconsole run etc/zope.conf scripts/populate.py
