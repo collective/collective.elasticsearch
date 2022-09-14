@@ -31,9 +31,7 @@ def get_es_catalog():
 
 def _bulk_call(conn, index_name, raw_data):
     """Bulk action on Elastic Search."""
-    data = []
-    for item in raw_data:
-        data.extend(item)
+    data = [item for sublist in raw_data for item in sublist]
     logger.debug(f"Bulk call with {len(raw_data)} entries and {len(data)} actions.")
     result = conn.bulk(index=index_name, body=data)
     if "errors" in result and result["errors"] is True:
