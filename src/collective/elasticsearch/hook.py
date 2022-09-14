@@ -40,9 +40,7 @@ def _bulk_call(conn, index_name, raw_data):
 
 def _remove_payload(index_name: str, es, to_remove: List) -> List[List[dict]]:
     """Payload for remove calls."""
-    data = []
-    for uid in to_remove:
-        data.append[{"delete": {"_index": index_name, "_id": uid}}]
+    data = [{"delete": {"_index": index_name, "_id": uid}} for uid in to_remove]
     return data
 
 
