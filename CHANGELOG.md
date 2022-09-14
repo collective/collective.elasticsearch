@@ -2,6 +2,8 @@
 
 ## 5.0.0 (unreleased)
 
+- Refactor hook.index_batch to reduce the number of calls do Elastic Search @ericof
+
 - Implement plone/code-analysis-action @ericof
 
 - Add support to Plone 6.0 @ericof
@@ -9,7 +11,6 @@
 - Drop support to Plone versions 4.3, 5.0 and 5.1 @ericof, @andreclimaco
 
 - Drop support to Python 2.7 @ericof, @andreclimaco
-
 
 ## 4.0.0 (2021-04-28)
 

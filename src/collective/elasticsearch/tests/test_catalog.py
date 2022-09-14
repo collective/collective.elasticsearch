@@ -14,7 +14,7 @@ EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 DOCUMENT_KLASS = "plone.app.contenttypes.interfaces.IDocument"
 
 
-class TestQueries(BaseFunctionalTest):
+class TestCatalog(BaseFunctionalTest):
     def remove_portal(self, value):
         portal_uid = getUID(api.portal.get())
         if portal_uid in value:
@@ -59,6 +59,20 @@ class TestQueries(BaseFunctionalTest):
         to_remove = self.get_hook().remove
         self.assertEqual(to_index, {})
         self.assertEqual(to_remove, {obj_uid})
+
+    def test_change_position(self):
+        folder = api.content.create(container=self.portal, type="Folder", id="folder")
+        folder_uid = getUID(folder)
+
+        for idx in range(1, 5):
+            obj = api.content.create(
+                container=folder, type="Document", id=f"document-{idx}"
+            )
+        # Move object to top
+        folder.moveObjectsToTop(obj.id)
+        processQueue()
+        to_up_position = self.get_hook().positions
+        self.assertIn(folder_uid, to_up_position)
 
     def test_moved_content(self):
         """content moved by content rules should remove the original catalog
