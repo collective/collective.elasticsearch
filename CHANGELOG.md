@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.0 (unreleased)
+## 5.0.0a1 (2022-09-14)
 
 - Refactor hook.index_batch to reduce the number of calls do Elastic Search @ericof
 
