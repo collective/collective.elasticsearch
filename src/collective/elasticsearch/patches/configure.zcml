@@ -42,7 +42,7 @@
       preserveOriginal="True"
       />
 
-  <!-- CMFCore CatalogTool patches -->
+  <!-- Reordering support -->
   <configure zcml:condition="not-have plone-60">
     <monkey:patch
         original="moveObjectsByDelta"

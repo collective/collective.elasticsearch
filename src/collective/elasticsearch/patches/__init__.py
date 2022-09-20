@@ -2,6 +2,7 @@ from collective.elasticsearch import interfaces
 from collective.elasticsearch.manager import ElasticSearchManager
 from plone.folder.interfaces import IOrdering
 from Products.CMFCore.indexing import processQueue
+from Products.CMFCore.interfaces import IContentish
 from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -65,5 +66,9 @@ def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False)
         diff = [oid for oid, idx in after.items() if idx != before[oid]]
         context = self.context if ordered else self
         for oid in diff:
-            context[oid].reindexObject(idxs=["getObjPositionInParent"])
+            obj = context[oid]
+            # We only reindex content objects
+            if not IContentish.providedBy(obj):
+                continue
+            obj.reindexObject(idxs=["getObjPositionInParent"])
     return res
