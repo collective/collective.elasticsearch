@@ -14,6 +14,8 @@
 
 - Reindex operations update on the catalog send only updated index to ElasticSearch @ericof
 
+- Remove collective.celery support (as it is not Python-3 compatible yet) @ericof
+
 ## 5.0.0a1 (2022-09-14)
 
 - Refactor hook.index_batch to reduce the number of calls do Elastic Search @ericof
