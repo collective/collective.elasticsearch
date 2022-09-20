@@ -1,71 +1,69 @@
-from collective.elasticsearch import hook
-from collective.elasticsearch.es import ElasticSearchCatalog
-from plone import api
-
-
-def catalog_object(self, obj, uid=None, idxs=None, update_metadata=1, pghandler=None):
-    if idxs is None:
-        idxs = []
-    es = ElasticSearchCatalog(self)
-    return es.catalog_object(obj, uid, idxs, update_metadata, pghandler)
-
-
-def uncatalog_object(self, uid, obj=None, *args, **kwargs):  # NOQA W1113
-    es = ElasticSearchCatalog(self)
-    return es.uncatalog_object(uid, obj, *args, **kwargs)
+from collective.elasticsearch import interfaces
+from collective.elasticsearch.manager import ElasticSearchManager
+from plone.folder.interfaces import IOrdering
+from Products.CMFCore.indexing import processQueue
+from zope.globalrequest import getRequest
+from zope.interface import alsoProvides
+from zope.interface import noLongerProvides
 
 
 def unrestrictedSearchResults(self, REQUEST=None, **kw):
-    es = ElasticSearchCatalog(self)
-    return es.searchResults(REQUEST, check_perms=False, **kw)
+    manager = ElasticSearchManager()
+    return manager.search_results(REQUEST, check_perms=False, **kw)
 
 
 def safeSearchResults(self, REQUEST=None, **kw):
-    es = ElasticSearchCatalog(self)
-    return es.searchResults(REQUEST, check_perms=True, **kw)
+    manager = ElasticSearchManager()
+    return manager.search_results(REQUEST, check_perms=True, **kw)
 
 
 def manage_catalogRebuild(self, *args, **kwargs):  # NOQA W0613
     """need to be publishable"""
-    es = ElasticSearchCatalog(self)
-    return es.manage_catalogRebuild(**kwargs)
+    manager = ElasticSearchManager()
+    if manager.enabled:
+        manager._recreate_catalog()
+
+    alsoProvides(getRequest(), interfaces.IReindexActive)
+    result = self._old_manage_catalogRebuild(*args, **kwargs)
+    processQueue()
+    manager.flush_indices()
+    noLongerProvides(getRequest(), interfaces.IReindexActive)
+    return result
 
 
 def manage_catalogClear(self, *args, **kwargs):
     """need to be publishable"""
-    es = ElasticSearchCatalog(self)
-    return es.manage_catalogClear(*args, **kwargs)
+    manager = ElasticSearchManager()
+    if not manager.active:
+        manager._recreate_catalog()
+    return self._old_manage_catalogClear(*args, **kwargs)
 
 
-def _unindexObject(self, ob):
-    # same reason as the patch above, we need the actual object passed along
-    # this handle dexterity types
-    path = "/".join(ob.getPhysicalPath())
-    return self.uncatalog_object(path, obj=ob)
+def get_ordered_ids(context) -> dict:
+    """Return all object ids in a context, ordered."""
+    if IOrdering.providedBy(context):
+        return {oid: idx for idx, oid in enumerate(context.idsInOrder())}
+    else:
+        # For Plone 5.2, we care only about Dexterity content
+        objects = [
+            obj
+            for obj in list(context._objects)
+            if obj.get("meta_type").startswith("Dexterity")
+        ]
+        return {oid: idx for idx, oid in enumerate(context.getIdsSubset(objects))}
 
 
 def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False):
+    manager = ElasticSearchManager()
+    ordered = self if IOrdering.providedBy(self) else None
+    before = get_ordered_ids(self)
     res = self._old_moveObjectsByDelta(
         ids, delta, subset_ids=subset_ids, suppress_events=suppress_events
     )
-    es = ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
-    if es.enabled:
-        if subset_ids is None:
-            subset_ids = self.idsInOrder()
-        hook.index_positions(self.context, subset_ids)
-    return res
-
-
-def PloneSite_moveObjectsByDelta(
-    self, ids, delta, subset_ids=None, suppress_events=False
-):
-    res = self._old_moveObjectsByDelta(
-        ids, delta, subset_ids=subset_ids, suppress_events=suppress_events
-    )
-    es = ElasticSearchCatalog(api.portal.get_tool("portal_catalog"))
-    if es.enabled:
-        if subset_ids is None:
-            objects = list(self._objects)
-            subset_ids = self.getIdsSubset(objects)
-        hook.index_positions(self, subset_ids)
+    if manager.active:
+        after = get_ordered_ids(self)
+        diff = [oid for oid, idx in after.items() if idx != before[oid]]
+        context = self.context if ordered else self
+        for oid in diff:
+            context[oid].reindexObject(idxs=["getObjPositionInParent"])
     return res

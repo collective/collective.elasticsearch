@@ -10,20 +10,24 @@
 
   <include package=".browser" />
   <include package=".patches" />
+  <include file="profiles.zcml" />
 
   <adapter
       factory=".mapping.MappingAdapter"
       provides=".interfaces.IMappingProvider"
       for="zope.interface.Interface
-           .interfaces.IElasticSearchCatalog"
+           .interfaces.IElasticSearchManager"
       />
   <adapter
       factory=".query.QueryAssembler"
       provides=".interfaces.IQueryAssembler"
       for="zope.interface.Interface
-           .interfaces.IElasticSearchCatalog"
+           .interfaces.IElasticSearchManager"
       />
 
-  <include file="profiles.zcml" />
+  <utility
+      factory=".queueprocessor.IndexProcessor"
+      name="elasticsearch"
+      />
 
 </configure>

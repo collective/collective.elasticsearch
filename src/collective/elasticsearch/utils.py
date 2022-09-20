@@ -22,10 +22,22 @@ def get_settings():
     return settings
 
 
+def get_connection_settings():
+    settings = get_settings()
+    return settings.hosts, {
+        "retry_on_timeout": settings.retry_on_timeout,
+        "sniff_on_connection_fail": settings.sniff_on_connection_fail,
+        "sniff_on_start": settings.sniff_on_start,
+        "sniffer_timeout": settings.sniffer_timeout,
+        "timeout": settings.timeout,
+    }
+
+
 def getESOnlyIndexes():
     settings = get_settings()
     try:
-        return settings.es_only_indexes or set()
+        indexes = settings.es_only_indexes
+        return set(indexes) if indexes else set()
     except (KeyError, AttributeError):
         return {"Title", "Description", "SearchableText"}
 

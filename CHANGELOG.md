@@ -2,8 +2,17 @@
 
 ## 5.0.0a2 (unreleased)
 
-- Nothing changed yet.
+- Implement IIndexQueueProcessor support @ericof
 
+- Refactor ElasticSearchCatalog methods into ElasticSearchManager object @ericof
+
+- Breaking: Remove collective.elasticsearch.es @ericof
+
+- Breaking: Remove collective.elasticsearch.hooks @ericof
+
+- Refactor moveObjectsByDelta to reduce the number of calls to ElasticSearch @ericof
+
+- Reindex operations update on the catalog send only updated index to ElasticSearch @ericof
 
 ## 5.0.0a1 (2022-09-14)
 

@@ -291,15 +291,15 @@ class EExtendedPathIndex(BaseIndex):
             filters = []
             if depth == 0:
                 andfilters.append(
-                    {"bool": {"filter": {"term": {name + ".path": path}}}}
+                    {"bool": {"filter": {"term": {f"{name}.path": path}}}}
                 )
                 continue
             filters = [
-                {"prefix": {name + ".path": path}},
-                {"range": {name + ".depth": {gtcompare: start}}},
+                {"prefix": {f"{name}.path": path}},
+                {"range": {f"{name}.depth": {gtcompare: start}}},
             ]
             if depth != -1:
-                filters.append({"range": {name + ".depth": {"lte": end}}})
+                filters.append({"range": {f"{name}.depth": {"lte": end}}})
             andfilters.append({"bool": {"must": filters}})
         if len(andfilters) > 1:
             return {"bool": {"should": andfilters}}
@@ -376,6 +376,7 @@ except ImportError:
 
 
 def getIndex(catalog, name):
+    catalog = getattr(catalog, "_catalog", catalog)
     try:
         index = aq_base(catalog.getIndex(name))
     except KeyError:
