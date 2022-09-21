@@ -8,6 +8,7 @@ from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
 from plone import api
+from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.CatalogTool import CatalogTool
@@ -164,6 +165,8 @@ class ElasticSearchManager:
         return LazyMap(factory, result, result.count)
 
     def search_results(self, request=None, check_perms=False, **kw):
+        # Make sure any pending index tasks have been processed
+        processQueue()
         if not (self.active and utils.getESOnlyIndexes().intersection(kw.keys())):
             method = (
                 self.catalog._old_searchResults
