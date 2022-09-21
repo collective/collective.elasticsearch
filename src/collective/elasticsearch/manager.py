@@ -138,6 +138,13 @@ class ElasticSearchManager:
             self._bulk_call(batch)
             calls += 1
 
+    def get_record_by_path(self, path: str) -> dict:
+        body = {"query": {"match": {"path.path": path}}}
+        results = self.connection.search(index=self.index_name, body=body)
+        hits = results.get("hits", {}).get("hits", [])
+        record = hits[0]["_source"] if hits else {}
+        return record
+
     def _search(self, query, sort=None, **query_params):
         """ """
         if "start" in query_params:
@@ -160,7 +167,7 @@ class ElasticSearchManager:
         @param query_params: Parameters to pass to the search method
             'stored_fields': the list of fields to get from stored source
         """
-        factory = BrainFactory(self.catalog._catalog)
+        factory = BrainFactory(self)
         result = ElasticResult(self, query, **query_params)
         return LazyMap(factory, result, result.count)
 

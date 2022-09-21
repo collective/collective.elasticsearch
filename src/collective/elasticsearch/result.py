@@ -1,24 +1,72 @@
 from collective.elasticsearch import interfaces
 from collective.elasticsearch import logger
+from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
+from Products.ZCatalog.interfaces import ICatalogBrain
+from typing import TypeAlias
+from typing import Union
 from zope.component import getMultiAdapter
 from zope.globalrequest import getRequest
+from zope.interface import implementer
 
 
-def BrainFactory(catalog):
-    def factory(result):
+@implementer(ICatalogBrain)
+class ElasticSearchBrain:
+    """A Brain containing only information indexed in ElasticSearch."""
+
+    def __init__(self, record: dict):
+        self._record = record
+
+    def has_key(self, key):
+        return key in self._record
+
+    def __contains__(self, name):
+        return name in self._record
+
+    def __getattr__(self, name):
+        if not self.__contains__(name):
+            raise AttributeError(
+                f"'ElasticSearchBrain' object has no attribute '{name}'"
+            )
+        return self._record[name]
+
+    def getPath(self):
+        """Get the physical path for this record"""
+        return self._record["path"]["path"]
+
+    def getURL(self, relative=0):
+        """Generate a URL for this record"""
+        request = getRequest()
+        return request.physicalPathToURL(self.getPath(), relative)
+
+    def getObject(self, REQUEST=None):
+        return None
+
+    def getRID(self) -> int:
+        """Return the record ID for this object."""
+        return -1
+
+
+Brain: TypeAlias = Union[AbstractCatalogBrain, ElasticSearchBrain]
+
+
+def BrainFactory(manager):
+    def factory(result: dict) -> Brain:
+        catalog = manager.catalog._catalog
         path = result.get("fields", {}).get("path.path", None)
         if type(path) in (list, tuple, set) and len(path) > 0:
             path = path[0]
         if path:
             rid = catalog.uids.get(path)
-            try:
-                return catalog[rid]
-            except TypeError:
-                logger.error(f"Got not integer key for result: {result}")
-                return None
-            except KeyError:
-                logger.error(f"Couldn't get catalog entry for result: {result}")
-                return None
+            if isinstance(rid, int):
+                try:
+                    return catalog[rid]
+                except KeyError:
+                    logger.error(f"Couldn't get catalog entry for path: {path}")
+            else:
+                logger.error(f"Got not integer key for path: {path}")
+            result = manager.get_record_by_path(path)
+            return ElasticSearchBrain(record=result)
+        # We should handle cases where there is no path in the ES response
         return None
 
     return factory

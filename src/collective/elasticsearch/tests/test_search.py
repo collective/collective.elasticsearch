@@ -2,6 +2,7 @@ from collective.elasticsearch.tests import BaseFunctionalTest
 from DateTime import DateTime
 from parameterized import parameterized
 from plone import api
+from Products.ZCatalog.interfaces import ICatalogBrain
 
 
 EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
@@ -239,3 +240,30 @@ class TestBrainsIndexing(BaseFunctionalTest):
     )
     def test_ordering(self, result_idx, expected):
         self.assertEqual(self.el_results[result_idx].getId, expected)
+
+
+class TestRecordDeleted(BaseFunctionalTest):
+    def setUp(self):
+        super().setUp()
+        catalog = self.catalog._catalog
+        event = api.content.create(
+            self.portal, "Event", "event-test", title="Gone Event"
+        )
+        self.commit(wait=1)
+        path = "/".join(event.getPhysicalPath())
+        catalog.uncatalogObject(path)
+        self.commit()
+
+    def test_search_results(self):
+        el_results = self.search({"portal_type": "Event", "Title": "Gone Event"})
+        self.assertEqual(len(el_results), 1)
+        brain = el_results[0]
+        self.assertTrue(ICatalogBrain.providedBy(brain))
+        self.assertEqual(brain.getRID(), -1)
+        # Test data from elastic will populate the brain
+        self.assertEqual(brain.portal_type, "Event")
+        self.assertEqual(brain.Title, "Gone Event")
+        # Test
+        self.assertEqual(brain.getPath(), "/plone/event-test")
+        self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
+        self.assertIsNone(brain.getObject())
