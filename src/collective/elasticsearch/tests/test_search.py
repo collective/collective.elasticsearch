@@ -243,15 +243,15 @@ class TestBrainsIndexing(BaseFunctionalTest):
         self.assertEqual(self.el_results[result_idx].getId, expected)
 
 
-class TestRecordDeleted(BaseFunctionalTest):
+class TestCatalogRecordDeleted(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
         catalog = self.catalog._catalog
-        event = api.content.create(
+        self.event = api.content.create(
             self.portal, "Event", "event-test", title="Gone Event"
         )
         self.commit(wait=1)
-        path = "/".join(event.getPhysicalPath())
+        path = "/".join(self.event.getPhysicalPath())
         catalog.uncatalogObject(path)
         self.commit()
 
@@ -267,7 +267,36 @@ class TestRecordDeleted(BaseFunctionalTest):
         # Test
         self.assertEqual(brain.getPath(), "/plone/event-test")
         self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
-        self.assertIsNone(brain.getObject())
+        self.assertEqual(brain.getObject(), self.event)
+
+
+class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
+    def setUp(self):
+        super().setUp()
+        catalog = self.catalog._catalog
+        self.event = api.content.create(
+            self.portal, "Event", "event-test", title="Gone Event"
+        )
+        self.commit(wait=1)
+        path = "/".join(self.event.getPhysicalPath())
+        catalog.uncatalogObject(path)
+        self.portal._delObject("event-test", suppress_events=True)
+        self.commit()
+
+    def test_search_results(self):
+        el_results = self.search({"portal_type": "Event", "Title": "Gone Event"})
+        self.assertEqual(len(el_results), 1)
+        brain = el_results[0]
+        self.assertTrue(ICatalogBrain.providedBy(brain))
+        self.assertEqual(brain.getRID(), -1)
+        # Test data from elastic will populate the brain
+        self.assertEqual(brain.portal_type, "Event")
+        self.assertEqual(brain.Title, "Gone Event")
+        # Test
+        self.assertEqual(brain.getPath(), "/plone/event-test")
+        self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
+        with self.assertRaises(KeyError):
+            brain.getObject()
 
 
 class TestSearchOnRemovedIndex(BaseFunctionalTest):

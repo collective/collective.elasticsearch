@@ -1,3 +1,6 @@
+from Acquisition import aq_base
+from Acquisition import aq_get
+from Acquisition import aq_parent
 from collective.elasticsearch import interfaces
 from collective.elasticsearch import logger
 from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
@@ -6,14 +9,16 @@ from typing import Union
 from zope.component import getMultiAdapter
 from zope.globalrequest import getRequest
 from zope.interface import implementer
+from ZPublisher.BaseRequest import RequestContainer
 
 
 @implementer(ICatalogBrain)
 class ElasticSearchBrain:
     """A Brain containing only information indexed in ElasticSearch."""
 
-    def __init__(self, record: dict):
+    def __init__(self, record: dict, catalog):
         self._record = record
+        self._catalog = catalog
 
     def has_key(self, key):
         return key in self._record
@@ -38,7 +43,21 @@ class ElasticSearchBrain:
         return request.physicalPathToURL(self.getPath(), relative)
 
     def getObject(self, REQUEST=None):
-        return None
+        path = self.getPath().split("/")
+        if not path:
+            return None
+        parent = aq_parent(self._catalog)
+        if aq_get(parent, "REQUEST", None) is None:
+            request = getRequest()
+            if request is not None:
+                # path should be absolute, starting at the physical root
+                parent = self.getPhysicalRoot()
+                request_container = RequestContainer(REQUEST=request)
+                parent = aq_base(parent).__of__(request_container)
+        if len(path) > 1:
+            parent = parent.unrestrictedTraverse(path[:-1])
+
+        return parent.restrictedTraverse(path[-1])
 
     def getRID(self) -> int:
         """Return the record ID for this object."""
@@ -59,9 +78,9 @@ def BrainFactory(manager):
                 except KeyError:
                     logger.error(f"Couldn't get catalog entry for path: {path}")
             else:
-                logger.error(f"Got not integer key for path: {path}")
+                logger.error(f"Got a key for path that is not integer: {path}")
             result = manager.get_record_by_path(path)
-            return ElasticSearchBrain(record=result)
+            return ElasticSearchBrain(record=result, catalog=manager.catalog)
         # We should handle cases where there is no path in the ES response
         return None
 
