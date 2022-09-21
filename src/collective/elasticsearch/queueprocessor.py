@@ -8,6 +8,7 @@ from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
 from plone import api
 from plone.indexer.interfaces import IIndexableObject
+from plone.indexer.interfaces import IIndexer
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
 from zope.globalrequest import getRequest
@@ -19,6 +20,7 @@ class IndexProcessor:
     """A queue processor for elasticsearch"""
 
     _manager: ElasticSearchManager = None
+    _es_attributes = None
     _all_attributes = None
     rebuild: bool = False
     _actions: IndexingActions = None
@@ -36,11 +38,18 @@ class IndexProcessor:
         return api.portal.get_tool("portal_catalog")
 
     @property
+    def es_attributes(self):
+        """Return all attributes defined in portal catalog."""
+        if not self._es_attributes:
+            self._es_attributes = getESOnlyIndexes()
+        return self._es_attributes
+
+    @property
     def all_attributes(self):
         """Return all attributes defined in portal catalog."""
         if not self._all_attributes:
             catalog = self.catalog
-            es_indexes = getESOnlyIndexes()
+            es_indexes = self.es_attributes
             catalog_indexes = set(catalog.indexes())
             self._all_attributes = es_indexes.union(catalog_indexes)
         return self._all_attributes
@@ -62,6 +71,7 @@ class IndexProcessor:
 
     def _clean_up(self):
         self._manager = None
+        self._es_attributes = None
         self._all_attributes = None
         self._actions = None
 
@@ -149,6 +159,7 @@ class IndexProcessor:
         attributes = attributes if attributes else self.all_attributes
         catalog = self.catalog
         for index_name in attributes:
+            value = None
             index = getIndex(catalog, index_name)
             if index is not None:
                 try:
@@ -160,6 +171,19 @@ class IndexProcessor:
                 if value in (None, "None"):
                     # yes, we'll index null data...
                     value = None
+            elif index_name in self._es_attributes:
+                indexer = queryMultiAdapter(
+                    (wrapped_object, catalog), IIndexer, name=index_name
+                )
+                if indexer:
+                    value = indexer()
+                else:
+                    attr = getattr(obj, index_name, None)
+                    value = attr() if callable(attr) else value
+            # Use str, if bytes value
+            value = (
+                value.decode("utf-8", "ignore") if isinstance(value, bytes) else value
+            )
             index_data[index_name] = value
         additional_providers = [
             adapter for adapter in getAdapters((obj,), IAdditionalIndexDataProvider)

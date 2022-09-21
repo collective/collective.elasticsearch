@@ -1,4 +1,5 @@
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from parameterized import parameterized
 from plone import api
@@ -267,3 +268,45 @@ class TestRecordDeleted(BaseFunctionalTest):
         self.assertEqual(brain.getPath(), "/plone/event-test")
         self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
         self.assertIsNone(brain.getObject())
+
+
+class TestSearchOnRemovedIndex(BaseFunctionalTest):
+    def setUp(self):
+        super().setUp()
+        # Create a content with the word fancy
+        self.document = api.content.create(
+            container=self.portal,
+            type="Document",
+            id="a-document",
+            title="A Fancy Title",
+        )
+        # Force indexing in ES
+        self.commit(wait=1)
+        # Now delete the index from the catalog
+        zcatalog = self.catalog._catalog
+        # Delete indexes that should be only in ES
+        idxs = getESOnlyIndexes()
+        for idx in idxs:
+            zcatalog.delIndex(idx)
+        self.commit()
+
+    def test_search_results(self):
+        el_results = self.search({"portal_type": "Document", "SearchableText": "Fancy"})
+        self.assertEqual(len(el_results), 1)
+        self.assertEqual(el_results[0].getId, self.document.id)
+
+    def test_search_results_after_reindex(self):
+        # Update title
+        document = self.document
+        document.title = "Common title"
+        document.reindexObject(idxs=["SearchableText", "Title"])
+        self.commit(wait=1)
+        # Search for the old title
+        el_results = self.search({"portal_type": "Document", "SearchableText": "Fancy"})
+        self.assertEqual(len(el_results), 0)
+        # Search for the new title
+        el_results = self.search(
+            {"portal_type": "Document", "SearchableText": "Common"}
+        )
+        self.assertEqual(len(el_results), 1)
+        self.assertEqual(el_results[0].getId, self.document.id)

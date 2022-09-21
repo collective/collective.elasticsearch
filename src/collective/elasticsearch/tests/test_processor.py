@@ -1,4 +1,5 @@
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import getUID
 from plone import api
 from plone.app.contentrules.actions.move import MoveAction
@@ -112,3 +113,38 @@ class TestMoveReindex(BaseFunctionalTest):
         idxs = list(processor.actions.reindex[doc_uuid].keys())
         self.assertEqual(len(idxs), 1)
         self.assertEqual(idxs[0], "getObjPositionInParent")
+
+
+class TestRemoveIndexFromCatalog(BaseFunctionalTest):
+    def setUp(self):
+        super().setUp()
+        # Create a content with the word fancy
+        self.document = api.content.create(
+            container=self.portal,
+            type="Document",
+            id="a-document",
+            title="A Fancy Title",
+        )
+        # Force indexing in ES
+        self.commit(wait=1)
+        # Now delete the index from the catalog
+        zcatalog = self.catalog._catalog
+        # Delete indexes that should be only in ES
+        idxs = getESOnlyIndexes()
+        for idx in idxs:
+            zcatalog.delIndex(idx)
+        self.commit()
+
+    def test_reindex_object(self):
+        processor = self.get_processor()
+        document = self.document
+        document.title = "Common title"
+        document.reindexObject(idxs=["SearchableText", "Title"])
+        processQueue()
+        actions = processor.actions
+        uid = getUID(document)
+        self.assertIn(uid, actions.reindex)
+        self.assertIn("SearchableText", actions.reindex[uid])
+        self.assertIn("Common", actions.reindex[uid]["SearchableText"])
+        self.assertIn("Title", actions.reindex[uid])
+        self.assertIn("Common", actions.reindex[uid]["Title"])
