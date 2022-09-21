@@ -2,7 +2,6 @@ from collective.elasticsearch import interfaces
 from collective.elasticsearch import logger
 from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from Products.ZCatalog.interfaces import ICatalogBrain
-from typing import TypeAlias
 from typing import Union
 from zope.component import getMultiAdapter
 from zope.globalrequest import getRequest
@@ -46,11 +45,8 @@ class ElasticSearchBrain:
         return -1
 
 
-Brain: TypeAlias = Union[AbstractCatalogBrain, ElasticSearchBrain]
-
-
 def BrainFactory(manager):
-    def factory(result: dict) -> Brain:
+    def factory(result: dict) -> Union[AbstractCatalogBrain, ElasticSearchBrain]:
         catalog = manager.catalog._catalog
         path = result.get("fields", {}).get("path.path", None)
         if type(path) in (list, tuple, set) and len(path) > 0:
