@@ -55,7 +55,7 @@ class MappingAdapter:
         else:
             if not manager.index_version:
                 # need to initialize version value
-                manager.bump_index_version()
+                manager._bump_index_version()
             index_name_v = f"{index_name}_{manager.index_version}"
             if not conn.indices.exists(index_name_v):
                 conn.indices.create(index_name_v, body=self.get_index_creation_body())

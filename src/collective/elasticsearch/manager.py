@@ -70,7 +70,7 @@ class ElasticSearchManager:
             return f"{self.index_name}_{self.index_version}"
         return self.index_name
 
-    def bump_index_version(self):
+    def _bump_index_version(self):
         version = getattr(self.catalog, INDEX_VERSION_ATTR, None)
         version = version + 1 if version else 1
         setattr(self.catalog, INDEX_VERSION_ATTR, version)
