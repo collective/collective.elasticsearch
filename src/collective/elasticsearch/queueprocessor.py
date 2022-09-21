@@ -21,7 +21,7 @@ class IndexProcessor:
     _manager: ElasticSearchManager = None
     _all_attributes = None
     rebuild: bool = False
-    actions: IndexingActions = None
+    _actions: IndexingActions = None
 
     @property
     def manager(self):
@@ -49,19 +49,21 @@ class IndexProcessor:
     def rebuild(self):
         return IReindexActive.providedBy(getRequest())
 
-    def _initialize(self):
-        if not self.actions:
-            self.actions = IndexingActions(
+    @property
+    def actions(self) -> IndexingActions:
+        if not self._actions:
+            self._actions = IndexingActions(
                 index={},
                 reindex={},
                 unindex={},
                 uuid_path={},
             )
+        return self._actions
 
     def _clean_up(self):
         self._manager = None
         self._all_attributes = None
-        self.actions = None
+        self._actions = None
 
     def _uuid_path(self, obj):
         uuid = api.content.get_uuid(obj) if obj.portal_type != "Plone Site" else "/"
@@ -114,7 +116,7 @@ class IndexProcessor:
 
     def begin(self):
         """Transaction start."""
-        self._initialize()
+        pass
 
     def commit(self, wait=None):
         """Transaction commit."""
