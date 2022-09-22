@@ -31,9 +31,16 @@ class ElasticSearchManager:
     _catalog: CatalogTool = None
     connection_key = "elasticsearch_connection"
 
-    def __init__(self):
-        settings = utils.get_settings()
-        self.bulk_size = settings.bulk_size
+    @property
+    def bulk_size(self) -> int:
+        """Bulk size of ElasticSearch calls."""
+        try:
+            value = api.portal.get_registry_record(
+                "bulk_size", interfaces.IElasticSettings, 50
+            )
+        except KeyError:
+            value = 50
+        return value
 
     @property
     def catalog(self):
@@ -45,8 +52,13 @@ class ElasticSearchManager:
 
     @property
     def enabled(self):
-        settings = utils.get_settings()
-        return settings.enabled
+        try:
+            value = api.portal.get_registry_record(
+                "enabled", interfaces.IElasticSettings, False
+            )
+        except KeyError:
+            value = False
+        return value
 
     @property
     def active(self):

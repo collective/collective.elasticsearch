@@ -10,12 +10,18 @@ from zope.interface import noLongerProvides
 
 def unrestrictedSearchResults(self, REQUEST=None, **kw):
     manager = ElasticSearchManager()
-    return manager.search_results(REQUEST, check_perms=False, **kw)
+    method = self._old_unrestrictedSearchResults
+    if manager.active:
+        method = manager.search_results
+    return method(REQUEST, check_perms=False, **kw)
 
 
 def safeSearchResults(self, REQUEST=None, **kw):
     manager = ElasticSearchManager()
-    return manager.search_results(REQUEST, check_perms=True, **kw)
+    method = self._old_unrestrictedSearchResults
+    if manager.active:
+        method = manager.search_results
+    return method(REQUEST, check_perms=True, **kw)
 
 
 def manage_catalogRebuild(self, *args, **kwargs):  # NOQA W0613
@@ -23,19 +29,19 @@ def manage_catalogRebuild(self, *args, **kwargs):  # NOQA W0613
     manager = ElasticSearchManager()
     if manager.enabled:
         manager._recreate_catalog()
-
-    alsoProvides(getRequest(), interfaces.IReindexActive)
+        alsoProvides(getRequest(), interfaces.IReindexActive)
     result = self._old_manage_catalogRebuild(*args, **kwargs)
-    processQueue()
-    manager.flush_indices()
-    noLongerProvides(getRequest(), interfaces.IReindexActive)
+    if manager.enabled:
+        processQueue()
+        manager.flush_indices()
+        noLongerProvides(getRequest(), interfaces.IReindexActive)
     return result
 
 
 def manage_catalogClear(self, *args, **kwargs):
     """need to be publishable"""
     manager = ElasticSearchManager()
-    if not manager.active:
+    if manager.enabled and not manager.active:
         manager._recreate_catalog()
     return self._old_manage_catalogClear(*args, **kwargs)
 
