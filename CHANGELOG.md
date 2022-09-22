@@ -16,6 +16,8 @@
 
 - Remove collective.celery support (as it is not Python-3 compatible yet) @ericof
 
+- Document support to Python 3.10 @ericof
+
 ## 5.0.0a1 (2022-09-14)
 
 - Refactor hook.index_batch to reduce the number of calls do Elastic Search @ericof
