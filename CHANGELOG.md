@@ -16,8 +16,6 @@
 
 - Remove collective.celery support (as it is not Python-3 compatible yet) @ericof
 
-- Document support to Python 3.10 @ericof
-
 ## 5.0.0a1 (2022-09-14)
 
 - Refactor hook.index_batch to reduce the number of calls do Elastic Search @ericof
@@ -25,6 +23,8 @@
 - Implement plone/code-analysis-action @ericof
 
 - Add support to Plone 6.0 @ericof
+
+- Support Python 3.7, 3.8, 3.9 and 3.10 @ericof
 
 - Drop support to Plone versions 4.3, 5.0 and 5.1 @ericof, @andreclimaco
 
