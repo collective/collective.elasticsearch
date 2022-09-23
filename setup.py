@@ -30,9 +30,11 @@ setup(
         "License :: OSI Approved :: GNU General Public License (GPL)",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
@@ -70,8 +72,6 @@ setup(
         ],
     },
     entry_points="""
-    [celery_tasks]
-    castle = collective.elasticsearch.hook
     [z3c.autoinclude.plugin]
     target = plone
     """,

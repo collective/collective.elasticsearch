@@ -1,6 +1,7 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:monkey="http://namespaces.plone.org/monkey"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     i18n_domain="collective.elasticsearch"
     >
 
@@ -17,20 +18,6 @@
       replacement=".safeSearchResults"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
       description="searchResults"
-      preserveOriginal="True"
-      />
-  <monkey:patch
-      original="catalog_object"
-      replacement=".catalog_object"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="catalog_object"
-      preserveOriginal="True"
-      />
-  <monkey:patch
-      original="uncatalog_object"
-      replacement=".uncatalog_object"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="uncatalog_object"
       preserveOriginal="True"
       />
   <monkey:patch
@@ -55,22 +42,23 @@
       preserveOriginal="True"
       />
 
-  <!-- CMFCore CatalogTool patches -->
   <monkey:patch
-      original="_unindexObject"
-      replacement="._unindexObject"
+      original="uncatalog_object"
+      replacement=".uncatalog_object"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="_unindexObject"
+      description="uncatalog_object"
       preserveOriginal="True"
       />
-
-  <monkey:patch
-      original="moveObjectsByDelta"
-      replacement=".PloneSite_moveObjectsByDelta"
-      class="Products.CMFPlone.Portal.PloneSite"
-      description="moveObjectsByDelta"
-      preserveOriginal="True"
-      />
+  <!-- Reordering support -->
+  <configure zcml:condition="not-have plone-60">
+    <monkey:patch
+        original="moveObjectsByDelta"
+        replacement=".moveObjectsByDelta"
+        class="Products.CMFPlone.Portal.PloneSite"
+        description="moveObjectsByDelta"
+        preserveOriginal="True"
+        />
+  </configure>
 
   <monkey:patch
       original="moveObjectsByDelta"

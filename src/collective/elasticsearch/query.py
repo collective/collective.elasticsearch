@@ -9,7 +9,7 @@ from zope.interface import implementer
 class QueryAssembler:
     def __init__(self, request, es):
         self.es = es
-        self.catalogtool = es.catalogtool
+        self.catalog = es.catalog
         self.request = request
 
     def normalize(self, query):  # NOQA R0201
@@ -37,7 +37,7 @@ class QueryAssembler:
     def __call__(self, dquery):
         filters = []
         matches = []
-        catalog = self.catalogtool._catalog
+        catalog = self.catalog._catalog
         idxs = catalog.indexes.keys()
         query = {"match_all": {}}
         es_only_indexes = getESOnlyIndexes()

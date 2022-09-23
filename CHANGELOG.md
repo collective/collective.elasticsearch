@@ -2,8 +2,19 @@
 
 ## 5.0.0a2 (unreleased)
 
-- Nothing changed yet.
+- Implement IIndexQueueProcessor support @ericof
 
+- Refactor ElasticSearchCatalog methods into ElasticSearchManager object @ericof
+
+- Breaking: Remove collective.elasticsearch.es @ericof
+
+- Breaking: Remove collective.elasticsearch.hooks @ericof
+
+- Refactor moveObjectsByDelta to reduce the number of calls to ElasticSearch @ericof
+
+- Reindex operations update on the catalog send only updated index to ElasticSearch @ericof
+
+- Remove collective.celery support (as it is not Python-3 compatible yet) @ericof
 
 ## 5.0.0a1 (2022-09-14)
 
@@ -12,6 +23,8 @@
 - Implement plone/code-analysis-action @ericof
 
 - Add support to Plone 6.0 @ericof
+
+- Support Python 3.7, 3.8, 3.9 and 3.10 @ericof
 
 - Drop support to Plone versions 4.3, 5.0 and 5.1 @ericof, @andreclimaco
 

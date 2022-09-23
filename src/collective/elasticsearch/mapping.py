@@ -28,15 +28,16 @@ class MappingAdapter:
         "path.path",
     ]
 
-    def __init__(self, request, es):
+    def __init__(self, request, manager):
         self.request = request
-        self.es = es
-        self.catalog = es.catalog
+        self.manager = manager
+        self.catalog = manager.catalog._catalog
 
     def get_index_creation_body(self):  # NOQA E0211
         return {}
 
     def __call__(self):
+        manager = self.manager
         properties = self._default_mapping.copy()
         for name in self.catalog.indexes.keys():
             index = getIndex(self.catalog, name)
@@ -45,17 +46,17 @@ class MappingAdapter:
             else:
                 raise Exception(f"Can not locate index for {name}")
 
-        conn = self.es.connection
-        index_name = self.es.index_name
+        conn = manager.connection
+        index_name = manager.index_name
         if conn.indices.exists(index_name):
             # created BEFORE we started creating this as aliases to versions,
             # we can't go anywhere from here beside try updating...
             pass
         else:
-            if not self.es.index_version:
+            if not manager.index_version:
                 # need to initialize version value
-                self.es.bump_index_version()
-            index_name_v = f"{index_name}_{self.es.index_version}"
+                manager._bump_index_version()
+            index_name_v = f"{index_name}_{manager.index_version}"
             if not conn.indices.exists(index_name_v):
                 conn.indices.create(index_name_v, body=self.get_index_creation_body())
             if not conn.indices.exists_alias(name=index_name):

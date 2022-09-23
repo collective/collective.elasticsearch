@@ -1,9 +1,11 @@
-from collective.elasticsearch import hook
 from collective.elasticsearch import utils
-from collective.elasticsearch.es import ElasticSearchCatalog
+from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcessor
+from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
-from Products.CMFCore.utils import getToolByName
+from plone import api
+from Products.CMFCore.indexing import processQueue
+from zope.component import getUtility
 
 import time
 import transaction
@@ -12,6 +14,9 @@ import unittest
 
 class BaseTest(unittest.TestCase):
     layer = ElasticSearch_INTEGRATION_TESTING
+
+    def get_processor(self):
+        return getUtility(IElasticSearchIndexQueueProcessor, name="elasticsearch")
 
     def setUp(self):
         super().setUp()
@@ -26,22 +31,21 @@ class BaseTest(unittest.TestCase):
         settings.enabled = True
         settings.sniffer_timeout = 0.0
 
-        self.catalog = getToolByName(self.portal, "portal_catalog")
+        self.catalog = api.portal.get_tool("portal_catalog")
         self.catalog._elasticcustomindex = "plone-test-index"
-        self.es = ElasticSearchCatalog(self.catalog)
+        self.es = ElasticSearchManager()
         self.catalog.manage_catalogRebuild()
         # need to commit here so all tests start with a baseline
         # of elastic enabled
+        time.sleep(0.1)
         self.commit()
 
-    @staticmethod
-    def commit():
+    def commit(self, wait: int = 0):
+        processQueue()
         transaction.commit()
-
-    def clearTransactionEntries(self):
-        _hook = hook.getHook(self.es)
-        _hook.remove = []
-        _hook.index = {}
+        self.es.flush_indices()
+        if wait:
+            time.sleep(wait)
 
     def tearDown(self):
         super().tearDown()
@@ -50,10 +54,17 @@ class BaseTest(unittest.TestCase):
         conn = self.es.connection
         conn.indices.delete_alias(index=real_index_name, name=index_name)
         conn.indices.delete(index=real_index_name)
-        self.clearTransactionEntries()
+        conn.indices.flush()
         # Wait ES remove the index
         time.sleep(0.1)
 
 
 class BaseFunctionalTest(BaseTest):
     layer = ElasticSearch_FUNCTIONAL_TESTING
+
+    def search(self, query: dict):
+        return self.catalog(**query)
+
+    def total_results(self, query: dict):
+        results = self.search(query)
+        return len(results)

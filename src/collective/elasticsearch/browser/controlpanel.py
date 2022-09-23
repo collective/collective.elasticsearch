@@ -1,6 +1,6 @@
 from collective.elasticsearch import logger
-from collective.elasticsearch.es import ElasticSearchCatalog
 from collective.elasticsearch.interfaces import IElasticSettings
+from collective.elasticsearch.manager import ElasticSearchManager
 from elasticsearch.exceptions import ConnectionError as conerror
 from elasticsearch.exceptions import NotFoundError
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
@@ -29,7 +29,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.portal_catalog = getToolByName(self.context, "portal_catalog")
-        self.es = ElasticSearchCatalog(self.portal_catalog)
+        self.es = ElasticSearchManager()
 
     @property
     def connection_status(self):
@@ -67,6 +67,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
                 size_in_mb = stats["store"]["size_in_bytes"] / 1024.0 / 1024.0
                 return [
                     ("Cluster Name", info.get("name")),
+                    ("Index Name", self.es.real_index_name),
                     ("Elastic Search Version", info["version"]["number"]),
                     ("Number of docs", stats["docs"]["count"]),
                     ("Deleted docs", stats["docs"]["deleted"]),
@@ -83,8 +84,12 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             return []
 
     @property
+    def enabled(self):
+        return self.es.enabled
+
+    @property
     def active(self):
-        return self.es.get_setting("enabled")
+        return self.es.active
 
 
 ElasticControlPanelView = layout.wrap_form(

@@ -1,3 +1,8 @@
+from dataclasses import dataclass
+from Products.CMFCore.interfaces import IIndexQueueProcessor
+from typing import Dict
+from typing import List
+from typing import Tuple
 from zope import schema
 from zope.interface import Interface
 
@@ -6,7 +11,7 @@ class IElasticSearchLayer(Interface):
     pass
 
 
-class IElasticSearchCatalog(Interface):
+class IElasticSearchManager(Interface):
     pass
 
 
@@ -72,3 +77,37 @@ class IElasticSettings(Interface):
     bulk_size = schema.Int(
         title="Bulk Size", description="bulk size for elastic queries", default=50
     )
+
+
+class IElasticSearchIndexQueueProcessor(IIndexQueueProcessor):
+    """Index queue processor for elasticsearch."""
+
+
+@dataclass
+class IndexingActions:
+
+    index: Dict[str, dict]
+    reindex: Dict[str, dict]
+    unindex: Dict[str, dict]
+    uuid_path: Dict[str, str]
+
+    def __len__(self):
+        size = 0
+        size += len(self.index)
+        size += len(self.reindex)
+        size += len(self.unindex)
+        return size
+
+    def all(self) -> List[Tuple[str, str, Dict]]:
+        all_data = []
+        for attr, action in (
+            ("index", "index"),
+            ("reindex", "update"),
+            ("unindex", "delete"),
+        ):
+            action_data = [
+                (uuid, data) for uuid, data in getattr(self, attr, {}).items()
+            ]
+            if action_data:
+                all_data.extend([(action, uuid, data) for uuid, data in action_data])
+        return all_data

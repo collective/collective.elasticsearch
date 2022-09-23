@@ -1,6 +1,6 @@
 from AccessControl import Unauthorized
 from Acquisition import aq_parent
-from collective.elasticsearch.es import ElasticSearchCatalog
+from collective.elasticsearch.manager import ElasticSearchManager
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
 
@@ -14,8 +14,8 @@ class Utils(BrowserView):
             if not authenticator.verify():
                 raise Unauthorized
 
-            es = ElasticSearchCatalog(self.context)
-            es.convertToElastic()
+            es = ElasticSearchManager()
+            es._convert_catalog_to_elastic()
         site = aq_parent(self.context)
         self.request.response.redirect(f"{site.absolute_url()}/@@elastic-controlpanel")
 
