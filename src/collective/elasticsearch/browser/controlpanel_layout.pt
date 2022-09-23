@@ -59,24 +59,24 @@
         <div id="layout-contents">
             <span tal:replace="structure view/contents" />
         </div>
-        <tal:el tal:condition="view/active">
+        <tal:el tal:condition="view/enabled">
             <div class="card" tal:define="purl string:${view/portal_catalog/absolute_url}" tal:condition="status">
                 <div class="card-header">
                     Actions
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-2">
+                        <div class="col-md-12">
                             <form method="POST" action="${purl}/@@elastic-convert">
                                 <span tal:replace="structure context/@@authenticator/authenticator" />
-                                <button type="submit" name="convert">Convert Catalog</button>
+                                <button type="submit" name="convert" class="btn btn-primary">Convert Catalog</button>
                             </form>
                         </div>
-                        <div class="col-md-10">
+                        <div class="col-md-12" tal:condition="view/active">
                             <div class="col-md-2">
                                 <form method="POST" class="rebuild" action="${purl}/@@elastic-rebuild">
                                     <span tal:replace="structure context/@@authenticator/authenticator" />
-                                    <button type="submit" name="convert">Rebuild Catalog</button>
+                                    <button type="submit" name="convert" class="btn btn-danger">Rebuild Catalog</button>
                                 </form>
                             </div>
                             <div class="col-md-10">
@@ -90,9 +90,9 @@
                 </div>
             </div>
             <div tal:condition="status" id="status" tal:define="shards status/_shards/total|python:0;">
-                <table class="listing">
+                <table class="listing table table-stripped">
                     <thead>
-                        <th colspan="2">
+                        <th colspan="2" class="table-primary">
                             Server status
                         </th>
                     </thead>

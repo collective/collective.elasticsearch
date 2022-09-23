@@ -84,8 +84,12 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             return []
 
     @property
-    def active(self):
+    def enabled(self):
         return self.es.enabled
+
+    @property
+    def active(self):
+        return self.es.active
 
 
 ElasticControlPanelView = layout.wrap_form(
