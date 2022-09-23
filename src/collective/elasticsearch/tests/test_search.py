@@ -246,13 +246,13 @@ class TestBrainsIndexing(BaseFunctionalTest):
 class TestCatalogRecordDeleted(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
-        catalog = self.catalog._catalog
+        zcatalog = self.catalog._catalog
         self.event = api.content.create(
             self.portal, "Event", "event-test", title="Gone Event"
         )
         self.commit(wait=1)
         path = "/".join(self.event.getPhysicalPath())
-        catalog.uncatalogObject(path)
+        zcatalog.uncatalogObject(path)
         self.commit()
 
     def test_search_results(self):
@@ -273,13 +273,13 @@ class TestCatalogRecordDeleted(BaseFunctionalTest):
 class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
-        catalog = self.catalog._catalog
+        zcatalog = self.catalog._catalog
         self.event = api.content.create(
             self.portal, "Event", "event-test", title="Gone Event"
         )
         self.commit(wait=1)
         path = "/".join(self.event.getPhysicalPath())
-        catalog.uncatalogObject(path)
+        zcatalog.uncatalogObject(path)
         self.portal._delObject("event-test", suppress_events=True)
         self.commit()
 
@@ -297,6 +297,23 @@ class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
         self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
         with self.assertRaises(KeyError):
             brain.getObject()
+
+
+class TestUncatalogRemoveOnES(BaseFunctionalTest):
+    def setUp(self):
+        super().setUp()
+        self.event = api.content.create(
+            self.portal, "Event", "event-test", title="Gone Event"
+        )
+        self.commit(wait=1)
+        path = "/".join(self.event.getPhysicalPath())
+        catalog = self.catalog
+        catalog.uncatalog_object(path)
+        self.commit(wait=1)
+
+    def test_search_results(self):
+        el_results = self.search({"portal_type": "Event", "Title": "Gone Event"})
+        self.assertEqual(len(el_results), 0)
 
 
 class TestSearchOnRemovedIndex(BaseFunctionalTest):

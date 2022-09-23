@@ -2,7 +2,7 @@ from Acquisition import aq_base
 from Acquisition import aq_get
 from Acquisition import aq_parent
 from collective.elasticsearch import interfaces
-from collective.elasticsearch import logger
+from collective.elasticsearch.utils import get_brain_from_path
 from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from Products.ZCatalog.interfaces import ICatalogBrain
 from typing import Union
@@ -66,21 +66,17 @@ class ElasticSearchBrain:
 
 def BrainFactory(manager):
     def factory(result: dict) -> Union[AbstractCatalogBrain, ElasticSearchBrain]:
-        catalog = manager.catalog._catalog
+        catalog = manager.catalog
+        zcatalog = catalog._catalog
         path = result.get("fields", {}).get("path.path", None)
         if type(path) in (list, tuple, set) and len(path) > 0:
             path = path[0]
         if path:
-            rid = catalog.uids.get(path)
-            if isinstance(rid, int):
-                try:
-                    return catalog[rid]
-                except KeyError:
-                    logger.error(f"Couldn't get catalog entry for path: {path}")
-            else:
-                logger.error(f"Got a key for path that is not integer: {path}")
-            result = manager.get_record_by_path(path)
-            return ElasticSearchBrain(record=result, catalog=manager.catalog)
+            brain = get_brain_from_path(zcatalog, path)
+            if not brain:
+                result = manager.get_record_by_path(path)
+                brain = ElasticSearchBrain(record=result, catalog=catalog)
+            return brain
         # We should handle cases where there is no path in the ES response
         return None
 

@@ -42,6 +42,13 @@
       preserveOriginal="True"
       />
 
+  <monkey:patch
+      original="uncatalog_object"
+      replacement=".uncatalog_object"
+      class="Products.CMFPlone.CatalogTool.CatalogTool"
+      description="uncatalog_object"
+      preserveOriginal="True"
+      />
   <!-- Reordering support -->
   <configure zcml:condition="not-have plone-60">
     <monkey:patch

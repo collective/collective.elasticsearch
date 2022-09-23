@@ -1,5 +1,6 @@
 from collective.elasticsearch import interfaces
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.utils import get_brain_from_path
 from plone.folder.interfaces import IOrdering
 from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.interfaces import IContentish
@@ -61,6 +62,22 @@ def manage_catalogClear(self, *args, **kwargs):
     if manager.enabled and not manager.active:
         manager._recreate_catalog()
     return self._old_manage_catalogClear(*args, **kwargs)
+
+
+def uncatalog_object(self, *args, **kwargs):
+    manager = ElasticSearchManager()
+    if manager.active:
+        # If ES is active, we also remove the record from there
+        zcatalog = self._catalog
+        data = []
+        for path in args:
+            brain = get_brain_from_path(zcatalog, path)
+            if not brain:
+                # Path not in the catalog
+                continue
+            data.append(("delete", brain.UID, {}))
+        manager.bulk(data=data)
+    return self._old_uncatalog_object(*args, **kwargs)
 
 
 def get_ordered_ids(context) -> dict:

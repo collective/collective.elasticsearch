@@ -1,6 +1,9 @@
+from collective.elasticsearch import logger
 from collective.elasticsearch.interfaces import IElasticSettings
 from plone.registry.interfaces import IRegistry
 from plone.uuid.interfaces import IUUID
+from Products.ZCatalog import ZCatalog
+from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from typing import List
 from zope.component import getUtility
 
@@ -10,6 +13,18 @@ def getUID(obj):
     if not value and hasattr(obj, "UID"):
         value = obj.UID()
     return value
+
+
+def get_brain_from_path(zcatalog: ZCatalog, path: str) -> AbstractCatalogBrain:
+    rid = zcatalog.uids.get(path)
+    if isinstance(rid, int):
+        try:
+            return zcatalog[rid]
+        except KeyError:
+            logger.error(f"Couldn't get catalog entry for path: {path}")
+    else:
+        logger.error(f"Got a key for path that is not integer: {path}")
+    return None
 
 
 def get_settings():
