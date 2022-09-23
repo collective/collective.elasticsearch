@@ -2,14 +2,14 @@
 
 <div align="center">
 
-[![PyPI](https://img.shields.io/pypi/v/collective.elasticsearch/5.0.0a1)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/collective.elasticsearch/5.0.0a1)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - Wheel](https://img.shields.io/pypi/wheel/collective.elasticsearch/5.0.0a1)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - License](https://img.shields.io/pypi/l/collective.elasticsearch/5.0.0a1)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - Status](https://img.shields.io/pypi/status/collective.elasticsearch/5.0.0a1)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI](https://img.shields.io/pypi/v/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Wheel](https://img.shields.io/pypi/wheel/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - License](https://img.shields.io/pypi/l/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Status](https://img.shields.io/pypi/status/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
 
 
-[![PyPI - Plone Versions](https://img.shields.io/pypi/frameworkversions/plone/collective.elasticsearch/5.0.0a1)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Plone Versions](https://img.shields.io/pypi/frameworkversions/plone/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
 
 [![Code analysis checks](https://github.com/collective/collective.elasticsearch/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/collective/collective.elasticsearch/actions/workflows/code-analysis.yml)
 [![Tests](https://github.com/collective/collective.elasticsearch/actions/workflows/tests.yml/badge.svg)](https://github.com/collective/collective.elasticsearch/actions/workflows/tests.yml)
@@ -80,12 +80,6 @@ You now have a insanely scalable modern search engine. Now live the life of the 
 
 Support for all index column types is done EXCEPT for the DateRecurringIndex index column type. If you are doing a full text search along with a query that contains a DateRecurringIndex column, it will not work.
 
-
-## Celery support
-
-This package comes with Celery support where all indexing operations will be pushed into celery to be run asynchronously.
-
-Please see instructions for `collective.celery` to see how this works.
 
 ## Developing this package
 
