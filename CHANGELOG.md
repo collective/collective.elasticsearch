@@ -1,5 +1,11 @@
 # Changelog
 
+5.0.0a3 (unreleased)
+--------------------
+
+- Nothing changed yet.
+
+
 5.0.0a2 (2022-09-23)
 
 - Implement IIndexQueueProcessor support @ericof
