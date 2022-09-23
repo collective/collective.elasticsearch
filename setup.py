@@ -12,7 +12,7 @@ long_description = f"""
 
 setup(
     name="collective.elasticsearch",
-    version="5.0.0a2.dev0",
+    version="5.0.0a2",
     description="elasticsearch integration with plone",
     long_description=long_description,
     long_description_content_type="text/markdown",
