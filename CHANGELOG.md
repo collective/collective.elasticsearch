@@ -4,6 +4,8 @@
 
 - Rename `master` branch to `main` @ericof
 
+- Drop support for Python 3.7 when using Plone 6.0 @ericof
+
 
 ## 5.0.0a2 (2022-09-23)
 
