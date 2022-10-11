@@ -2,14 +2,14 @@
 
 <div align="center">
 
-[![PyPI](https://img.shields.io/pypi/v/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - Wheel](https://img.shields.io/pypi/wheel/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - License](https://img.shields.io/pypi/l/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
-[![PyPI - Status](https://img.shields.io/pypi/status/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI](https://img.shields.io/pypi/v/collective.elasticsearch)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/collective.elasticsearch)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Wheel](https://img.shields.io/pypi/wheel/collective.elasticsearch)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - License](https://img.shields.io/pypi/l/collective.elasticsearch)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Status](https://img.shields.io/pypi/status/collective.elasticsearch)](https://pypi.org/project/collective.elasticsearch/)
 
 
-[![PyPI - Plone Versions](https://img.shields.io/pypi/frameworkversions/plone/collective.elasticsearch/5.0.0a2)](https://pypi.org/project/collective.elasticsearch/)
+[![PyPI - Plone Versions](https://img.shields.io/pypi/frameworkversions/plone/collective.elasticsearch)](https://pypi.org/project/collective.elasticsearch/)
 
 [![Code analysis checks](https://github.com/collective/collective.elasticsearch/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/collective/collective.elasticsearch/actions/workflows/code-analysis.yml)
 [![Tests](https://github.com/collective/collective.elasticsearch/actions/workflows/tests.yml/badge.svg)](https://github.com/collective/collective.elasticsearch/actions/workflows/tests.yml)
