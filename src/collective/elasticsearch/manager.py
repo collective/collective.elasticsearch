@@ -7,6 +7,7 @@ from collective.elasticsearch.result import ElasticResult
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
+from elasticsearch.exceptions import NotFoundError
 from plone import api
 from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.permissions import AccessInactivePortalContent
@@ -59,6 +60,44 @@ class ElasticSearchManager:
         except KeyError:
             value = False
         return value
+
+    @property
+    def info(self) -> list:
+        """Return Information about ElasticSearch."""
+        conn = self.connection
+        index_name = self.real_index_name
+        catalog = api.portal.get_tool("portal_catalog")
+        zcatalog = catalog._catalog
+        catalog_docs = len(zcatalog)
+        try:
+            info = conn.info()
+            cluster_name = info.get("name")
+            cluster_version = info.get("version", {}).get("number")
+            try:
+                index_stats = conn.indices.stats(index=index_name)["indices"]
+                if index_name not in index_stats:
+                    index_name = f"{index_name}_{self.index_version}"
+                stats = index_stats[index_name]["primaries"]
+                size_in_mb = utils.format_size_mb(stats["store"]["size_in_bytes"])
+                return [
+                    ("Cluster Name", cluster_name),
+                    ("Index Name", index_name),
+                    ("Elastic Search Version", cluster_version),
+                    ("Number of docs (Catalog)", catalog_docs),
+                    ("Number of docs", stats["docs"]["count"]),
+                    ("Deleted docs", stats["docs"]["deleted"]),
+                    ("Size", size_in_mb),
+                    ("Query Count", stats["search"]["query_total"]),
+                ]
+            except KeyError:
+                return [
+                    ("Cluster Name", cluster_name),
+                    ("Elastic Search Version", cluster_version),
+                    ("Number of docs (Catalog)", catalog_docs),
+                ]
+        except NotFoundError:
+            logger.warning("Error getting stats", exc_info=True)
+            return []
 
     @property
     def active(self):

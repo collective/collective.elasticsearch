@@ -1,6 +1,7 @@
 from collective.elasticsearch import utils
 from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcessor
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.testing import ElasticSearch_API_TESTING
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
 from plone import api
@@ -68,3 +69,8 @@ class BaseFunctionalTest(BaseTest):
     def total_results(self, query: dict):
         results = self.search(query)
         return len(results)
+
+
+class BaseAPITest(BaseTest):
+
+    layer = ElasticSearch_API_TESTING

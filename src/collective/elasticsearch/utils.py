@@ -7,6 +7,8 @@ from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from typing import List
 from zope.component import getUtility
 
+import math
+
 
 def getUID(obj):
     value = IUUID(obj, None)
@@ -60,3 +62,9 @@ def getESOnlyIndexes():
 def batches(data: list, size: int) -> List[List]:
     """Create a batch of lists from a base list."""
     return [data[i : i + size] for i in range(0, len(data), size)]  # noQA
+
+
+def format_size_mb(value: int) -> str:
+    """Format a size, in bytes, to mb."""
+    value = value / 1024.0 / 1024.0
+    return f"{int(math.ceil(value))} MB"

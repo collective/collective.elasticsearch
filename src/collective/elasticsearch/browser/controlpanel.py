@@ -1,17 +1,13 @@
-from collective.elasticsearch import logger
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.manager import ElasticSearchManager
 from elasticsearch.exceptions import ConnectionError as conerror
-from elasticsearch.exceptions import NotFoundError
+from plone import api
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.z3cform import layout
-from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from urllib3.exceptions import NewConnectionError
 from z3c.form import form
-
-import math
 
 
 class ElasticControlPanelForm(RegistryEditForm):
@@ -28,7 +24,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.portal_catalog = getToolByName(self.context, "portal_catalog")
+        self.portal_catalog = api.portal.get_tool("portal_catalog")
         self.es = ElasticSearchManager()
 
     @property
@@ -58,30 +54,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
 
     @property
     def es_info(self):
-        try:
-            info = self.es.connection.info()
-            try:
-                stats = self.es.connection.indices.stats(index=self.es.real_index_name)[
-                    "indices"
-                ][self.es.real_index_name]["primaries"]
-                size_in_mb = stats["store"]["size_in_bytes"] / 1024.0 / 1024.0
-                return [
-                    ("Cluster Name", info.get("name")),
-                    ("Index Name", self.es.real_index_name),
-                    ("Elastic Search Version", info["version"]["number"]),
-                    ("Number of docs", stats["docs"]["count"]),
-                    ("Deleted docs", stats["docs"]["deleted"]),
-                    ("Size", str(int(math.ceil(size_in_mb))) + "MB"),
-                    ("Query Count", stats["search"]["query_total"]),
-                ]
-            except KeyError:
-                return [
-                    ("Cluster Name", info.get("name")),
-                    ("Elastic Search Version", info["version"]["number"]),
-                ]
-        except NotFoundError:
-            logger.warning("Error getting stats", exc_info=True)
-            return []
+        return self.es.info
 
     @property
     def enabled(self):
