@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.0.1 (unreleased)
+
+- Nothing changed yet.
+
+
 ## 5.0.0 (2022-10-11)
 
 - Rename `master` branch to `main` @ericof
