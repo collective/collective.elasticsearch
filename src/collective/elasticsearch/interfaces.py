@@ -41,14 +41,15 @@ class IQueryAssembler(Interface):
 
 
 class IElasticSettings(Interface):
+
+    enabled = schema.Bool(title="Enabled", default=False)
+
     hosts = schema.List(
         title="Hosts",
         default=["127.0.0.1"],
         unique=True,
         value_type=schema.TextLine(title="Host"),
     )
-
-    enabled = schema.Bool(title="Enabled", default=False)
 
     es_only_indexes = schema.Set(
         title="Indexes for which all searches are done through ElasticSearch",

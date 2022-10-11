@@ -1,0 +1,30 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    >
+
+  <include package="plone.restapi" />
+
+  <adapter
+      factory=".controlpanel.ElasticSearchSettingsConfigletPanel"
+      name="elasticsearch"
+      />
+
+  <plone:service
+      method="GET"
+      factory=".elasticsearch.Info"
+      for="Products.CMFCore.interfaces.ISiteRoot"
+      permission="cmf.ManagePortal"
+      name="@elasticsearch"
+      />
+
+  <plone:service
+      method="POST"
+      factory=".elasticsearch.Maintenance"
+      for="Products.CMFCore.interfaces.ISiteRoot"
+      permission="cmf.ManagePortal"
+      name="@elasticsearch"
+      />
+
+
+</configure>

@@ -7,9 +7,12 @@
     >
 
   <include package="plone.app.registry" />
+  <include package="plone.restapi" />
 
   <include package=".browser" />
   <include package=".patches" />
+  <include package=".services" />
+
   <include file="profiles.zcml" />
 
   <adapter
