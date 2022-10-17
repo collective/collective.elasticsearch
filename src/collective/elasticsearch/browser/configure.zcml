@@ -33,4 +33,13 @@
       layer="..interfaces.IElasticSearchLayer"
       />
 
+  <browser:page
+      name="elastic-synchronize"
+      for="Products.CMFPlone.interfaces.basetool.IPloneCatalogTool"
+      class=".utilviews.Utils"
+      attribute="synchronize"
+      permission="cmf.ManagePortal"
+      layer="..interfaces.IElasticSearchLayer"
+      />
+
 </configure>
