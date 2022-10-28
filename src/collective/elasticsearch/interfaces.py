@@ -42,7 +42,7 @@ class IQueryAssembler(Interface):
 
 class IElasticSettings(Interface):
 
-    enabled = schema.Bool(title="Enabled", default=False)
+    enabled = schema.Bool(title="Enabled", default=False, required=False)
 
     hosts = schema.List(
         title="Hosts",
@@ -57,17 +57,19 @@ class IElasticSettings(Interface):
         value_type=schema.TextLine(title="Index"),
     )
 
-    sniff_on_start = schema.Bool(title="Sniff on start", default=False)
+    sniff_on_start = schema.Bool(title="Sniff on start", default=False, required=False)
 
     sniff_on_connection_fail = schema.Bool(
-        title="Sniff on connection fail", default=False
+        title="Sniff on connection fail", default=False, required=False
     )
 
     sniffer_timeout = schema.Float(
         title="Sniffer timeout", required=False, default=None
     )
 
-    retry_on_timeout = schema.Bool(title="Retry on timeout", default=True)
+    retry_on_timeout = schema.Bool(
+        title="Retry on timeout", default=True, required=False
+    )
 
     timeout = schema.Float(
         title="Read timeout",

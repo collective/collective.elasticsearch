@@ -18,7 +18,7 @@ YELLOW=`tput setaf 3`
 PLONE5=5.2-latest
 PLONE6=6.0-latest
 
-ELASTIC_SEARCH_IMAGE=elasticsearch:7.7.0
+ELASTIC_SEARCH_IMAGE=elasticsearch:7.17.7
 ELASTIC_SEARCH_CONTAINER=elastictest
 
 CONTAINERS=$$(docker ps -q -a -f "name=${ELASTIC_SEARCH_CONTAINER}" | wc -l)

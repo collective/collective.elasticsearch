@@ -2,7 +2,11 @@
 
 ## 5.0.1 (unreleased)
 
-- Nothing changed yet.
+- Update elasticsearch to 7.17.7 (Ready for 8.x and apple silicon images are available) @maethu
+
+- Control-Panel: Fix potential issue with bool fields @maethu
+
+- Tests: Wait for elasticsearch service @maethu
 
 
 ## 5.0.0 (2022-10-11)
