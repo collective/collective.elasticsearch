@@ -1,4 +1,5 @@
 from collective.elasticsearch import utils
+from collective.elasticsearch.browser.controlpanel import ElasticControlPanelView
 from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcessor
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.testing import ElasticSearch_API_TESTING
@@ -11,6 +12,9 @@ from zope.component import getUtility
 import time
 import transaction
 import unittest
+
+
+MAX_CONNECTION_RETRIES = 20
 
 
 class BaseTest(unittest.TestCase):
@@ -32,9 +36,12 @@ class BaseTest(unittest.TestCase):
         settings.enabled = True
         settings.sniffer_timeout = 0.0
 
+        self._wait_for_es_service()
+
         self.catalog = api.portal.get_tool("portal_catalog")
         self.catalog._elasticcustomindex = "plone-test-index"
         self.es = ElasticSearchManager()
+
         self.catalog.manage_catalogRebuild()
         # need to commit here so all tests start with a baseline
         # of elastic enabled
@@ -58,6 +65,15 @@ class BaseTest(unittest.TestCase):
         conn.indices.flush()
         # Wait ES remove the index
         time.sleep(0.1)
+
+    def _wait_for_es_service(self):
+        controlpanel = ElasticControlPanelView(self.portal, self.request)
+        counter = 0
+        while not controlpanel.connection_status:
+            if counter == MAX_CONNECTION_RETRIES:
+                raise Exception("Cannot connect to elasticsearch service")
+            time.sleep(1)
+            counter += 1
 
 
 class BaseFunctionalTest(BaseTest):
