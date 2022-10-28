@@ -5,24 +5,11 @@
 <body>
     <div metal:fill-slot="prefs_configlet_main" tal:define="status view/connection_status">
         <style>
-            #actions form {
-                display: inline;
-            }
-
-            #actions {
-                margin-bottom: 10px;
-            }
-
-            hr {
-                margin-bottom: 10px;
-            }
-
             #actions .rebuild {
                 padding: 5px;
                 border: 1px solid #ccc;
                 background-color: #f1f1f1;
             }
-
             .card {
                 position: relative;
                 display: flex;
@@ -35,17 +22,21 @@
                 border-radius: .25rem;
                 margin-bottom: 1em;
             }
-
             .card-header {
                 padding: .5rem 1rem;
                 margin-bottom: 0;
                 background-color: rgba(0, 0, 0, .03);
                 border-bottom: 1px solid rgba(0, 0, 0, .125);
             }
-
             .card-body {
                 flex: 1 1 auto;
                 padding: 1rem 1rem;
+            }
+            .actionsForm  {
+              padding-bottom: 12px
+            }
+            .actionsForm .portalMessage{
+              margin-bottom: 5px;
             }
         </style>
         <a href="${portal_url}/@@overview-controlpanel" id="setup-link" class="link-parent" i18n:translate="">
@@ -65,27 +56,41 @@
                     Actions
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <form method="POST" action="${purl}/@@elastic-convert">
-                                <span tal:replace="structure context/@@authenticator/authenticator" />
-                                <button type="submit" name="convert" class="btn btn-primary">Convert Catalog</button>
-                            </form>
-                        </div>
-                        <div class="col-md-12" tal:condition="view/active">
-                            <div class="col-md-2">
-                                <form method="POST" class="rebuild" action="${purl}/@@elastic-rebuild">
-                                    <span tal:replace="structure context/@@authenticator/authenticator" />
-                                    <button type="submit" name="convert" class="btn btn-danger">Rebuild Catalog</button>
-                                </form>
+                    <div class="col-xs-12 col-sm-12">
+                        <form class="actionsForm" method="POST" action="${purl}/@@elastic-convert">
+                            <span tal:replace="structure context/@@authenticator/authenticator" />
+                            <p class="formHelp">
+                              The <b>"Convert Catalog"</b> action will create an index on elasticsearch, if it does not exist, and will map all indexes in the catalog.
+                            </p>
+                            <button type="submit" name="convert" class="btn btn-primary">Convert Catalog</button>
+                        </form>
+                    </div>
+                    <div class="col-xs-12 col-sm-12"
+                        tal:define="enable_data_sync view/enable_data_sync"
+                        tal:condition="enable_data_sync">
+                        <form class="actionsForm" method="POST" action="${purl}/@@elastic-synchronize">
+                          <span tal:replace="structure context/@@authenticator/authenticator" />
+                          <p class="formHelp">
+                            The <b>"Synchronize"</b> action synchronizes the elasticsearch data with the catalog data. Currently there are <b>${enable_data_sync/elastic_docs}</b> documents indexed in elasticsearch and <b>${enable_data_sync/catalog_objs}</b> objects indexed in catalog.
+                          </p>
+                          <div class="portalMessage warning" role="status">
+                            <strong>Warning</strong> Could take a very long time. Use carefully.
+                          </div>
+                          <button type="submit" name="synchronize" class="btn btn-primary">Synchronize</button>
+                        </form>
+                    </div>
+                    <div class="col-xs-12 col-sm-12" tal:condition="view/active">
+                        <form class="actionsForm" method="POST" class="rebuild" action="${purl}/@@elastic-rebuild">
+                            <span tal:replace="structure context/@@authenticator/authenticator" />
+                            <p class="formHelp">
+                              The <b>"Rebuild Catalog"</b> action clears the catalog and indexes all objects with an 'indexObject' method. This may take a long time.
+                            </p>
+                            <div class="portalMessage warning" role="status">
+                              <strong>Warning</strong>
+                              Could take a very long time. Use carefully.
                             </div>
-                            <div class="col-md-10">
-                                <div class="portalMessage warning" role="status" style="padding-top:5px;padding-bottom:5px;">
-                                    <strong>Warning</strong>
-                                    Could take a very long time. Use carefully.
-                                </div>
-                            </div>
-                        </div>
+                            <button type="submit" name="convert" class="btn btn-danger">Rebuild Catalog</button>
+                        </form>
                     </div>
                 </div>
             </div>

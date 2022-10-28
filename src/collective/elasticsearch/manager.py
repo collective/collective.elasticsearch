@@ -68,7 +68,7 @@ class ElasticSearchManager:
         index_name = self.real_index_name
         catalog = api.portal.get_tool("portal_catalog")
         zcatalog = catalog._catalog
-        catalog_docs = len(zcatalog)
+        catalog_docs = len(zcatalog.getIndex("UID"))
         try:
             info = conn.info()
             cluster_name = info.get("name")

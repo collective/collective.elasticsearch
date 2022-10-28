@@ -64,6 +64,16 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     def active(self):
         return self.es.active
 
+    @property
+    def enable_data_sync(self):
+        if self.es_info:
+            info = dict((key, value) for key, value in self.es_info)
+            elastic_docs = info["Number of docs"]
+            catalog_objs = info["Number of docs (Catalog)"]
+            if elastic_docs != catalog_objs:
+                return dict(elastic_docs=elastic_docs, catalog_objs=catalog_objs)
+            return False
+
 
 ElasticControlPanelView = layout.wrap_form(
     ElasticControlPanelForm, ElasticControlPanelFormWrapper
