@@ -18,6 +18,8 @@ YELLOW=`tput setaf 3`
 PLONE5=5.2-latest
 PLONE6=6.0-latest
 
+INSTANCE_YAML=instance.yaml
+
 ELASTIC_SEARCH_IMAGE=elasticsearch:7.17.7
 ELASTIC_SEARCH_CONTAINER=elastictest
 
@@ -47,13 +49,24 @@ bin/pip:
 	python3 -m venv .
 	bin/pip install -U pip wheel
 
+.PHONY: cookiecutter
+cookiecutter: bin/pip
+	@echo "$(GREEN)Install cookiecutter$(RESET)"
+	bin/pip install git+https://github.com/cookiecutter/cookiecutter.git#egg=cookiecutter
+
+.PHONY: instance
+instance: cookiecutter ## create configuration for an zope (plone) instance
+	@echo "$(GREEN)Create Plone/Zope configuration$(RESET)"
+	rm -fr ./etc
+	bin/cookiecutter -f --no-input --config-file ${INSTANCE_YAML} https://github.com/bluedynamics/cookiecutter-zope-instance
+
 .PHONY: build-plone-5
 build-plone-5: bin/pip ## Build Plone 5.2
 	@echo "$(GREEN)==> Build with Plone 5.2$(RESET)"
 	bin/pip install Paste Plone -c https://dist.plone.org/release/$(PLONE5)/constraints.txt
 	bin/pip install "zest.releaser[recommended]"
 	bin/pip install -e ".[test]"
-	bin/mkwsgiinstance -d . -u admin:admin
+	make instance
 
 .PHONY: build-plone-6
 build-plone-6: bin/pip ## Build Plone 6.0
@@ -61,7 +74,7 @@ build-plone-6: bin/pip ## Build Plone 6.0
 	bin/pip install Plone -c https://dist.plone.org/release/$(PLONE6)/constraints.txt
 	bin/pip install "zest.releaser[recommended]"
 	bin/pip install -e ".[test]"
-	bin/mkwsgiinstance -d . -u admin:admin
+	make instance
 
 .PHONY: build
 build: build-plone-6 ## Build Plone 6.0
@@ -148,7 +161,7 @@ test: ## run tests
 
 .PHONY: start
 start: ## Start a Plone instance on localhost:8080
-	PYTHONWARNINGS=ignore ./bin/runwsgi etc/zope.ini
+	PYTHONWARNINGS=ignore ./bin/runwsgi instance/etc/zope.ini
 
 .PHONY: populate
 populate: ## Populate site with wikipedia content

@@ -1,0 +1,17 @@
+---
+# This is a cookiecutter configuration context file for
+#
+#   cookiecutter-zope-instance
+#
+# available options are documented at
+# https://github.com/bluedynamics/cookiecutter-zope-instance/
+
+default_context:
+    debug_mode: true
+    verbose_security: true
+    wsgi_listen: 0.0.0.0:8080
+    initial_user_name: admin
+    initial_user_password: admin
+    load_zcml:
+        package_includes: ['collective.elasticsearch']
+    db_storage: direct
