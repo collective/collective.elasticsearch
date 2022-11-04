@@ -44,6 +44,17 @@ class IElasticSettings(Interface):
 
     enabled = schema.Bool(title="Enabled", default=False, required=False)
 
+    use_redis = schema.Bool(
+        title="Use redis as queue",
+        description=(
+            "You can enable this option if you have installed redis, "
+            "set the necessary env variables and started a worker."
+            "Please check the README for more informations"
+        ),
+        default=False,
+        required=False,
+    )
+
     hosts = schema.List(
         title="Hosts",
         default=["127.0.0.1"],
