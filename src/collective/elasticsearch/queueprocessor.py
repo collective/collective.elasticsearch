@@ -152,6 +152,7 @@ class IndexProcessor:
         return wrapped_object
 
     def get_data(self, uuid, attributes=None):
+    def get_data_for_es(self, uuid, attributes=None):
         """Data to be sent to elasticsearch."""
         obj = api.portal.get() if uuid == "/" else api.content.get(UID=uuid)
         wrapped_object = self.wrap_object(obj)
