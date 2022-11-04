@@ -4,6 +4,7 @@ from collective.elasticsearch import logger
 from collective.elasticsearch import utils
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
+from collective.elasticsearch.utils import use_redis
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
@@ -163,11 +164,25 @@ class ElasticSearchManager:
         return conn
 
     def _bulk_call(self, batch):
+        method = self._bulk_call_direct
+        if use_redis():
+            method = self._bulk_call_redis
+        return method(batch)
+
+    def _bulk_call_direct(self, batch):
         data = [item for sublist in batch for item in sublist]
         logger.info(f"Bulk call with {len(data)} entries and {len(batch)} actions.")
         result = self.connection.bulk(index=self.index_name, body=data)
         if "errors" in result and result["errors"] is True:
             logger.error(f"Error in bulk operation: {result}")
+
+    def _bulk_call_redis(self, batch):
+        from collective.elasticsearch.redis.tasks import bulk_update
+
+        logger.info(f"Bulk call with {len(batch)} entries and {len(batch)} actions.")
+        hosts, params = utils.get_connection_settings()
+        job = bulk_update.delay(hosts, params, index_name=self.index_name, body=batch)
+        logger.info("redis task created")
 
     def flush_indices(self):
         self.connection.indices.flush()

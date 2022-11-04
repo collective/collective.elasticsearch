@@ -10,6 +10,7 @@ from plone import api
 from Products.CMFCore.indexing import processQueue
 from zope.component import getUtility
 
+import os
 import time
 import transaction
 import unittest
@@ -30,6 +31,8 @@ class BaseTest(unittest.TestCase):
         self.request = self.layer["request"]
         self.request.environ["testing"] = True
         self.app = self.layer["app"]
+
+        os.environ["PLONE_BACKEND"] = utils.PLONE_BACKEND = self.portal.absolute_url()
 
         settings = utils.get_settings()
         # disable sniffing hosts in tests because docker...

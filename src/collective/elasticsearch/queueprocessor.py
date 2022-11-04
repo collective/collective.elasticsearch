@@ -6,6 +6,7 @@ from collective.elasticsearch.interfaces import IndexingActions
 from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.elasticsearch.utils import use_redis
 from plone import api
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
@@ -13,6 +14,8 @@ from zope.component import getAdapters
 from zope.component import queryMultiAdapter
 from zope.globalrequest import getRequest
 from zope.interface import implementer
+
+import transaction
 
 
 @implementer(IElasticSearchIndexQueueProcessor)
@@ -129,6 +132,20 @@ class IndexProcessor:
         pass
 
     def commit(self, wait=None):
+        method = self.commit_direct
+        if use_redis():
+            method = self.commit_redis
+        return method(wait=wait)
+
+    def commit_redis(self, wait=None):
+        """Since we defere indexing to a external queue. We need to make sure
+        the transaction is commited and synced with all threads.
+        Thus for the redis integration we call the run the 'update' in the
+        addAfterCommitHook of the transaction
+        """
+        transaction.get().addAfterCommitHook(self.commit_direct)
+
+    def commit_direct(self, wait=None):
         """Transaction commit."""
         actions = self.actions
         items = len(actions) if actions else 0
@@ -152,6 +169,18 @@ class IndexProcessor:
         return wrapped_object
 
     def get_data(self, uuid, attributes=None):
+        method = self.get_data_for_es
+        if use_redis():
+            method = self.get_data_for_redis
+        return method(uuid, attributes=attributes)
+
+    def get_data_for_redis(self, uuid, attributes=None):
+        attributes = attributes if attributes else self.all_attributes
+        index_data = {}
+        for index_name in attributes:
+            index_data[index_name] = None
+        return index_data
+
     def get_data_for_es(self, uuid, attributes=None):
         """Data to be sent to elasticsearch."""
         obj = api.portal.get() if uuid == "/" else api.content.get(UID=uuid)
