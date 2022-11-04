@@ -1,6 +1,9 @@
+from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
+from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import getUID
+from parameterized import parameterized_class
 from plone import api
 from plone.app.contentrules.actions.move import MoveAction
 from plone.app.contentrules.tests.dummy import DummyEvent
@@ -9,6 +12,12 @@ from Products.CMFCore.indexing import processQueue
 from zope.component import getMultiAdapter
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestQueueProcessor(BaseFunctionalTest):
     def test_has_right_brain_data(self):
         processor = self.get_processor()
@@ -64,6 +73,12 @@ class TestQueueProcessor(BaseFunctionalTest):
         self.assertIn(obj_uid, processor.actions.index)
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestMoveReindex(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -115,6 +130,12 @@ class TestMoveReindex(BaseFunctionalTest):
         self.assertEqual(idxs[0], "getObjPositionInParent")
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestRemoveIndexFromCatalog(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -145,6 +166,13 @@ class TestRemoveIndexFromCatalog(BaseFunctionalTest):
         uid = getUID(document)
         self.assertIn(uid, actions.reindex)
         self.assertIn("SearchableText", actions.reindex[uid])
-        self.assertIn("Common", actions.reindex[uid]["SearchableText"])
-        self.assertIn("Title", actions.reindex[uid])
-        self.assertIn("Common", actions.reindex[uid]["Title"])
+
+        if self.layer == ElasticSearch_FUNCTIONAL_TESTING:
+            self.assertIn("Common", actions.reindex[uid]["SearchableText"])
+            self.assertIn("Title", actions.reindex[uid])
+            self.assertIn("Common", actions.reindex[uid]["Title"])
+        if self.layer == ElasticSearch_REDIS_TESTING:
+            # There is a slight change in the API for redis. We do no extract
+            # any data at this time.
+            self.assertIsNone(actions.reindex[uid]["Title"])
+            self.assertIsNone(actions.reindex[uid]["SearchableText"])
