@@ -8,6 +8,22 @@ from typing import List
 from zope.component import getUtility
 
 import math
+import os
+import pkg_resources
+
+
+HAS_REDIS_MODULE = False
+try:
+    pkg_resources.get_distribution("redis")
+    HAS_REDIS_MODULE = True
+except pkg_resources.DistributionNotFound:
+    HAS_REDIS_MODULE = False
+
+
+PLONE_REDIS_DSN = os.environ.get("PLONE_REDIS_DSN", None)
+PLONE_USERNAME = os.environ.get("PLONE_USERNAME", None)
+PLONE_PASSWORD = os.environ.get("PLONE_PASSWORD", None)
+PLONE_BACKEND = os.environ.get("PLONE_BACKEND", None)
 
 
 def getUID(obj):
@@ -68,3 +84,22 @@ def format_size_mb(value: int) -> str:
     """Format a size, in bytes, to mb."""
     value = value / 1024.0 / 1024.0
     return f"{int(math.ceil(value))} MB"
+
+
+def is_redis_available():
+    """Determens if redis could be available"""
+    env_variables = [
+        HAS_REDIS_MODULE,
+        os.environ.get("PLONE_REDIS_DSN", None),
+        os.environ.get("PLONE_USERNAME", None),
+        os.environ.get("PLONE_PASSWORD", None),
+        os.environ.get("PLONE_BACKEND", None),
+    ]
+    return all(env_variables)
+
+
+def use_redis():
+    """
+    Determens if redis queueing should be used or not.
+    """
+    return is_redis_available() and get_settings().use_redis
