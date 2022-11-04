@@ -5,6 +5,7 @@ from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.testing import ElasticSearch_API_TESTING
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_INTEGRATION_TESTING
+from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from plone import api
 from Products.CMFCore.indexing import processQueue
 from zope.component import getUtility
@@ -90,3 +91,8 @@ class BaseFunctionalTest(BaseTest):
 class BaseAPITest(BaseTest):
 
     layer = ElasticSearch_API_TESTING
+
+
+class BaseRedisTest(BaseTest):
+
+    layer = ElasticSearch_REDIS_TESTING
