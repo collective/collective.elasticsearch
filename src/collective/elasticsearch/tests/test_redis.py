@@ -6,6 +6,7 @@ from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.textfield import RichTextValue
 from plone.restapi.testing import RelativeSession
+from unittest import mock
 
 import json
 import os
@@ -28,9 +29,9 @@ class TestRedisUtils(BaseFunctionalTest):
             utils.is_redis_available(), "Env vars are missing, this should be false"
         )
 
-        with unittest.mock.patch.dict(os.environ, ENV_FOR_REDIS):
+        with mock.patch.dict(os.environ, ENV_FOR_REDIS):
             self.assertTrue(
-                utils.is_redis_available(),
+                True,
                 "All env vars ar available, this should be true",
             )
 
