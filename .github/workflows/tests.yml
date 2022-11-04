@@ -39,7 +39,7 @@ jobs:
 
       - name: Install package
         run: |
-          pip install -e ".[test]"
+          pip install -e ".[test, redis]"
 
       # test
       - name: test
