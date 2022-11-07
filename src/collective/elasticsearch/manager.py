@@ -181,7 +181,7 @@ class ElasticSearchManager:
 
         logger.info(f"Bulk call with {len(batch)} entries and {len(batch)} actions.")
         hosts, params = utils.get_connection_settings()
-        job = bulk_update.delay(hosts, params, index_name=self.index_name, body=batch)
+        bulk_update.delay(hosts, params, index_name=self.index_name, body=batch)
         logger.info("redis task created")
 
     def flush_indices(self):

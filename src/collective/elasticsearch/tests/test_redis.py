@@ -11,7 +11,6 @@ from unittest import mock
 import json
 import os
 import transaction
-import unittest
 
 
 ENV_FOR_REDIS = {
