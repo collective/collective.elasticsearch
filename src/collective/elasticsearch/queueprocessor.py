@@ -8,12 +8,15 @@ from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import use_redis
 from plone import api
+from plone.dexterity.utils import iterSchemata
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
+from plone.namedfile.interfaces import INamedBlobFileField
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
 from zope.globalrequest import getRequest
 from zope.interface import implementer
+from zope.schema import getFields
 
 import transaction
 
@@ -68,6 +71,7 @@ class IndexProcessor:
                 index={},
                 reindex={},
                 unindex={},
+                index_blobs={},
                 uuid_path={},
             )
         return self._actions
@@ -96,6 +100,7 @@ class IndexProcessor:
             attributes = {att for att in attributes} if attributes else set()
             is_reindex = attributes and attributes != self.all_attributes
         data = self.get_data(uuid, attributes)
+        blob_data = self.get_blob_data(uuid, obj)
         if is_reindex and uuid in actions.index:
             # Reindexing something that was not processed yet
             actions.index[uuid].update(data)
@@ -103,14 +108,17 @@ class IndexProcessor:
         elif is_reindex:
             # Simple reindexing
             actions.reindex[uuid] = data
+            actions.index_blobs[uuid] = blob_data
             return
         elif uuid in actions.reindex:
             # Remove from reindex
             actions.reindex.pop(uuid)
+
         elif uuid in actions.unindex:
             # Remove from unindex
             actions.unindex.pop(uuid)
         actions.index[uuid] = data
+        actions.index_blobs[uuid] = blob_data
 
     def reindex(self, obj, attributes=None, update_metadata=False):
         """Reindex the specified attributes for an obj."""
@@ -132,7 +140,8 @@ class IndexProcessor:
         pass
 
     def commit(self, wait=None):
-        method = self.commit_direct
+        """Transaction commit."""
+        method = self.commit_es
         if use_redis():
             method = self.commit_redis
         return method(wait=wait)
@@ -140,12 +149,25 @@ class IndexProcessor:
     def commit_redis(self, wait=None):
         """Since we defere indexing to a external queue. We need to make sure
         the transaction is commited and synced with all threads.
-        Thus for the redis integration we call the run the 'update' in the
+        Thus for the redis integration we run the 'commit' in the
         addAfterCommitHook of the transaction
         """
-        transaction.get().addAfterCommitHook(self.commit_direct)
 
-    def commit_direct(self, wait=None):
+        transaction.get().addAfterCommitHook(self._commit_hook_redis)
+
+    def _commit_hook_redis(self, wait=None):
+        """The after commit hook from redis, includes updateing blobs as
+        well."""
+        actions = self.actions
+        items = len(actions) if actions else 0
+        if self.manager.active and items:
+            self.manager.bulk(data=actions.all())
+        for item in self.actions.all_blob_actions():
+            self.manager.update_blob(item)
+
+        self._clean_up()
+
+    def commit_es(self, wait=None):
         """Transaction commit."""
         actions = self.actions
         items = len(actions) if actions else 0
@@ -222,4 +244,19 @@ class IndexProcessor:
             for _, adapter in additional_providers:
                 index_data.update(adapter(catalog, index_data))
 
+        return index_data
+
+    def get_blob_data(self, uuid, obj):
+        """Go thru schemata and extract infos about blob fields"""
+        index_data = {}
+        portal_segments = api.portal.get().getPhysicalPath()
+        obj_segements = obj.getPhysicalPath()
+        relative_path = "/".join(obj_segements[len(portal_segments):])
+        for schema in iterSchemata(obj):
+            for name, field in getFields(schema).items():
+                if INamedBlobFileField.providedBy(field) and field.get(obj):
+                    index_data[name] = {
+                        "path": relative_path,
+                        "filename": field.get(obj).filename,
+                    }
         return index_data

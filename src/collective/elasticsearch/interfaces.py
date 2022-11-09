@@ -103,6 +103,7 @@ class IndexingActions:
     index: Dict[str, dict]
     reindex: Dict[str, dict]
     unindex: Dict[str, dict]
+    index_blobs: Dict[str, dict]
     uuid_path: Dict[str, str]
 
     def __len__(self):
@@ -125,3 +126,6 @@ class IndexingActions:
             if action_data:
                 all_data.extend([(action, uuid, data) for uuid, data in action_data])
         return all_data
+
+    def all_blob_actions(self):
+        return [(uuid, data) for uuid, data in getattr(self, "index_blobs", {}).items()]

@@ -184,6 +184,15 @@ class ElasticSearchManager:
         bulk_update.delay(hosts, params, index_name=self.index_name, body=batch)
         logger.info("redis task created")
 
+    def update_blob(self, item):
+        from collective.elasticsearch.redis.tasks import update_file_data
+
+        hosts, params = utils.get_connection_settings()
+
+        if item[1]:
+            update_file_data.delay(hosts, params, index_name=self.index_name, body=item)
+            logger.info("redis task to index blob data created")
+
     def flush_indices(self):
         self.connection.indices.flush()
 
