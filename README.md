@@ -42,6 +42,14 @@ docker run \
 		elasticsearch:7.7.0
 ```
 
+## Add ingest-attachment plugin
+
+In order to enable indexing blob/binary into the SearchableText index as well, you need to install this plugin manually.
+
+```shell
+docker exec CONTAINER_NAME /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
+```
+
 ### Test the installation
 
 Run, on your shell:

@@ -145,7 +145,10 @@ elastic: ## Create Elastic Search container
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
 		-p 9300:9300 \
-		$(ELASTIC_SEARCH_IMAGE);fi
+		$(ELASTIC_SEARCH_IMAGE); \
+		docker start $(ELASTIC_SEARCH_CONTAINER); \
+		docker exec $(ELASTIC_SEARCH_CONTAINER) /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
+		docker stop $(ELASTIC_SEARCH_CONTAINER);fi
 
 .PHONY: start-elastic
 start-elastic: elastic ## Start Elastic Search
