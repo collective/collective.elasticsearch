@@ -1,5 +1,6 @@
 from collective.elasticsearch import utils
 
+import io
 import os
 import requests
 
@@ -7,6 +8,12 @@ import requests
 session = requests.Session()
 session.headers.update({"Accept": "application/json"})
 session.auth = (
+    str(os.environ.get("PLONE_USERNAME", None)),
+    str(os.environ.get("PLONE_PASSWORD", None)),
+)
+
+session_data = requests.Session()
+session_data.auth = (
     str(os.environ.get("PLONE_USERNAME", None)),
     str(os.environ.get("PLONE_PASSWORD", None)),
 )
@@ -22,3 +29,11 @@ def fetch_data(uuid, attributes):
             return content["data"]
     else:
         raise Exception("Bad response from Plone Backend")
+
+
+def fetch_blob_data(fieldname, data):
+    download_url = "/".join(
+        [utils.PLONE_BACKEND, data[fieldname]["path"], "@@download", fieldname]
+    )
+    file_ = session_data.get(download_url)
+    return io.BytesIO(file_.content)
