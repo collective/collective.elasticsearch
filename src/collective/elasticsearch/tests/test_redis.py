@@ -8,6 +8,7 @@ from plone.app.textfield import RichTextValue
 from plone.dexterity.fti import DexterityFTIModificationDescription
 from plone.dexterity.fti import ftiModified
 from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
 from plone.restapi.testing import RelativeSession
 from unittest import mock
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -131,15 +132,17 @@ class TestIndexBlobs(BaseRedisTest):
     def setUp(self):
         super().setUp()
 
+    def _setup_sample_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "assets/test.pdf")
         with io.FileIO(file_path, "rb") as pdf:
-            self._file = api.content.create(
+            _file = api.content.create(
                 container=api.portal.get(),
                 type="File",
                 id="test-file",
                 file=NamedBlobFile(data=pdf.read(), filename="test.pdf"),
             )
         self.commit(wait=1)
+        return _file
 
     def _set_model_file(self, fti, path_to_xml):
         fti.model_file = path_to_xml
@@ -151,6 +154,7 @@ class TestIndexBlobs(BaseRedisTest):
         )
 
     def test_index_data_from_file(self):
+        self._setup_sample_file()
         query = {"SearchableText": "text"}
         cat_results = self.catalog._old_searchResults(**query)
         self.assertEqual(0, len(cat_results), "Expect no result")
@@ -158,17 +162,18 @@ class TestIndexBlobs(BaseRedisTest):
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
     def test_update_and_delete_file(self):
+        file_ = self._setup_sample_file()
         file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
         with io.FileIO(file_path, "rb") as word:
-            self._file.file = NamedBlobFile(data=word.read(), filename="test2.docx")
-            self._file.reindexObject()
+            file_.file = NamedBlobFile(data=word.read(), filename="test2.docx")
+            file_.reindexObject()
         self.commit(wait=1)
 
         query = {"SearchableText": "Lorem"}
         es_results = self.catalog(**query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
-        self.portal.manage_delObjects(ids=[self._file.getId()])
+        self.portal.manage_delObjects(ids=[file_.getId()])
         self.commit(wait=1)
 
         query = {"SearchableText": "lorem"}
@@ -176,7 +181,8 @@ class TestIndexBlobs(BaseRedisTest):
         self.assertEqual(0, len(es_results), "Expect no item")
 
     def test_make_sure_binary_data_are_removed_from_es(self):
-        es_data = self.es.connection.get(self.es.index_name, self._file.UID())
+        file_ = self._setup_sample_file()
+        es_data = self.es.connection.get(self.es.index_name, file_.UID())
         self.assertIsNone(es_data["_source"]["attachments"][0]["data"])
 
     def test_multiple_file_fields(self):
@@ -200,7 +206,7 @@ class TestIndexBlobs(BaseRedisTest):
 
         query = {"SearchableText": "text"}
         es_results = self.catalog(**query)
-        self.assertEqual(2, len(es_results), "Expect 1 item")
+        self.assertEqual(1, len(es_results), "Expect 1 item")
 
         es_data = self.es.connection.get(self.es.index_name, file_.UID())
         self.assertIsNone(es_data["_source"]["attachments"][0]["data"])
@@ -233,3 +239,21 @@ class TestIndexBlobs(BaseRedisTest):
         query = {"SearchableText": "lorem"}
         es_results = self.catalog(**query)
         self.assertEqual(0, len(es_results), "Expect 0 item")
+
+    def test_do_not_index_data_from_images(self):
+        file_path = os.path.join(os.path.dirname(__file__), "assets/image.png")
+        with io.FileIO(file_path, "rb") as image:
+            _image = api.content.create(
+                container=api.portal.get(),
+                type="Image",
+                id="test-file",
+                image=NamedBlobImage(data=image.read(), filename="image.png"),
+            )
+        self.commit(wait=1)
+
+        es_data = self.es.connection.get(self.es.index_name, _image.UID())
+        self.assertNotIn(
+            "attachments",
+            es_data["_source"],
+            "Expect not attachments on es data for a image",
+        )
