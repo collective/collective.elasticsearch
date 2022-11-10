@@ -29,6 +29,12 @@ REDIS_CONTAINER=redistest
 ELASTIC_SEARCH_CONTAINERS=$$(docker ps -q -a -f "name=${ELASTIC_SEARCH_CONTAINER}" | wc -l)
 REDIS_CONTAINERS=$$(docker ps -q -a -f "name=${REDIS_CONTAINER}" | wc -l)
 
+# Default env for elasticsearch with redis queue
+DEFAULT_ENV_ES_REDIS=PLONE_REDIS_DSN=redis://localhost:6379/0 \
+	PLONE_BACKEND=http://localhost:8080/Plone \
+	PLONE_USERNAME=admin \
+	PLONE_PASSWORD=admin
+
 ifndef LOG_LEVEL
 	LOG_LEVEL=INFO
 endif
@@ -194,3 +200,15 @@ start: ## Start a Plone instance on localhost:8080
 .PHONY: populate
 populate: ## Populate site with wikipedia content
 	PYTHONWARNINGS=ignore ./bin/zconsole run etc/zope.conf scripts/populate.py
+
+.PHONY: start-redis-support
+start-redis-support: ## Start a Plone instance on localhost:8080
+	@echo "$(GREEN)==> Set env variables, PLONE_REDIS_DSN, PLONE_BACKEND, PLONE_USERNAME and PLONE_PASSWORD before start instance$(RESET)"
+	PYTHONWARNINGS=ignore \
+	$(DEFAULT_ENV_ES_REDIS) \
+	./bin/runwsgi instance/etc/zope.ini
+
+
+.PHONY: worker
+worker: ## Start a worker for the redis queue
+	$(DEFAULT_ENV_ES_REDIS) ./bin/rq worker normal low --with-scheduler
