@@ -215,3 +215,21 @@ class TestIndexBlobs(BaseRedisTest):
         self.assertEqual(0, len(es_results), "Expect 0 item")
 
         self._set_model_file(fti, "plone.app.contenttypes.schema:file.xml")
+
+    def test_dont_queue_blob_extraction_jobs_if_not_possible(self):
+        settings = {"index": {"default_pipeline": None}}
+        self.es.connection.indices.put_settings(body=settings, index=self.es.index_name)
+        self.es.connection.ingest.delete_pipeline("cbor-attachments")
+        file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
+        with io.FileIO(file_path, "rb") as pdf:
+            self._file = api.content.create(
+                container=api.portal.get(),
+                type="File",
+                id="test-file2",
+                file=NamedBlobFile(data=pdf.read(), filename="test2.docx"),
+            )
+        self.commit(wait=1)
+
+        query = {"SearchableText": "lorem"}
+        es_results = self.catalog(**query)
+        self.assertEqual(0, len(es_results), "Expect 0 item")

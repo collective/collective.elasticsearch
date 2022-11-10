@@ -162,8 +162,13 @@ class IndexProcessor:
         items = len(actions) if actions else 0
         if self.manager.active and items:
             self.manager.bulk(data=actions.all())
-        for item in self.actions.all_blob_actions():
-            self.manager.update_blob(item)
+
+        # make sure attachment plugin and cbor-attachments pipeline are available
+        pipeline = "cbor-attachments" in self.manager.connection.ingest.get_pipeline()
+        plugin = "attachment" in self.manager.connection.cat.plugins()
+        if pipeline and plugin:
+            for item in self.actions.all_blob_actions():
+                self.manager.update_blob(item)
 
         self._clean_up()
 

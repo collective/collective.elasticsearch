@@ -171,6 +171,10 @@ class ElasticSearchManager:
         There is a condition defined, so the pipeline is only triggered if
         actual binary data is available to extract.
         """
+
+        if "attachment" not in self.connection.cat.plugins():
+            return
+
         body = {
             "description": "Extract attachment information and append extracted data to SearchableText",
             "processors": [
