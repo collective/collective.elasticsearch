@@ -256,7 +256,7 @@ class IndexProcessor:
         index_data = {}
         portal_segments = api.portal.get().getPhysicalPath()
         obj_segements = obj.getPhysicalPath()
-        relative_path = "/".join(obj_segements[len(portal_segments) :])
+        relative_path = "/".join(obj_segements[len(portal_segments):])
         for schema in iterSchemata(obj):
             for name, field in getFields(schema).items():
                 if INamedBlobFileField.providedBy(field) and field.get(obj):
