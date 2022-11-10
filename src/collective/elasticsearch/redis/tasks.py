@@ -1,9 +1,11 @@
+from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from elasticsearch import Elasticsearch
 from rq import Queue
 from rq import Retry
 from rq.decorators import job
 
+import cbor2
 import os
 import redis
 
@@ -46,4 +48,33 @@ def bulk_update(hosts, params, index_name, body):
 
     es_data = [item for sublist in body for item in sublist]
     connection.bulk(index=index_name, body=es_data)
+    return "Done"
+
+
+@job(queue_low)
+def update_file_data(hosts, params, index_name, body):
+    """
+    Get blob data from plone and index it via elasticsearch attachment pipeline
+    """
+    connection = Elasticsearch(hosts, **params)
+    uuid, data = body
+
+    attachments = {"attachments": []}
+
+    for fieldname, content in data.items():
+        file_ = fetch_blob_data(fieldname, data)
+        attachments["attachments"].append(
+            {
+                "filename": content["filename"],
+                "fieldname": fieldname,
+                "data": file_.read(),
+            }
+        )
+
+    connection.update(
+        index_name,
+        uuid,
+        cbor2.dumps({"doc": attachments}),
+        headers={"content-type": "application/cbor"},
+    )
     return "Done"

@@ -74,6 +74,7 @@ setup(
             "redis",
             "rq",
             "requests",
+            "cbor2",
         ],
     },
     entry_points="""
