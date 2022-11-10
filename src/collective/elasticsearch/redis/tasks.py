@@ -15,6 +15,12 @@ queue = Queue(
     is_async=os.environ.get("ZOPETESTCASE", "0") == "0",
 )  # Don't queue in tests
 
+queue_low = Queue(
+    "low",
+    connection=redis_connection,
+    is_async=os.environ.get("ZOPETESTCASE", "0") == "0",
+)  # Don't queue in tests
+
 
 @job(queue, retry=Retry(max=3, interval=30))
 def bulk_update(hosts, params, index_name, body):
