@@ -27,7 +27,7 @@
       source="*"
       destination="1"
       >
-  </genericsetup:upgradeSteps>
+</genericsetup:upgradeSteps>
 
   <genericsetup:upgradeSteps
       profile="collective.elasticsearch:default"

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <model xmlns="http://namespaces.plone.org/supermodel/schema"
        xmlns:i18n="http://xml.zope.org/namespaces/i18n"
        xmlns:marshal="http://namespaces.plone.org/supermodel/marshal"
