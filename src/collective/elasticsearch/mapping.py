@@ -66,4 +66,12 @@ class MappingAdapter:
             if key in self._search_attributes:
                 properties[key]["store"] = True
 
+        properties["attachments"] = {
+            "properties": {
+                "data": {"type": "binary"},
+                "filename": {"type": "text"},
+                "fieldname": {"type": "text"},
+            }
+        }
+
         return {"properties": properties}
