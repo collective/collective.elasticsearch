@@ -1,0 +1,36 @@
+<model xmlns="http://namespaces.plone.org/supermodel/schema"
+       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+       xmlns:marshal="http://namespaces.plone.org/supermodel/marshal"
+       i18n:domain="plone"
+>
+  <schema>
+    <field name="title"
+           type="zope.schema.TextLine"
+    >
+      <description />
+      <required>False</required>
+      <title i18n:translate="">Title</title>
+    </field>
+    <field name="description"
+           type="zope.schema.Text"
+    >
+      <description />
+      <required>False</required>
+      <title i18n:translate="">Description</title>
+    </field>
+    <field marshal:primary="true"
+           name="file"
+           type="plone.namedfile.field.NamedBlobFile"
+    >
+      <description />
+      <title i18n:translate="label_file">File</title>
+    </field>
+    <field marshal:primary="true"
+           name="file2"
+           type="plone.namedfile.field.NamedBlobFile"
+    >
+      <description />
+      <title i18n:translate="label_file">File 2</title>
+    </field>
+  </schema>
+</model>

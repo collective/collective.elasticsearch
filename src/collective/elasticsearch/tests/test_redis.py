@@ -5,9 +5,14 @@ from plone import api
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.textfield import RichTextValue
+from plone.dexterity.fti import DexterityFTIModificationDescription
+from plone.dexterity.fti import ftiModified
+from plone.namedfile.file import NamedBlobFile
 from plone.restapi.testing import RelativeSession
 from unittest import mock
+from zope.lifecycleevent import ObjectModifiedEvent
 
+import io
 import json
 import os
 import transaction
@@ -120,3 +125,93 @@ class TestExtractRestApiEndpoint(BaseRedisTest):
         params = {"uuid": self.obj.UID()}
         response = self.api_session.get(self.endpoint, params=params)
         self.assertEqual(response.status_code, 401)
+
+
+class TestIndexBlobs(BaseRedisTest):
+    def setUp(self):
+        super().setUp()
+
+        file_path = os.path.join(os.path.dirname(__file__), "assets/test.pdf")
+        with io.FileIO(file_path, "rb") as pdf:
+            self._file = api.content.create(
+                container=api.portal.get(),
+                type="File",
+                id="test-file",
+                file=NamedBlobFile(data=pdf.read(), filename="test.pdf"),
+            )
+        self.commit(wait=1)
+
+    def _set_model_file(self, fti, path_to_xml):
+        fti.model_file = path_to_xml
+        ftiModified(
+            fti,
+            ObjectModifiedEvent(
+                fti, DexterityFTIModificationDescription("model_file", "")
+            ),
+        )
+
+    def test_index_data_from_file(self):
+        query = {"SearchableText": "text"}
+        cat_results = self.catalog._old_searchResults(**query)
+        self.assertEqual(0, len(cat_results), "Expect no result")
+        es_results = self.catalog(**query)
+        self.assertEqual(1, len(es_results), "Expect 1 item")
+
+    def test_update_and_delete_file(self):
+        file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
+        with io.FileIO(file_path, "rb") as word:
+            self._file.file = NamedBlobFile(data=word.read(), filename="test2.docx")
+            self._file.reindexObject()
+        self.commit(wait=1)
+
+        query = {"SearchableText": "Lorem"}
+        es_results = self.catalog(**query)
+        self.assertEqual(1, len(es_results), "Expect 1 item")
+
+        self.portal.manage_delObjects(ids=[self._file.getId()])
+        self.commit(wait=1)
+
+        query = {"SearchableText": "lorem"}
+        es_results = self.catalog(**query)
+        self.assertEqual(0, len(es_results), "Expect no item")
+
+    def test_make_sure_binary_data_are_removed_from_es(self):
+        es_data = self.es.connection.get(self.es.index_name, self._file.UID())
+        self.assertIsNone(es_data["_source"]["attachments"][0]["data"])
+
+    def test_multiple_file_fields(self):
+        fti = self.portal.portal_types.File
+        self._set_model_file(fti, "collective.elasticsearch.tests:test_file_schema.xml")
+        file_path_1 = os.path.join(os.path.dirname(__file__), "assets/test.pdf")
+        file_path_2 = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
+        with io.FileIO(file_path_1, "rb") as pdf, io.FileIO(file_path_2, "rb") as word:
+            file_ = api.content.create(
+                container=api.portal.get(),
+                type="File",
+                id="test-file-multiple-file-fields",
+                file=NamedBlobFile(data=pdf.read(), filename="test.pdf"),
+                file2=NamedBlobFile(data=word.read(), filename="test2.docx"),
+            )
+        self.commit(wait=1)
+
+        query = {"SearchableText": "lorem"}
+        es_results = self.catalog(**query)
+        self.assertEqual(1, len(es_results), "Expect 1 item")
+
+        query = {"SearchableText": "text"}
+        es_results = self.catalog(**query)
+        self.assertEqual(2, len(es_results), "Expect 1 item")
+
+        es_data = self.es.connection.get(self.es.index_name, file_.UID())
+        self.assertIsNone(es_data["_source"]["attachments"][0]["data"])
+        self.assertIsNone(es_data["_source"]["attachments"][1]["data"])
+
+        file_.file2 = None
+        file_.reindexObject()
+        self.commit(wait=1)
+
+        query = {"SearchableText": "lorem"}
+        es_results = self.catalog(**query)
+        self.assertEqual(0, len(es_results), "Expect 0 item")
+
+        self._set_model_file(fti, "plone.app.contenttypes.schema:file.xml")
