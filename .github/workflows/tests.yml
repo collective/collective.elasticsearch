@@ -4,15 +4,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     services:
-      elastic:
-        image: elasticsearch:7.17.7
-        env:
-          discovery.type: single-node
-          cluster.name: docker-cluster
-          ES_JAVA_OPTS: -Xms512m -Xmx512m
-        ports:
-          - 9200:9200
-          - 9300:9300
       redis:
         image: redis:7.0.5
         # Set health checks to wait until redis has started
@@ -39,6 +30,23 @@ jobs:
     steps:
       # git checkout
       - uses: actions/checkout@v2
+
+      - name: Setup elasticsearch docker container with ingest attachment plugin
+        run: |
+          docker container create --name elastictest \
+          -e "discovery.type=single-node" \
+          -e "cluster.name=docker-cluster" \
+          -e "http.cors.enabled=true" \
+          -e "http.cors.allow-origin=*" \
+          -e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
+          -e "http.cors.allow-credentials=true" \
+          -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+          -p 9200:9200 \
+          -p 9300:9300 \
+          elasticsearch:7.17.7; \
+          docker start elastictest; \
+          docker exec elastictest /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
+          docker restart elastictest
 
       - name: Setup Plone ${{ matrix.plone }} with Python ${{ matrix.python }}
         id: setup
