@@ -197,14 +197,27 @@ class ElasticSearchManager:
                         "if": 'ctx.containsKey("attachments")',
                         "source": """
                             for(int i=0; i<ctx['attachments'].length;++i) {
-                                if(ctx['attachments'][i]['attachment']['content'].length() > 0)
-                                    ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
+                                if(ctx['attachments'][i]['attachment'].containsKey('content')) {
+                                    if (ctx['attachments'][i]['attachment']['content'].length() > 0) {
+                                        ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
+                                    }
                                     ctx['attachments'][i]['data'] = null;
+                                }
                             }
                             """,
                     }
                 },
             ],
+            # Enable this for debugging the pipeline
+            # "on_failure": [
+            #     {
+            #         "set": {
+            #             "description": "Record error information",
+            #             "field": "error_information",
+            #             "value": "Processor {{ _ingest.on_failure_processor_type }} with tag {{ _ingest.on_failure_processor_tag }} in pipeline {{ _ingest.on_failure_pipeline }} failed with message {{ _ingest.on_failure_message }}"
+            #         }
+            #     }
+            # ]
         }
         self.connection.ingest.put_pipeline("cbor-attachments", body=body)
 
