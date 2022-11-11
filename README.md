@@ -72,6 +72,19 @@ You now have a insanely scalable modern search engine. Now live the life of the 
 
 ## Redis queue integration with blob indexing support
 
+### TLDR
+
+```shell
+docker-compose -f docker-compose.dev.yaml up -d
+```
+
+Your Plone site should be up and running: http://localhost:8080/Plone
+
+- Go to `Add-on Configuration`
+- Check "Enable"
+- Click "Convert Catalog"
+- Click "Rebuild Catalog"
+
 ### Why
 
 Having a queue, which does heavy and time consuming jobs asynchronous improves the responsiveness of the website and lowers
@@ -102,7 +115,6 @@ Trade of: Instead of a fully indexed document in elasticsearch we have pretty fa
 ### Requirements
 
 There are a couple things that need to be done manually if you want redis queue support.
-First everything described above needs to done as well.
 
 
 1. Install redis extra from collective.elasticsearch

@@ -14,6 +14,14 @@
       />
 
   <genericsetup:registerProfile
+      name="docker-dev"
+      title="Elastic Search used within a docker setup"
+      description="Installs the Elastic Search plone integration package"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/docker-dev"
+      />
+
+  <genericsetup:registerProfile
       name="uninstall"
       title="Elastic Search (uninstall)"
       description="Uninstalls package Elastic Search."

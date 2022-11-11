@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.0.5
+    command: redis-server --appendonly yes
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: docker/elasticsearch.Dockerfile
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - http.cors.enabled=true
+      - http.cors.allow-origin=*
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - http.cors.allow-credentials=true
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    environment:
+      - PLONE_REDIS_DSN=redis://redis:6379/0
+      - PLONE_BACKEND=http://plone:8080/Plone
+      - PLONE_USERNAME=admin
+      - PLONE_PASSWORD=admin
+
+  plone:
+    build:
+      context: .
+      dockerfile: docker/plone.Dockerfile
+    environment:
+      - PLONE_REDIS_DSN=redis://redis:6379/0
+      - PLONE_BACKEND=http://127.0.0.1:8080/Plone
+      - PLONE_USERNAME=admin
+      - PLONE_PASSWORD=admin
+    ports:
+    - "8080:8080"
+    depends_on:
+      - redis
+      - elasticsearch
+      - worker
+    volumes:
+      - plone_data:/data
+
+volumes:
+  redis_data:
+  elasticsearch_data:
+  plone_data:

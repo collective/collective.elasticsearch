@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<registry>
+  <records interface="collective.elasticsearch.interfaces.IElasticSettings"
+           prefix="collective.elasticsearch.interfaces.IElasticSettings"
+  >
+    <value key="hosts">
+      <element>elasticsearch</element>
+    </value>
+    <value key="use_redis">True</value>
+  </records>
+</registry>
