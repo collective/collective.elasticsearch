@@ -254,9 +254,9 @@ class IndexProcessor:
     def get_blob_data(self, uuid, obj):
         """Go thru schemata and extract infos about blob fields"""
         index_data = {}
-        portal_segments = api.portal.get().getPhysicalPath()
+        portal_path_len = len(api.portal.get().getPhysicalPath())
         obj_segements = obj.getPhysicalPath()
-        relative_path = "/".join(obj_segements[len(portal_segments):])
+        relative_path = "/".join(obj_segements[portal_path_len:])
         for schema in iterSchemata(obj):
             for name, field in getFields(schema).items():
                 if INamedBlobFileField.providedBy(field) and field.get(obj):
