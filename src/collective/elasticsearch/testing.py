@@ -77,7 +77,7 @@ class RedisElasticSearch(ElasticSearch):
             if counter == MAX_CONNECTION_RETRIES:
                 raise Exception("Cannot connect to redis service")
             try:
-                if redis_connection.ping():
+                if redis_connection().ping():
                     break
             except redis.ConnectionError:
                 time.sleep(1)
