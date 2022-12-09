@@ -26,6 +26,8 @@ from zope.interface import alsoProvides
 import math
 
 
+from ZODB.POSException import POSKeyError
+
 CONVERTED_ATTR = '_elasticconverted'
 CUSTOM_INDEX_NAME_ATTR = '_elasticcustomindex'
 INDEX_VERSION_ATTR = '_elasticindexversion'
@@ -204,8 +206,12 @@ class ElasticSearchCatalog(object):
     def catalog_object(self, obj, uid=None, idxs=[], update_metadata=1,
                        pghandler=None):
         if idxs != ['getObjPositionInParent']:
-            self.catalogtool._old_catalog_object(
-                obj, uid, idxs, update_metadata, pghandler)
+            try:
+                self.catalogtool._old_catalog_object(
+                    obj, uid, idxs, update_metadata, pghandler)
+            except POSKeyError as e:
+                logger.warning("Missing blob for obj: %s" % obj)
+                return
 
         if not self.enabled:
             return
