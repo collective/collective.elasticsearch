@@ -4,6 +4,7 @@ from collective.elasticsearch import logger
 from collective.elasticsearch import utils
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
+from collective.elasticsearch.utils import use_redis
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
@@ -152,6 +153,76 @@ class ElasticSearchManager:
         self.catalog._p_changed = True
         mapping = getMultiAdapter((getRequest(), self), interfaces.IMappingProvider)()
         self.connection.indices.put_mapping(body=mapping, index=self.index_name)
+        self._setup_attachment_pipeline_and_default_index()
+
+    def _setup_attachment_pipeline_and_default_index(self):
+        """
+        Setup the cbor-attachments pipeline:
+        1. Iterate over all attachments (field) and use the attachment processor
+           to extract text data from the binary/data field called 'data'.
+        2. Iterate over all extracted data and extend the SearchableText.
+           At same time remove the binary data to save some space. With
+           Version 8 of elasticsearch we could use the remove_binary flag, but
+           it does not exist yet in version 7.
+        It's called cbor-attachment pipeline, because the data is transfered
+        using cbor. This eliminates the base64 overhead.
+
+        Also the cbor-attachments pipline is used as default pipeline for the index.
+        There is a condition defined, so the pipeline is only triggered if
+        actual binary data is available to extract.
+        """
+
+        if "attachment" not in self.connection.cat.plugins():
+            return
+
+        body = {
+            "description": "Extract attachment information and append extracted data to SearchableText",
+            "processors": [
+                {
+                    "foreach": {
+                        "if": 'ctx.containsKey("attachments")',
+                        "field": "attachments",
+                        "processor": {
+                            "attachment": {
+                                "target_field": "_ingest._value.attachment",
+                                "field": "_ingest._value.data",
+                                # "remove_binary": "true",  # version 8
+                                "properties": ["content"],
+                            }
+                        },
+                    }
+                },
+                {
+                    "script": {
+                        "if": 'ctx.containsKey("attachments")',
+                        "source": """
+                            for(int i=0; i<ctx['attachments'].length;++i) {
+                                if(ctx['attachments'][i]['attachment'].containsKey('content')) {
+                                    if (ctx['attachments'][i]['attachment']['content'].length() > 0) {
+                                        ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
+                                    }
+                                    ctx['attachments'][i]['data'] = null;
+                                }
+                            }
+                            """,
+                    }
+                },
+            ],
+            # Enable this for debugging the pipeline
+            # "on_failure": [
+            #     {
+            #         "set": {
+            #             "description": "Record error information",
+            #             "field": "error_information",
+            #             "value": "Processor {{ _ingest.on_failure_processor_type }} with tag {{ _ingest.on_failure_processor_tag }} in pipeline {{ _ingest.on_failure_pipeline }} failed with message {{ _ingest.on_failure_message }}"
+            #         }
+            #     }
+            # ]
+        }
+        self.connection.ingest.put_pipeline("cbor-attachments", body=body)
+
+        settings = {"index": {"default_pipeline": "cbor-attachments"}}
+        self.connection.indices.put_settings(body=settings, index=self.index_name)
 
     @property
     def connection(self) -> Elasticsearch:
@@ -163,11 +234,34 @@ class ElasticSearchManager:
         return conn
 
     def _bulk_call(self, batch):
+        method = self._bulk_call_direct
+        if use_redis():
+            method = self._bulk_call_redis
+        return method(batch)
+
+    def _bulk_call_direct(self, batch):
         data = [item for sublist in batch for item in sublist]
         logger.info(f"Bulk call with {len(data)} entries and {len(batch)} actions.")
         result = self.connection.bulk(index=self.index_name, body=data)
         if "errors" in result and result["errors"] is True:
             logger.error(f"Error in bulk operation: {result}")
+
+    def _bulk_call_redis(self, batch):
+        from collective.elasticsearch.redis.tasks import bulk_update
+
+        logger.info(f"Bulk call with {len(batch)} entries and {len(batch)} actions.")
+        hosts, params = utils.get_connection_settings()
+        bulk_update.delay(hosts, params, index_name=self.index_name, body=batch)
+        logger.info("redis task created")
+
+    def update_blob(self, item):
+        from collective.elasticsearch.redis.tasks import update_file_data
+
+        hosts, params = utils.get_connection_settings()
+
+        if item[1]:
+            update_file_data.delay(hosts, params, index_name=self.index_name, body=item)
+            logger.info("redis task to index blob data created")
 
     def flush_indices(self):
         self.connection.indices.flush()

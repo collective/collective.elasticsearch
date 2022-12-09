@@ -18,10 +18,22 @@ YELLOW=`tput setaf 3`
 PLONE5=5.2-latest
 PLONE6=6.0-latest
 
+INSTANCE_YAML=instance.yaml
+
 ELASTIC_SEARCH_IMAGE=elasticsearch:7.17.7
 ELASTIC_SEARCH_CONTAINER=elastictest
 
-CONTAINERS=$$(docker ps -q -a -f "name=${ELASTIC_SEARCH_CONTAINER}" | wc -l)
+REDIS_IMAGE=redis:7.0.5
+REDIS_CONTAINER=redistest
+
+ELASTIC_SEARCH_CONTAINERS=$$(docker ps -q -a -f "name=${ELASTIC_SEARCH_CONTAINER}" | wc -l)
+REDIS_CONTAINERS=$$(docker ps -q -a -f "name=${REDIS_CONTAINER}" | wc -l)
+
+# Default env for elasticsearch with redis queue
+DEFAULT_ENV_ES_REDIS=PLONE_REDIS_DSN=redis://localhost:6379/0 \
+	PLONE_BACKEND=http://localhost:8080/Plone \
+	PLONE_USERNAME=admin \
+	PLONE_PASSWORD=admin
 
 ifndef LOG_LEVEL
 	LOG_LEVEL=INFO
@@ -47,21 +59,32 @@ bin/pip:
 	python3 -m venv .
 	bin/pip install -U pip wheel
 
+.PHONY: cookiecutter
+cookiecutter: bin/pip
+	@echo "$(GREEN)Install cookiecutter$(RESET)"
+	bin/pip install git+https://github.com/cookiecutter/cookiecutter.git#egg=cookiecutter
+
+.PHONY: instance
+instance: cookiecutter ## create configuration for an zope (plone) instance
+	@echo "$(GREEN)Create Plone/Zope configuration$(RESET)"
+	rm -fr ./etc
+	bin/cookiecutter -f --no-input --config-file ${INSTANCE_YAML} https://github.com/bluedynamics/cookiecutter-zope-instance
+
 .PHONY: build-plone-5
 build-plone-5: bin/pip ## Build Plone 5.2
 	@echo "$(GREEN)==> Build with Plone 5.2$(RESET)"
 	bin/pip install Paste Plone -c https://dist.plone.org/release/$(PLONE5)/constraints.txt
 	bin/pip install "zest.releaser[recommended]"
-	bin/pip install -e ".[test]"
-	bin/mkwsgiinstance -d . -u admin:admin
+	bin/pip install -e ".[test, redis]"
+	make instance
 
 .PHONY: build-plone-6
 build-plone-6: bin/pip ## Build Plone 6.0
 	@echo "$(GREEN)==> Build with Plone 6.0$(RESET)"
 	bin/pip install Plone -c https://dist.plone.org/release/$(PLONE6)/constraints.txt
 	bin/pip install "zest.releaser[recommended]"
-	bin/pip install -e ".[test]"
-	bin/mkwsgiinstance -d . -u admin:admin
+	bin/pip install -e ".[test, redis]"
+	make instance
 
 .PHONY: build
 build: build-plone-6 ## Build Plone 6.0
@@ -117,7 +140,7 @@ lint-zpretty: ## validate ZCML/XML using zpretty
 
 .PHONY: elastic
 elastic: ## Create Elastic Search container
-	@if [ $(CONTAINERS) -eq 0 ]; then \
+	@if [ $(ELASTIC_SEARCH_CONTAINERS) -eq 0 ]; then \
 		docker container create --name $(ELASTIC_SEARCH_CONTAINER) \
 		-e "discovery.type=single-node" \
 		-e "cluster.name=docker-cluster" \
@@ -128,7 +151,10 @@ elastic: ## Create Elastic Search container
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
 		-p 9300:9300 \
-		$(ELASTIC_SEARCH_IMAGE);fi
+		$(ELASTIC_SEARCH_IMAGE); \
+		docker start $(ELASTIC_SEARCH_CONTAINER); \
+		docker exec $(ELASTIC_SEARCH_CONTAINER) /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
+		docker stop $(ELASTIC_SEARCH_CONTAINER);fi
 
 .PHONY: start-elastic
 start-elastic: elastic ## Start Elastic Search
@@ -140,16 +166,49 @@ stop-elastic: ## Stop Elastic Search
 	@echo "$(GREEN)==> Stop Elastic Search$(RESET)"
 	@docker stop $(ELASTIC_SEARCH_CONTAINER)
 
+.PHONY: redis
+redis: ## Create redis Search container
+	@if [ $(REDIS_CONTAINERS) -eq 0 ]; then \
+		docker container create --name $(REDIS_CONTAINER) \
+		-p 6379:6379 \
+		$(REDIS_IMAGE);fi
+
+
+.PHONY: start-redis
+start-redis: redis ## Start redis
+	@echo "$(GREEN)==> Start redis$(RESET)"
+	@docker start $(REDIS_CONTAINER)
+
+.PHONY: stop-redis
+stop-redis: ## Stop redis
+	@echo "$(GREEN)==> Stop redis$(RESET)"
+	@docker stop $(REDIS_CONTAINER)
+
+
 .PHONY: test
 test: ## run tests
 	make start-elastic
+	make start-redis
 	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
 	make stop-elastic
+	make stop-redis
 
 .PHONY: start
 start: ## Start a Plone instance on localhost:8080
-	PYTHONWARNINGS=ignore ./bin/runwsgi etc/zope.ini
+	PYTHONWARNINGS=ignore ./bin/runwsgi instance/etc/zope.ini
 
 .PHONY: populate
 populate: ## Populate site with wikipedia content
 	PYTHONWARNINGS=ignore ./bin/zconsole run etc/zope.conf scripts/populate.py
+
+.PHONY: start-redis-support
+start-redis-support: ## Start a Plone instance on localhost:8080
+	@echo "$(GREEN)==> Set env variables, PLONE_REDIS_DSN, PLONE_BACKEND, PLONE_USERNAME and PLONE_PASSWORD before start instance$(RESET)"
+	PYTHONWARNINGS=ignore \
+	$(DEFAULT_ENV_ES_REDIS) \
+	./bin/runwsgi instance/etc/zope.ini
+
+
+.PHONY: worker
+worker: ## Start a worker for the redis queue
+	$(DEFAULT_ENV_ES_REDIS) ./bin/rq worker normal low --with-scheduler

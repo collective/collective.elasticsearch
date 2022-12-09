@@ -1,16 +1,21 @@
+from collective.elasticsearch.testing import ElasticSearch_API_TESTING
+from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseAPITest
+from parameterized import parameterized_class
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.restapi.testing import RelativeSession
 
 
+@parameterized_class(
+    [{"layer": ElasticSearch_API_TESTING}, {"layer": ElasticSearch_REDIS_TESTING}]
+)
 class TestService(BaseAPITest):
     def setUp(self):
         super().setUp()
         self.portal = self.layer["portal"]
         self.portal_url = self.portal.absolute_url()
         self.request = self.portal.REQUEST
-
         self.api_session = RelativeSession(self.portal_url)
         self.api_session.headers.update({"Accept": "application/json"})
         self.api_session.auth = (SITE_OWNER_NAME, SITE_OWNER_PASSWORD)

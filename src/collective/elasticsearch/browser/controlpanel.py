@@ -1,5 +1,6 @@
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.utils import is_redis_available
 from elasticsearch.exceptions import ConnectionError as conerror
 from plone import api
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
@@ -17,6 +18,11 @@ class ElasticControlPanelForm(RegistryEditForm):
     label = "Elastic Search Settings"
 
     control_panel_view = "@@elastic-controlpanel"
+
+    def updateWidgets(self):
+        super().updateWidgets()
+        if not is_redis_available():
+            self.widgets["use_redis"].disabled = "disabled"
 
 
 class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):

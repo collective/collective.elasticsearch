@@ -1,7 +1,10 @@
+from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
+from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from parameterized import parameterized
+from parameterized import parameterized_class
 from plone import api
 from Products.ZCatalog.interfaces import ICatalogBrain
 
@@ -10,6 +13,12 @@ EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 DOCUMENT_KLASS = "plone.app.contenttypes.interfaces.IDocument"
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestSearch(BaseFunctionalTest):
 
     event_klass = EVENT_KLASS
@@ -161,6 +170,12 @@ class TestSearch(BaseFunctionalTest):
         self.assertEqual(self.total_results(query), 1)
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestBrains(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -175,7 +190,7 @@ class TestBrains(BaseFunctionalTest):
         brain = el_results[0]
         self.assertEqual(brain.getObject(), self.event)
         self.assertEqual(brain.portal_type, "Event")
-        self.assertEqual(brain.getURL(), "http://nohost/plone/event")
+        self.assertEqual(brain.getURL(), self.event.absolute_url())
         self.assertEqual(brain.getPath(), "/plone/event")
 
     def test_one_result_index_last(self):
@@ -184,7 +199,7 @@ class TestBrains(BaseFunctionalTest):
         brain = el_results[-1]
         self.assertEqual(brain.getObject(), self.event)
         self.assertEqual(brain.portal_type, "Event")
-        self.assertEqual(brain.getURL(), "http://nohost/plone/event")
+        self.assertEqual(brain.getURL(), self.event.absolute_url())
         self.assertEqual(brain.getPath(), "/plone/event")
 
     def test_two_results(self):
@@ -211,6 +226,12 @@ class TestBrains(BaseFunctionalTest):
         self.assertEqual(brain.getId, "event2")
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestBrainsIndexing(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -243,6 +264,12 @@ class TestBrainsIndexing(BaseFunctionalTest):
         self.assertEqual(self.el_results[result_idx].getId, expected)
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestCatalogRecordDeleted(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -266,10 +293,16 @@ class TestCatalogRecordDeleted(BaseFunctionalTest):
         self.assertEqual(brain.Title, "Gone Event")
         # Test
         self.assertEqual(brain.getPath(), "/plone/event-test")
-        self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
+        self.assertEqual(brain.getURL(), self.event.absolute_url())
         self.assertEqual(brain.getObject(), self.event)
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -294,11 +327,17 @@ class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
         self.assertEqual(brain.Title, "Gone Event")
         # Test
         self.assertEqual(brain.getPath(), "/plone/event-test")
-        self.assertEqual(brain.getURL(), "http://nohost/plone/event-test")
+        self.assertEqual(brain.getURL(), self.event.absolute_url())
         with self.assertRaises(KeyError):
             brain.getObject()
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestUncatalogRemoveOnES(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -316,6 +355,12 @@ class TestUncatalogRemoveOnES(BaseFunctionalTest):
         self.assertEqual(len(el_results), 0)
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_REDIS_TESTING},
+    ]
+)
 class TestSearchOnRemovedIndex(BaseFunctionalTest):
     def setUp(self):
         super().setUp()

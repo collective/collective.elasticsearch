@@ -1,5 +1,6 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:monkey="http://namespaces.plone.org/monkey"
     xmlns:zcml="http://namespaces.zope.org/zcml"
@@ -12,6 +13,12 @@
   <include package=".browser" />
   <include package=".patches" />
   <include package=".services" />
+
+  <configure zcml:condition="installed redis">
+    <configure zcml:condition="installed rq">
+      <include package=".redis" />
+    </configure>
+  </configure>
 
   <include file="profiles.zcml" />
 

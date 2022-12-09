@@ -44,6 +44,17 @@ class IElasticSettings(Interface):
 
     enabled = schema.Bool(title="Enabled", default=False, required=False)
 
+    use_redis = schema.Bool(
+        title="Use redis as queue",
+        description=(
+            "You can enable this option if you have installed redis, "
+            "set the necessary env variables and started a worker."
+            "Please check the README for more informations"
+        ),
+        default=False,
+        required=False,
+    )
+
     hosts = schema.List(
         title="Hosts",
         default=["127.0.0.1"],
@@ -92,6 +103,7 @@ class IndexingActions:
     index: Dict[str, dict]
     reindex: Dict[str, dict]
     unindex: Dict[str, dict]
+    index_blobs: Dict[str, dict]
     uuid_path: Dict[str, str]
 
     def __len__(self):
@@ -114,3 +126,6 @@ class IndexingActions:
             if action_data:
                 all_data.extend([(action, uuid, data) for uuid, data in action_data])
         return all_data
+
+    def all_blob_actions(self):
+        return [(uuid, data) for uuid, data in getattr(self, "index_blobs", {}).items()]

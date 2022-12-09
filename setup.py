@@ -70,6 +70,12 @@ setup(
             "plone.app.robotframework[test]>=2.0.0a5",
             "parameterized",
         ],
+        "redis": [
+            "redis",
+            "rq",
+            "requests",
+            "cbor2",
+        ],
     },
     entry_points="""
     [z3c.autoinclude.plugin]
