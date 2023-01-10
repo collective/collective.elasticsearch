@@ -92,6 +92,36 @@ class IElasticSettings(Interface):
         title="Bulk Size", description="bulk size for elastic queries", default=50
     )
 
+    highlight = schema.Bool(
+        title="Enable Search Highlight",
+        description="Use elasticsearch highlight feature instead of descriptions in search results",
+        default=False,
+        required=False
+    )
+
+    highlight_threshold = schema.Int(
+        title="Highlight Threshold",
+        description="Number of highlighted characters to display in search results descriptions",
+        default=600,
+        required=False
+    )
+
+    highlight_pre_tags = schema.Text(
+        title="Highlight pre tags",
+        description="Used with highlight post tags to wrap matching words. e.g. &lt;pre class=\"highlight\"&gt;. One tag per line",
+        default="",
+        required=False
+    )
+
+    highlight_post_tags = schema.Text(
+        title="Higlight post tags",
+        description="Used with highlight pre tags to wrap matching words. e.g. &lt;/pre&gt; One tag per line",
+        default="",
+        required=False
+    )
+
+
+
 
 class IElasticSearchIndexQueueProcessor(IIndexQueueProcessor):
     """Index queue processor for elasticsearch."""

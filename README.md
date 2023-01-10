@@ -215,6 +215,20 @@ This feature aims to have a minimal impact in terms of responsiveness of the plo
 Support for all index column types is done EXCEPT for the DateRecurringIndex index column type. If you are doing a full text search along with a query that contains a DateRecurringIndex column, it will not work.
 
 
+## Search Highlighting
+
+If you want to make use of the [Elasticsearch highlight](https://www.elastic.co/guide/en/elasticsearch/reference/current/highlighting.html) feature you can enable it in the control panel.
+
+When enabled, it will replace the description of search results with the highlighted fragments from elastic search.
+
+### Highlight Threshold
+
+This is the number of characters to show in the description. Fragments will be added until this threshold is met.
+
+### Pre/Post Tags
+
+Highlighted terms can be wrapped in html which can be used to enhance the results further, such as by adding a custom background color. Note that the default Plone search results will not render html so to use this feature you will need to create a custom saearch result view.
+
 ## Developing this package
 
 Create the virtual enviroment and install all dependencies:

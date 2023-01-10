@@ -1,7 +1,7 @@
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
-from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.elasticsearch.utils import getESOnlyIndexes, get_settings
 from DateTime import DateTime
 from parameterized import parameterized
 from parameterized import parameterized_class
@@ -168,6 +168,21 @@ class TestSearch(BaseFunctionalTest):
             "SearchableText": "folder",
         }
         self.assertEqual(self.total_results(query), 1)
+
+    def test_highlight_query(self):
+        settings = get_settings()
+        settings.highlight = True
+        settings.highlight_pre_tags = '<em>'
+        settings.highlight_post_tags = '</em>'
+        api.content.create(self.portal,
+                           "Document",
+                           "page",
+                           title="Some Page")
+        self.commit(wait=1)
+        query = {'SearchableText': 'some'}
+        results = self.search(query)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].Description, "page <em>Some</em> Page")
 
 
 @parameterized_class(
