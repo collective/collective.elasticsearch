@@ -96,28 +96,28 @@ class IElasticSettings(Interface):
         title="Enable Search Highlight",
         description="Use elasticsearch highlight feature instead of descriptions in search results",
         default=False,
-        required=False
+        required=False,
     )
 
     highlight_threshold = schema.Int(
         title="Highlight Threshold",
         description="Number of highlighted characters to display in search results descriptions",
         default=600,
-        required=False
+        required=False,
     )
 
     highlight_pre_tags = schema.Text(
         title="Highlight pre tags",
-        description="Used with highlight post tags to wrap matching words. e.g. &lt;pre class=\"highlight\"&gt;. One tag per line",
+        description='Used with highlight post tags to wrap matching words. e.g. &lt;pre class="highlight"&gt;. One tag per line',
         default="",
-        required=False
+        required=False,
     )
 
     highlight_post_tags = schema.Text(
         title="Higlight post tags",
         description="Used with highlight pre tags to wrap matching words. e.g. &lt;/pre&gt; One tag per line",
         default="",
-        required=False
+        required=False,
     )
 
 

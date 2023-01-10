@@ -173,14 +173,11 @@ class TestSearch(BaseFunctionalTest):
     def test_highlight_query(self):
         settings = get_settings()
         settings.highlight = True
-        settings.highlight_pre_tags = '<em>'
-        settings.highlight_post_tags = '</em>'
-        api.content.create(self.portal,
-                           "Document",
-                           "page",
-                           title="Some Page")
+        settings.highlight_pre_tags = "<em>"
+        settings.highlight_post_tags = "</em>"
+        api.content.create(self.portal, "Document", "page", title="Some Page")
         self.commit(wait=1)
-        query = {'SearchableText': 'some'}
+        query = {"SearchableText": "some"}
         results = self.search(query)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Description, "page <em>Some</em> Page")

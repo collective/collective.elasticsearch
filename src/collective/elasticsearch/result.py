@@ -84,7 +84,7 @@ def BrainFactory(manager):
                     if idx > 0 and fraglen > manager.highlight_threshold:
                         break
                     fragments.append(i)
-                brain["Description"] = ' ... '.join(fragments)
+                brain["Description"] = " ... ".join(fragments)
             return brain
         # We should handle cases where there is no path in the ES response
         return None

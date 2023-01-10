@@ -46,7 +46,7 @@ class ElasticSearchManager:
 
     @property
     def highlight(self):
-        """ Is search highlighting enabled in the control panel."""
+        """Is search highlighting enabled in the control panel."""
         try:
             value = api.portal.get_registry_record(
                 "highlight", interfaces.IElasticSettings, False
@@ -57,7 +57,7 @@ class ElasticSearchManager:
 
     @property
     def highlight_threshold(self):
-        """ Is search highlighting enabled in the control panel."""
+        """Search highlighting threshold."""
         try:
             value = api.portal.get_registry_record(
                 "highlight_threshold", interfaces.IElasticSettings, False
@@ -68,7 +68,7 @@ class ElasticSearchManager:
 
     @property
     def highlight_pre_tags(self):
-        """ Is search highlighting enabled in the control panel."""
+        """Search highlighting pre tags."""
         try:
             value = api.portal.get_registry_record(
                 "highlight_pre_tags", interfaces.IElasticSettings, ""
@@ -81,7 +81,7 @@ class ElasticSearchManager:
 
     @property
     def highlight_post_tags(self):
-        """ Is search highlighting enabled in the control panel."""
+        """Search highlighting post tags."""
         try:
             value = api.portal.get_registry_record(
                 "highlight_post_tags", interfaces.IElasticSettings, ""
@@ -353,8 +353,9 @@ class ElasticSearchManager:
         if self.highlight:
             body["highlight"] = {
                 "fields": {"SearchableText": {"number_of_fragments": 5}},
-                "pre_tags": self.highlight_pre_tags.split('\n'),
-                "post_tags": self.highlight_post_tags.split('\n')}
+                "pre_tags": self.highlight_pre_tags.split("\n"),
+                "post_tags": self.highlight_post_tags.split("\n"),
+            }
         return self.connection.search(index=self.index_name, body=body, **query_params)
 
     def search(self, query: dict, factory=None, **query_params) -> LazyMap:
