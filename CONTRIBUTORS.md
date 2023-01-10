@@ -4,3 +4,4 @@
 - Wesley Barroso, wesleybl@gmail.com
 - André Climaco, andre.climaco@gmail.com
 - Érico Andrei, ericof@plone.org
+- Jon Pentland, jon.pentland@pretagov.co.uk

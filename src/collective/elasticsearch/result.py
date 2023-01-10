@@ -76,6 +76,15 @@ def BrainFactory(manager):
             if not brain:
                 result = manager.get_record_by_path(path)
                 brain = ElasticSearchBrain(record=result, catalog=catalog)
+            if manager.highlight:
+                fragments = []
+                fraglen = 0
+                for idx, i in enumerate(result["highlight"]["SearchableText"]):
+                    fraglen += len(i)
+                    if idx > 0 and fraglen > manager.highlight_threshold:
+                        break
+                    fragments.append(i)
+                brain["Description"] = " ... ".join(fragments)
             return brain
         # We should handle cases where there is no path in the ES response
         return None

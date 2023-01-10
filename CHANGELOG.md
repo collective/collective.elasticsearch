@@ -8,6 +8,7 @@
 
 - Tests: Wait for elasticsearch service @maethu
 
+- Add support for highlight feature of elasticsearch @instification
 
 ## 5.0.0 (2022-10-11)
 
