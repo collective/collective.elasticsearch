@@ -121,8 +121,6 @@ class IElasticSettings(Interface):
     )
 
 
-
-
 class IElasticSearchIndexQueueProcessor(IIndexQueueProcessor):
     """Index queue processor for elasticsearch."""
 
