@@ -120,6 +120,13 @@ class IElasticSettings(Interface):
         required=False,
     )
 
+    raise_search_exception = schema.Bool(
+        title="Raise Search Exceptions",
+        description="If there is an error with elastic search Plone will default to trying the old catalog search. Set this to true to raise the error instead.",
+        default=False,
+        required=False
+    )
+
 
 class IElasticSearchIndexQueueProcessor(IIndexQueueProcessor):
     """Index queue processor for elasticsearch."""

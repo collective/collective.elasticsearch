@@ -40,6 +40,9 @@ class BaseTest(unittest.TestCase):
         settings.enabled = True
         settings.sniffer_timeout = 0.0
 
+        # Raise elastic search exceptions
+        settings.raise_search_exception = True
+
         self._wait_for_es_service()
 
         self.catalog = api.portal.get_tool("portal_catalog")
