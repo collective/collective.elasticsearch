@@ -188,9 +188,10 @@ class TestSearch(BaseFunctionalTest):
         self.commit(wait=1)
         query = {
             "portal_type": {"not": ["Event", "News Item"]},
-            "SearchableText": "New"
+            "SearchableText": "New",
         }
         self.assertEqual(self.total_results(query), 1)
+
 
 @parameterized_class(
     [
