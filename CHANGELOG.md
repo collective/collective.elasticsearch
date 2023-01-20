@@ -10,6 +10,8 @@
 
 - Add support for highlight feature of elasticsearch @instification
 
+- Use _old_searchResults when patching safeSearchResults @instification
+
 ## 5.0.0 (2022-10-11)
 
 - Rename `master` branch to `main` @ericof

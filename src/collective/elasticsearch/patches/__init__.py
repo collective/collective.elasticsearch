@@ -23,7 +23,7 @@ def unrestrictedSearchResults(self, REQUEST=None, **kw):
 def safeSearchResults(self, REQUEST=None, **kw):
     manager = ElasticSearchManager()
     active = manager.active
-    method = manager.search_results if active else self._old_unrestrictedSearchResults
+    method = manager.search_results if active else self._old_searchResults
     return method(REQUEST, check_perms=True, **kw)
 
 
