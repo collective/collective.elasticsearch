@@ -99,6 +99,12 @@ class BaseIndex:
             if len(value) == 0:
                 return None
             return {"terms": {name: value}}
+        if isinstance(value, dict) and "not" in value:
+            if isinstance(value["not"], (list, tuple, set)):
+                return {
+                    "bool": {"must_not": [{"term": {name: i}} for i in value["not"]]}
+                }
+            return {"bool": {"must_not": [{"term": {name: value["not"]}}]}}
         return {"term": {name: value}}
 
 
