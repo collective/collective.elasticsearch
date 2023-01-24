@@ -12,6 +12,8 @@
 
 - Use _old_searchResults when patching safeSearchResults @instification
 
+- Handle negative term filters (fixes #101) @instification
+
 ## 5.0.0 (2022-10-11)
 
 - Rename `master` branch to `main` @ericof

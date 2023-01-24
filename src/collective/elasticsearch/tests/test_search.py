@@ -182,6 +182,16 @@ class TestSearch(BaseFunctionalTest):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Description, "page <em>Some</em> Page")
 
+    def test_not_query(self):
+        api.content.create(self.portal, "Document", "page", title="New Content")
+        api.content.create(self.portal, "Event", "event", title="New Event")
+        self.commit(wait=1)
+        query = {
+            "portal_type": {"not": ["Event", "News Item"]},
+            "SearchableText": "New",
+        }
+        self.assertEqual(self.total_results(query), 1)
+
 
 @parameterized_class(
     [
