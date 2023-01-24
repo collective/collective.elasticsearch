@@ -10,6 +10,8 @@
 
 - Add support for highlight feature of elasticsearch @instification
 
+- Use _old_searchResults when patching safeSearchResults @instification
+
 - Handle negative term filters (fixes #101) @instification
 
 ## 5.0.0 (2022-10-11)
