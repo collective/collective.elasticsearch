@@ -39,15 +39,16 @@ class QueryAssembler:
         matches = []
         catalog = self.catalog._catalog
         idxs = catalog.indexes.keys()
+        query_type = self.es.query_type
         query = {"match_all": {}}
         es_only_indexes = getESOnlyIndexes()
         for key, value in dquery.items():
             if key not in idxs and key not in es_only_indexes:
                 continue
-            index = getIndex(catalog, key)
+            index = getIndex(catalog, key, query_type=query_type)
             if index is None and key in es_only_indexes:
                 # deleted index for plone performance but still need on ES
-                index = EZCTextIndex(catalog, key)
+                index = EZCTextIndex(catalog, key, query_type=query_type)
             qq = index.get_query(key, value)
             if qq is None:
                 continue
