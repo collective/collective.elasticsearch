@@ -76,10 +76,10 @@ def BrainFactory(manager):
             if not brain:
                 result = manager.get_record_by_path(path)
                 brain = ElasticSearchBrain(record=result, catalog=catalog)
-            if manager.highlight:
+            if manager.highlight and result.get("highlight"):
                 fragments = []
                 fraglen = 0
-                for idx, i in enumerate(result["highlight"]["SearchableText"]):
+                for idx, i in enumerate(result["highlight"].get("SearchableText", [])):
                     fraglen += len(i)
                     if idx > 0 and fraglen > manager.highlight_threshold:
                         break
