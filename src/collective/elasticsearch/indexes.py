@@ -214,7 +214,6 @@ class EZCTextIndex(BaseIndex):
         query = query.replace(" AND ", " + ")
         return query
 
-
     def get_query(self, name, value):
         value = self._normalize_query(value)
         # ES doesn't care about * like zope catalog does
@@ -224,7 +223,11 @@ class EZCTextIndex(BaseIndex):
             if name in ("Title", "SearchableText"):
                 # titles have most importance... we override here...
                 queries.append(
-                    {"match_phrase_prefix": {"Title": {"query": clean_value, "boost": 2}}}
+                    {
+                        "match_phrase_prefix": {
+                            "Title": {"query": clean_value, "boost": 2}
+                        }
+                    }
                 )
             if name != "Title":
                 queries.append({"match": {name: {"query": clean_value}}})
@@ -239,14 +242,8 @@ class EZCTextIndex(BaseIndex):
                 fields.extend(["Title^2", "SearchableText"])
             else:
                 fields.append(name)
-            query = {
-                "simple_query_string": {
-                    "query":  qs_value,
-                    "fields": fields
-                }
-            }
+            query = {"simple_query_string": {"query": qs_value, "fields": fields}}
             return query
-
 
 
 class EBooleanIndex(BaseIndex):
