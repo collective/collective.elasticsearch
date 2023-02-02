@@ -228,7 +228,7 @@ class IndexProcessor:
                 if value in (None, "None"):
                     # yes, we'll index null data...
                     value = None
-            elif index_name in self._es_attributes:
+            elif index_name in self.es_attributes:
                 indexer = queryMultiAdapter(
                     (wrapped_object, catalog), IIndexer, name=index_name
                 )
