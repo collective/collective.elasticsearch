@@ -89,6 +89,8 @@ class IndexProcessor:
 
     def index(self, obj, attributes=None):
         """Index the specified attributes for an obj."""
+        if not self.manager.active:
+            return
         actions = self.actions
         uuid, path = self._uuid_path(obj)
         actions.uuid_path[uuid] = path
@@ -122,10 +124,14 @@ class IndexProcessor:
 
     def reindex(self, obj, attributes=None, update_metadata=False):
         """Reindex the specified attributes for an obj."""
+        if not self.manager.active:
+            return
         self.index(obj, attributes)
 
     def unindex(self, obj):
         """Unindex the obj."""
+        if not self.manager.active:
+            return
         actions = self.actions
         uuid, path = self._uuid_path(obj)
         actions.uuid_path[uuid] = path
