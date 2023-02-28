@@ -8,6 +8,7 @@ from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import use_redis
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from plone.dexterity.utils import iterSchemata
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
@@ -210,7 +211,7 @@ class IndexProcessor:
 
     def get_data_for_es(self, uuid, attributes=None):
         """Data to be sent to elasticsearch."""
-        obj = api.portal.get() if uuid == "/" else api.content.get(UID=uuid)
+        obj = api.portal.get() if uuid == "/" else uuidToObject(uuid, unrestricted=True)
         wrapped_object = self.wrap_object(obj)
         index_data = {}
         attributes = attributes if attributes else self.all_attributes

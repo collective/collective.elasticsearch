@@ -8,6 +8,8 @@
 
 - Tests: Wait for elasticsearch service @maethu
 
+- Fix restricted object lookup @maethu
+
 - Add support for highlight feature of elasticsearch @instification
 
 - Use _old_searchResults when patching safeSearchResults @instification
