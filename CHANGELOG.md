@@ -14,6 +14,8 @@
 
 - Handle negative term filters (fixes #101) @instification
 
+- Check addon is installed before processing queue (fixes #108) @instification
+
 ## 5.0.0 (2022-10-11)
 
 - Rename `master` branch to `main` @ericof
