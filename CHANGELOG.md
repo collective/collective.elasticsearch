@@ -14,6 +14,8 @@
 
 - Handle negative term filters (fixes #101) @instification
 
+- Add support for optional es host in worker via PLONE_ELASTICSEARCH_HOST env variable @maethu
+
 ## 5.0.0 (2022-10-11)
 
 - Rename `master` branch to `main` @ericof

@@ -55,12 +55,10 @@ class RedisElasticSearch(ElasticSearch):
         super().setUpPloneSite(portal)
 
         # Setup environ for redis testing
-        os.environ["PLONE_BACKEND"] = utils.PLONE_BACKEND = portal.absolute_url()
-        os.environ["PLONE_USERNAME"] = utils.PLONE_USERNAME = SITE_OWNER_NAME
-        os.environ["PLONE_PASSWORD"] = utils.PLONE_PASSWORD = SITE_OWNER_PASSWORD
-        os.environ[
-            "PLONE_REDIS_DSN"
-        ] = utils.PLONE_REDIS_DSN = "redis://localhost:6379/0"
+        os.environ["PLONE_BACKEND"] = portal.absolute_url()
+        os.environ["PLONE_USERNAME"] = SITE_OWNER_NAME
+        os.environ["PLONE_PASSWORD"] = SITE_OWNER_PASSWORD
+        os.environ["PLONE_REDIS_DSN"] = "redis://localhost:6379/0"
 
         # Make sure tasks are not handled async in tests
         # from collective.elasticsearch.redis.tasks import queue
