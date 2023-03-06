@@ -7,6 +7,8 @@ from parameterized import parameterized_class
 from plone import api
 from plone.app.contentrules.actions.move import MoveAction
 from plone.app.contentrules.tests.dummy import DummyEvent
+from plone.app.testing import login
+from plone.app.testing import TEST_USER_PASSWORD
 from plone.contentrules.rule.interfaces import IExecutable
 from Products.CMFCore.indexing import processQueue
 from zope.component import getMultiAdapter
@@ -71,6 +73,26 @@ class TestQueueProcessor(BaseFunctionalTest):
         ex = getMultiAdapter((target, e, DummyEvent(obj)), IExecutable)
         self.assertEqual(True, ex())
         self.assertIn(obj_uid, processor.actions.index)
+
+    def test_index_even_if_access_to_obj_might_be_restricted(self):
+        processor = self.get_processor()
+        user = api.user.create(
+            username="worker",
+            email="ordinary_person@example.com",
+            password=TEST_USER_PASSWORD,
+            roles=("Member",),
+        )
+
+        folder = api.content.create(self.portal, "Folder", "folder1", title="A folder")
+        folder.manage_permission(
+            "Access contents information", roles=["Manager"], acquire=False
+        )
+        obj = api.content.create(folder, "Event", "event1", title="Some Event")
+
+        login(self.portal, user.getId())
+        obj.reindexObject()
+        processQueue()
+        self.assertIn(obj.UID(), processor.actions.index)
 
 
 @parameterized_class(
