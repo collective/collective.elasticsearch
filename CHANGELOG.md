@@ -16,7 +16,10 @@
 
 - Handle negative term filters (fixes #101) @instification
 
+- Check addon is installed before processing queue (fixes #108) @instification
+
 - Add support for optional es host in worker via PLONE_ELASTICSEARCH_HOST env variable @maethu
+
 
 ## 5.0.0 (2022-10-11)
 
