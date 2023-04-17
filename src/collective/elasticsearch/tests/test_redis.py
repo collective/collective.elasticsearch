@@ -21,7 +21,7 @@ import transaction
 
 ENV_FOR_REDIS = {
     "PLONE_REDIS_DSN": "redis://localhost:6379/0",
-    "PLONE_BACKEND": "http://localhost",
+    "PLONE_BACKEND": "http://localhost/plone",
     "PLONE_USERNAME": "admin",
     "PLONE_PASSWORD": "password",
 }
@@ -40,6 +40,15 @@ class TestRedisUtils(BaseFunctionalTest):
                 "All env vars ar available, this should be true",
             )
 
+        env_for_redis_with_host = ENV_FOR_REDIS.copy()
+        del env_for_redis_with_host["PLONE_BACKEND"]
+        env_for_redis_with_host["PLONE_BACKEND_HOST"] = "http://localhost"
+        with mock.patch.dict(os.environ, env_for_redis_with_host):
+            self.assertTrue(
+                True,
+                "All env vars ar available, this should be true",
+            )
+
 
 class TestUseRedis(BaseRedisTest):
     def test_use_redis_if_configured(self):
@@ -48,6 +57,45 @@ class TestUseRedis(BaseRedisTest):
 
         utils.get_settings().use_redis = True
         self.assertTrue(utils.use_redis(), "Using redis should be enabled")
+
+
+class TestPloneBackendHost(BaseRedisTest):
+    def setUp(self):
+        super().setUp()
+        self.original_plone_backend = os.environ["PLONE_BACKEND"]
+        del os.environ["PLONE_BACKEND"]
+        os.environ[
+            "PLONE_BACKEND_HOST"
+        ] = f'http://{self.layer["host"]}:{self.layer["port"]}'
+
+    def tearDown(self):
+        super().tearDown()
+        del os.environ["PLONE_BACKEND_HOST"]
+        os.environ["PLONE_BACKEND"] = self.original_plone_backend
+
+    def test_index_data_from_file_and_search(self):
+        file_path = os.path.join(os.path.dirname(__file__), "assets/test.pdf")
+        with io.FileIO(file_path, "rb") as pdf:
+            api.content.create(
+                container=api.portal.get(),
+                type="File",
+                id="test-file",
+                title="demo",
+                file=NamedBlobFile(data=pdf.read(), filename="test.pdf"),
+            )
+        self.commit(wait=1)
+
+        query = {"SearchableText": "text"}
+        cat_results = self.catalog._old_searchResults(**query)
+        self.assertEqual(0, len(cat_results), "Expect no result")
+        es_results = self.catalog(**query)
+        self.assertEqual(1, len(es_results), "Expect 1 item")
+
+        query = {"SearchableText": "demo"}
+        cat_results = self.catalog._old_searchResults(**query)
+        self.assertEqual(1, len(cat_results), "Expect 1 item")
+        es_results = self.catalog(**query)
+        self.assertEqual(1, len(es_results), "Expect 1 item")
 
 
 class TestExtractRestApiEndpoint(BaseRedisTest):
