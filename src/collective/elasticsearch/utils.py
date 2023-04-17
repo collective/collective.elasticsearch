@@ -82,14 +82,17 @@ def format_size_mb(value: int) -> str:
 
 def is_redis_available():
     """Determens if redis could be available"""
-    env_variables = [
+    env_variables_required = [
         HAS_REDIS_MODULE,
         os.environ.get("PLONE_REDIS_DSN", None),
         os.environ.get("PLONE_USERNAME", None),
         os.environ.get("PLONE_PASSWORD", None),
-        os.environ.get("PLONE_BACKEND", None),
     ]
-    return all(env_variables)
+    env_any_required = [
+        os.environ.get("PLONE_BACKEND", None),
+        os.environ.get("PLONE_BACKEND_HOST", None),
+    ]
+    return all(env_variables_required) and any(env_any_required)
 
 
 def use_redis():

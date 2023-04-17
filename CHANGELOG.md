@@ -20,6 +20,8 @@
 
 - Add support for optional es host in worker via PLONE_ELASTICSEARCH_HOST env variable @maethu
 
+- Add support for multiple plone sites on one installation via PLONE_BACKEND_HOST @maethu
+
 
 ## 5.0.0 (2022-10-11)
 

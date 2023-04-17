@@ -50,7 +50,7 @@ queue_low = Queue(
 
 
 @job(queue, retry=Retry(max=3, interval=30))
-def bulk_update(hosts, params, index_name, body):
+def bulk_update(hosts, params, index_name, body, plone_url):
     """
     Collects all the data and updates elasticsearch
     """
@@ -64,11 +64,15 @@ def bulk_update(hosts, params, index_name, body):
         catalog_info, payload = item
         action, index_info = list(catalog_info.items())[0]
         if action == "index":
-            data = fetch_data(uuid=index_info["_id"], attributes=list(payload.keys()))
+            data = fetch_data(
+                plone_url, uuid=index_info["_id"], attributes=list(payload.keys())
+            )
             item[1] = data
         elif action == "update":
             data = fetch_data(
-                uuid=index_info["_id"], attributes=list(payload["doc"].keys())
+                plone_url,
+                uuid=index_info["_id"],
+                attributes=list(payload["doc"].keys()),
             )
             item[1]["doc"] = data
 
@@ -78,7 +82,7 @@ def bulk_update(hosts, params, index_name, body):
 
 
 @job(queue_low)
-def update_file_data(hosts, params, index_name, body):
+def update_file_data(hosts, params, index_name, body, plone_url):
     """
     Get blob data from plone and index it via elasticsearch attachment pipeline
     """
@@ -89,7 +93,7 @@ def update_file_data(hosts, params, index_name, body):
     attachments = {"attachments": []}
 
     for fieldname, content in data.items():
-        file_ = fetch_blob_data(fieldname, data)
+        file_ = fetch_blob_data(plone_url, fieldname, data)
         attachments["attachments"].append(
             {
                 "filename": content["filename"],

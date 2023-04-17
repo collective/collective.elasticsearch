@@ -19,6 +19,7 @@ from zope.globalrequest import getRequest
 from zope.interface import implementer
 from ZTUtils.Lazy import LazyMap
 
+import os
 import warnings
 
 
@@ -310,7 +311,14 @@ class ElasticSearchManager:
 
         logger.info(f"Bulk call with {len(batch)} entries and {len(batch)} actions.")
         hosts, params = utils.get_connection_settings()
-        bulk_update.delay(hosts, params, index_name=self.index_name, body=batch)
+
+        bulk_update.delay(
+            hosts,
+            params,
+            index_name=self.index_name,
+            body=batch,
+            plone_url=self.get_plone_url(),
+        )
         logger.info("redis task created")
 
     def update_blob(self, item):
@@ -319,7 +327,13 @@ class ElasticSearchManager:
         hosts, params = utils.get_connection_settings()
 
         if item[1]:
-            update_file_data.delay(hosts, params, index_name=self.index_name, body=item)
+            update_file_data.delay(
+                hosts,
+                params,
+                index_name=self.index_name,
+                body=item,
+                plone_url=self.get_plone_url(),
+            )
             logger.info("redis task to index blob data created")
 
     def flush_indices(self):
@@ -348,6 +362,14 @@ class ElasticSearchManager:
         hits = results.get("hits", {}).get("hits", [])
         record = hits[0]["_source"] if hits else {}
         return record
+
+    def get_plone_url(self):
+        """This enables multiple plone sites in one ZODB/storage"""
+        plone_url = None
+        backend_host = os.environ.get("PLONE_BACKEND_HOST", None)
+        if backend_host:
+            plone_url = backend_host + "/".join(api.portal.get().getPhysicalPath())
+        return plone_url
 
     def _search(self, query, sort=None, **query_params):
         """ """
