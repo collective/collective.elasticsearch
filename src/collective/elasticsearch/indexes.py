@@ -115,6 +115,7 @@ class EKeywordIndex(BaseIndex):
     def create_mapping(self, name):  # NOQA R0201
         return {"type": "keyword", "index": True, "store": True}
 
+
 class EFieldIndex(BaseIndex):
     pass
 
