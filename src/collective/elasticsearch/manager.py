@@ -4,6 +4,7 @@ from collective.elasticsearch import logger
 from collective.elasticsearch import utils
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
+from collective.elasticsearch.utils import ELASTIC_SEARCH_VERSION
 from collective.elasticsearch.utils import use_redis
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
@@ -233,7 +234,8 @@ class ElasticSearchManager:
         actual binary data is available to extract.
         """
 
-        if "attachment" not in self.connection.cat.plugins():
+        if (ELASTIC_SEARCH_VERSION == 7 and
+                "attachment" not in self.connection.cat.plugins()):
             return
 
         body = {
@@ -247,7 +249,7 @@ class ElasticSearchManager:
                             "attachment": {
                                 "target_field": "_ingest._value.attachment",
                                 "field": "_ingest._value.data",
-                                # "remove_binary": "true",  # version 8
+                                "remove_binary": True,  # version 8
                                 "properties": ["content"],
                             }
                         },
@@ -262,7 +264,9 @@ class ElasticSearchManager:
                                     if (ctx['attachments'][i]['attachment']['content'].length() > 0) {
                                         ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
                                     }
-                                    ctx['attachments'][i]['data'] = null;
+                                    if (ctx['attachments'][i].containsKey('data')) {
+                                        ctx['attachments'][i]['data'] = null;
+                                    }                                   
                                 }
                             }
                             """,
