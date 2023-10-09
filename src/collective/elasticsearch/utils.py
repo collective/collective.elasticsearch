@@ -51,11 +51,19 @@ def get_settings():
 
 def get_connection_settings():
     settings = get_settings()
-    return settings.hosts, {
+
+    hosts = settings.hosts
+    if ELASTIC_SEARCH_VERSION == 8:
+        # Make sure the is a port defined for all hosts
+        for index, host in enumerate(settings.hosts):
+            if ":" not in host:
+                hosts[index] = f"{host}:9200"
+
+    return hosts, {
         "retry_on_timeout": settings.retry_on_timeout,
         "sniff_on_connection_fail": settings.sniff_on_connection_fail,
         "sniff_on_start": settings.sniff_on_start,
-        "sniffer_timeout": settings.sniffer_timeout,
+        "sniffer_timeout": settings.sniffer_timeout and settings.sniffer_timeout or 0.0,
         "timeout": settings.timeout,
     }
 

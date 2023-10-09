@@ -57,7 +57,7 @@ class IElasticSettings(Interface):
 
     hosts = schema.List(
         title="Hosts",
-        default=["127.0.0.1"],
+        default=["http://127.0.0.1:9200"],
         unique=True,
         value_type=schema.TextLine(title="Host"),
     )

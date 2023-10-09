@@ -73,7 +73,7 @@ def bulk_update(hosts, params, index_name, body):
             item[1]["doc"] = data
 
     es_data = [item for sublist in body for item in sublist]
-    connection.bulk(index=index_name, body=es_data)
+    connection.bulk(index=index_name, operations=es_data)
     return "Done"
 
 

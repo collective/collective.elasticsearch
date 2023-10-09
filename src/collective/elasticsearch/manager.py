@@ -194,14 +194,16 @@ class ElasticSearchManager:
             conn.indices.delete(index=self.real_index_name)
         except exceptions.NotFoundError:
             pass
-        except exceptions.TransportError as exc:
+        except (exceptions.BadRequestError, exceptions.TransportError) as exc:
             if exc.error != "illegal_argument_exception":
                 raise
             conn.indices.delete_alias(index="_all", name=self.real_index_name)
 
         if self.index_version:
             try:
-                conn.indices.delete_alias(self.index_name, self.real_index_name)
+                conn.indices.delete_alias(
+                    index=self.index_name, name=self.real_index_name
+                )
             except exceptions.NotFoundError:
                 pass
         self.flush_indices()
@@ -278,7 +280,7 @@ class ElasticSearchManager:
             #     }
             # ]
         }
-        self.connection.ingest.put_pipeline("cbor-attachments", body=body)
+        self.connection.ingest.put_pipeline(id="cbor-attachments", body=body)
 
         settings = {"index": {"default_pipeline": "cbor-attachments"}}
         self.connection.indices.put_settings(body=settings, index=self.index_name)
