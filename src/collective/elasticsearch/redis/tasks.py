@@ -2,6 +2,7 @@ from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from collective.elasticsearch import local
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.utils import ELASTIC_SEARCH_VERSION
 from elasticsearch import Elasticsearch
 from rq import Queue
 from rq import Retry
@@ -83,7 +84,15 @@ def update_file_data(hosts, params, index_name, body):
     Get blob data from plone and index it via elasticsearch attachment pipeline
     """
     hosts = os.environ.get("PLONE_ELASTICSEARCH_HOST", hosts)
-    connection = es_connection(hosts, **params)
+
+    if ELASTIC_SEARCH_VERSION == 8:
+        serializers = {
+            "application/cbor": cbor2,
+        }
+        params["serializers"] = serializers
+        connection = Elasticsearch(hosts, **params)
+    else:
+        connection = es_connection(hosts, **params)
     uuid, data = body
 
     attachments = {"attachments": []}
