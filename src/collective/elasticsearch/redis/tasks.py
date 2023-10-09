@@ -50,7 +50,7 @@ queue_low = Queue(
 )  # Don't queue in tests
 
 
-@job(queue, retry=Retry(max=3, interval=30))
+@job(queue, retry=Retry(max=3, interval=5))
 def bulk_update(hosts, params, index_name, body):
     """
     Collects all the data and updates elasticsearch
@@ -107,10 +107,23 @@ def update_file_data(hosts, params, index_name, body):
             }
         )
 
-    connection.update(
-        index_name,
-        uuid,
-        cbor2.dumps({"doc": attachments}),
-        headers={"content-type": "application/cbor"},
-    )
+    if ELASTIC_SEARCH_VERSION == 8:
+        # Construct our own request, since the python es client can't handle cbor directly
+        response = connection._transport.perform_request(
+            method="POST",
+            target=f"/{index_name}/_update/{uuid}",
+            body={"doc": attachments},
+            headers={"content-type": "application/cbor"},
+        )
+    else:
+        response = connection.update(
+            index_name,
+            uuid,
+            cbor2.dumps({"doc": attachments}),
+            headers={"content-type": "application/cbor"},
+        )
+
+    if response.meta.status != 200:
+        raise Exception(f"Failed to update {uuid} with {response}")
+
     return "Done"
