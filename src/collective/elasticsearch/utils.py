@@ -27,6 +27,11 @@ def getUID(obj):
     return value
 
 
+ELASTIC_SEARCH_VERSION = pkg_resources.get_distribution(
+    "elasticsearch"
+).parsed_version.major
+
+
 def get_brain_from_path(zcatalog: ZCatalog, path: str) -> AbstractCatalogBrain:
     rid = zcatalog.uids.get(path)
     if isinstance(rid, int):
