@@ -31,13 +31,13 @@ jobs:
       # git checkout
       - uses: actions/checkout@v2
 
-      - name: Setup elasticsearch docker container with ingest attachment plugin
+      - name: Setup elasticsearch 7.17.7 docker container with ingest attachment plugin
         run: |
           docker container create --name elastictest \
           -e "discovery.type=single-node" \
           -e "cluster.name=docker-cluster" \
           -e "http.cors.enabled=true" \
-          -e "http.cors.allow-origin=*" \
+          -e "http.cors.allow-origin='*'" \
           -e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
           -e "http.cors.allow-credentials=true" \
           -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
@@ -57,9 +57,32 @@ jobs:
 
       - name: Install package
         run: |
-          pip install -e ".[test, redis]"
+          pip install -e ".[test, redis]" elasticsearch==7.17.7
 
-      # test
-      - name: test
+      # test elasticsearch 7.17.7
+      - name: test elasticsearch 7.17.7
         run: |
+          zope-testrunner --auto-color --auto-progress --test-path src; \
+          docker stop elastictest; \
+          docker rm elastictest
+
+      # test elasticsearch 8.10.2
+      - name: Setup elasticsearch 8.10.2 docker container
+        run: |
+          docker container create --name elastictest8 \
+          -e "discovery.type=single-node" \
+          -e "cluster.name=docker-cluster" \
+          -e "http.cors.enabled=true" \
+          -e "http.cors.allow-origin='*'" \
+          -e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
+          -e "http.cors.allow-credentials=true" \
+          -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+          -p 9200:9200 \
+          -p 9300:9300 \
+          elasticsearch:8.10.2; \
+          docker start elastictest8; \
+
+      - name: test elasticsearch 8.10.2
+        run: |
+          pip install elasticsearch==8.10.0; /
           zope-testrunner --auto-color --auto-progress --test-path src

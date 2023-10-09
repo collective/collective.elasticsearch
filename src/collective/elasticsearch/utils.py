@@ -1,5 +1,4 @@
 from collective.elasticsearch import logger
-from collective.elasticsearch.interfaces import IElasticSettings
 from plone.registry.interfaces import IRegistry
 from plone.uuid.interfaces import IUUID
 from Products.ZCatalog import ZCatalog
@@ -46,6 +45,8 @@ def get_brain_from_path(zcatalog: ZCatalog, path: str) -> AbstractCatalogBrain:
 
 def get_settings():
     """Return IElasticSettings values."""
+    from collective.elasticsearch.interfaces import IElasticSettings
+
     registry = getUtility(IRegistry)
     try:
         settings = registry.forInterface(IElasticSettings, check=False)
@@ -62,7 +63,7 @@ def get_connection_settings():
         # Make sure the is a port defined for all hosts
         for index, host in enumerate(settings.hosts):
             if ":" not in host:
-                hosts[index] = f"{host}:9200"
+                hosts[index] = f"http://{host}:9200"
 
     return hosts, {
         "retry_on_timeout": settings.retry_on_timeout,

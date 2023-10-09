@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.1.0 (unreleased)
+
+- Add suport of elasticsearch to 8.10.2 @maethu
+
 ## 5.0.1 (unreleased)
 
 - Update elasticsearch to 7.17.7 (Ready for 8.x and apple silicon images are available) @maethu

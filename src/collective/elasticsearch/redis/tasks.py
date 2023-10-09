@@ -74,7 +74,10 @@ def bulk_update(hosts, params, index_name, body):
             item[1]["doc"] = data
 
     es_data = [item for sublist in body for item in sublist]
-    connection.bulk(index=index_name, operations=es_data)
+    if ELASTIC_SEARCH_VERSION == 8:
+        connection.bulk(index=index_name, operations=es_data)
+    else:
+        connection.bulk(es_data, index=index_name)
     return "Done"
 
 

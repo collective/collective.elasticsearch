@@ -1,6 +1,7 @@
 from collective.elasticsearch.interfaces import IElasticSettings
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import is_redis_available
+from elastic_transport import ConnectionTimeout
 from elasticsearch.exceptions import ConnectionError as conerror
 from plone import api
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
@@ -52,6 +53,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             except (
                 conerror,
                 ConnectionError,
+                ConnectionTimeout,
                 NewConnectionError,
                 ConnectionRefusedError,
                 AttributeError,
@@ -60,7 +62,10 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
 
     @property
     def es_info(self):
-        return self.es.info
+        try:
+            return self.es.info
+        except ConnectionTimeout:
+            return None
 
     @property
     def enabled(self):
