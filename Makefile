@@ -20,7 +20,8 @@ PLONE6=6.0-latest
 
 INSTANCE_YAML=instance.yaml
 
-ELASTIC_SEARCH_IMAGE=elasticsearch:7.17.7
+ELASTIC_SEARCH_IMAGE_7=elasticsearch:7.17.7
+ELASTIC_SEARCH_IMAGE_8=elasticsearch:8.10.2
 ELASTIC_SEARCH_CONTAINER=elastictest
 
 REDIS_IMAGE=redis:7.0.5
@@ -138,28 +139,56 @@ lint-pyroma: ## validate using pyroma
 lint-zpretty: ## validate ZCML/XML using zpretty
 	$(LINT) zpretty ${CODEPATH}
 
-.PHONY: elastic
-elastic: ## Create Elastic Search container
+.PHONY: elastic-7
+elastic-7: ## Create Elastic Search container
+	@echo "$(GREEN)==> Create Elastic Search Version 7 Container $(RESET)"
 	@if [ $(ELASTIC_SEARCH_CONTAINERS) -eq 0 ]; then \
 		docker container create --name $(ELASTIC_SEARCH_CONTAINER) \
 		-e "discovery.type=single-node" \
 		-e "cluster.name=docker-cluster" \
 		-e "http.cors.enabled=true" \
-		-e "http.cors.allow-origin=*" \
+		-e "http.cors.allow-origin='*'" \
 		-e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
 		-e "http.cors.allow-credentials=true" \
+		-e "xpack.security.enabled=false" \
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
 		-p 9300:9300 \
-		$(ELASTIC_SEARCH_IMAGE); \
+		$(ELASTIC_SEARCH_IMAGE_7); \
 		docker start $(ELASTIC_SEARCH_CONTAINER); \
 		docker exec $(ELASTIC_SEARCH_CONTAINER) /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
-		docker stop $(ELASTIC_SEARCH_CONTAINER);fi
+		docker stop $(ELASTIC_SEARCH_CONTAINER); else \
+		echo "$(RED)==> Could not create container: Container already exists $(RESET)";fi
 
-.PHONY: start-elastic
-start-elastic: elastic ## Start Elastic Search
+.PHONY: elastic-8
+elastic-8: ## Create Elastic Search container
+	@echo "$(GREEN)==> Create Elastic Search Version 8 Container $(RESET)"
+	@if [ $(ELASTIC_SEARCH_CONTAINERS) -eq 0 ]; then \
+		pip install elasticsearch==8.10.0; \
+		docker container create --name $(ELASTIC_SEARCH_CONTAINER) \
+		-e "discovery.type=single-node" \
+		-e "cluster.name=docker-cluster" \
+		-e "http.cors.enabled=true" \
+		-e "http.cors.allow-origin='*'" \
+		-e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
+		-e "http.cors.allow-credentials=true" \
+		-e "xpack.security.enabled=false" \
+		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+		-p 9200:9200 \
+		-p 9300:9300 \
+		$(ELASTIC_SEARCH_IMAGE_8); else \
+		echo "$(RED)==> Could not create container: Container already exists $(RESET)";fi
+
+.PHONY: start-elastic-7
+start-elastic-7: elastic-7 ## Start Elastic Search
 	@echo "$(GREEN)==> Start Elastic Search$(RESET)"
 	@docker start $(ELASTIC_SEARCH_CONTAINER)
+
+.PHONY: start-elastic-8
+start-elastic-8: elastic-8 ## Start Elastic Search
+	@echo "$(GREEN)==> Start Elastic Search$(RESET)"
+	@docker start $(ELASTIC_SEARCH_CONTAINER)
+
 
 .PHONY: stop-elastic
 stop-elastic: ## Stop Elastic Search
@@ -187,11 +216,22 @@ stop-redis: ## Stop redis
 
 .PHONY: test
 test: ## run tests
-	make start-elastic
+	bin/pip install elasticsearch==8.10.0
+	make start-elastic-8
 	make start-redis
 	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
 	make stop-elastic
 	make stop-redis
+
+.PHONY: test-elastic-7
+test-elastic-7: ## run tests with elasticsearch 7
+	bin/pip install elasticsearch==7.17.7
+	make start-elastic-7
+	make start-redis
+	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
+	make stop-elastic
+	make stop-redis
+
 
 .PHONY: start
 start: ## Start a Plone instance on localhost:8080
@@ -202,7 +242,7 @@ populate: ## Populate site with wikipedia content
 	PYTHONWARNINGS=ignore ./bin/zconsole run etc/zope.conf scripts/populate.py
 
 .PHONY: start-redis-support
-start-redis-support: ## Start a Plone instance on localhost:8080
+start-redis-support: ## Start a Plone instance on localhost:8080 with redis support
 	@echo "$(GREEN)==> Set env variables, PLONE_REDIS_DSN, PLONE_BACKEND, PLONE_USERNAME and PLONE_PASSWORD before start instance$(RESET)"
 	PYTHONWARNINGS=ignore \
 	$(DEFAULT_ENV_ES_REDIS) \

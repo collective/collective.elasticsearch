@@ -20,9 +20,10 @@ services:
       - discovery.type=single-node
       - cluster.name=docker-cluster
       - http.cors.enabled=true
-      - http.cors.allow-origin=*
+      - http.cors.allow-origin="*"
       - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
       - http.cors.allow-credentials=true
+      - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
@@ -36,6 +37,7 @@ services:
       - PLONE_BACKEND=http://plone:8080/Plone
       - PLONE_USERNAME=admin
       - PLONE_PASSWORD=admin
+      - PLONE_ELASTICSEARCH_HOST=host.docker.internal
 
   plone:
     build:

@@ -1,5 +1,4 @@
 from collective.elasticsearch import logger
-from collective.elasticsearch.interfaces import IElasticSettings
 from plone.registry.interfaces import IRegistry
 from plone.uuid.interfaces import IUUID
 from Products.ZCatalog import ZCatalog
@@ -27,6 +26,11 @@ def getUID(obj):
     return value
 
 
+ELASTIC_SEARCH_VERSION = pkg_resources.get_distribution(
+    "elasticsearch"
+).parsed_version.major
+
+
 def get_brain_from_path(zcatalog: ZCatalog, path: str) -> AbstractCatalogBrain:
     rid = zcatalog.uids.get(path)
     if isinstance(rid, int):
@@ -41,6 +45,8 @@ def get_brain_from_path(zcatalog: ZCatalog, path: str) -> AbstractCatalogBrain:
 
 def get_settings():
     """Return IElasticSettings values."""
+    from collective.elasticsearch.interfaces import IElasticSettings
+
     registry = getUtility(IRegistry)
     try:
         settings = registry.forInterface(IElasticSettings, check=False)
@@ -51,11 +57,19 @@ def get_settings():
 
 def get_connection_settings():
     settings = get_settings()
-    return settings.hosts, {
+
+    hosts = settings.hosts
+    if ELASTIC_SEARCH_VERSION == 8:
+        # Make sure the is a port defined for all hosts
+        for index, host in enumerate(settings.hosts):
+            if ":" not in host:
+                hosts[index] = f"http://{host}:9200"
+
+    return hosts, {
         "retry_on_timeout": settings.retry_on_timeout,
         "sniff_on_connection_fail": settings.sniff_on_connection_fail,
         "sniff_on_start": settings.sniff_on_start,
-        "sniffer_timeout": settings.sniffer_timeout,
+        "sniffer_timeout": settings.sniffer_timeout and settings.sniffer_timeout or 0.0,
         "timeout": settings.timeout,
     }
 

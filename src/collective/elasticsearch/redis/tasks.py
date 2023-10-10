@@ -2,6 +2,7 @@ from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from collective.elasticsearch import local
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.utils import ELASTIC_SEARCH_VERSION
 from elasticsearch import Elasticsearch
 from rq import Queue
 from rq import Retry
@@ -49,7 +50,7 @@ queue_low = Queue(
 )  # Don't queue in tests
 
 
-@job(queue, retry=Retry(max=3, interval=30))
+@job(queue, retry=Retry(max=3, interval=5))
 def bulk_update(hosts, params, index_name, body):
     """
     Collects all the data and updates elasticsearch
@@ -73,7 +74,10 @@ def bulk_update(hosts, params, index_name, body):
             item[1]["doc"] = data
 
     es_data = [item for sublist in body for item in sublist]
-    connection.bulk(index=index_name, body=es_data)
+    if ELASTIC_SEARCH_VERSION == 8:
+        connection.bulk(index=index_name, operations=es_data)
+    else:
+        connection.bulk(es_data, index=index_name)
     return "Done"
 
 
@@ -83,7 +87,15 @@ def update_file_data(hosts, params, index_name, body):
     Get blob data from plone and index it via elasticsearch attachment pipeline
     """
     hosts = os.environ.get("PLONE_ELASTICSEARCH_HOST", hosts)
-    connection = es_connection(hosts, **params)
+
+    if ELASTIC_SEARCH_VERSION == 8:
+        serializers = {
+            "application/cbor": cbor2,
+        }
+        params["serializers"] = serializers
+        connection = Elasticsearch(hosts, **params)
+    else:
+        connection = es_connection(hosts, **params)
     uuid, data = body
 
     attachments = {"attachments": []}
@@ -98,10 +110,23 @@ def update_file_data(hosts, params, index_name, body):
             }
         )
 
-    connection.update(
-        index_name,
-        uuid,
-        cbor2.dumps({"doc": attachments}),
-        headers={"content-type": "application/cbor"},
-    )
+    if ELASTIC_SEARCH_VERSION == 8:
+        # Construct our own request, since the python es client can't handle cbor directly
+        response = connection._transport.perform_request(
+            method="POST",
+            target=f"/{index_name}/_update/{uuid}",
+            body={"doc": attachments},
+            headers={"content-type": "application/cbor"},
+        )
+    else:
+        response = connection.update(
+            index_name,
+            uuid,
+            cbor2.dumps({"doc": attachments}),
+            headers={"content-type": "application/cbor"},
+        )
+
+    if response.meta.status != 200:
+        raise Exception(f"Failed to update {uuid} with {response}")
+
     return "Done"

@@ -4,11 +4,11 @@ from collective.elasticsearch import logger
 from collective.elasticsearch import utils
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
+from collective.elasticsearch.utils import ELASTIC_SEARCH_VERSION
 from collective.elasticsearch.utils import use_redis
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
-from elasticsearch.exceptions import NotFoundError
 from plone import api
 from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.permissions import AccessInactivePortalContent
@@ -25,6 +25,13 @@ import warnings
 CONVERTED_ATTR = "_elasticconverted"
 CUSTOM_INDEX_NAME_ATTR = "_elasticcustomindex"
 INDEX_VERSION_ATTR = "_elasticindexversion"
+
+
+try:
+    from elasticsearch.exceptions import BadRequestError
+except ImportError:
+    # Backwards compatibility with ES 7
+    BadRequestError = Exception
 
 
 @implementer(interfaces.IElasticSearchManager)
@@ -155,7 +162,7 @@ class ElasticSearchManager:
                     ("Elastic Search Version", cluster_version),
                     ("Number of docs (Catalog)", catalog_docs),
                 ]
-        except NotFoundError:
+        except exceptions.NotFoundError:
             logger.warning("Error getting stats", exc_info=True)
             return []
 
@@ -194,14 +201,16 @@ class ElasticSearchManager:
             conn.indices.delete(index=self.real_index_name)
         except exceptions.NotFoundError:
             pass
-        except exceptions.TransportError as exc:
+        except (BadRequestError, exceptions.TransportError) as exc:
             if exc.error != "illegal_argument_exception":
                 raise
             conn.indices.delete_alias(index="_all", name=self.real_index_name)
 
         if self.index_version:
             try:
-                conn.indices.delete_alias(self.index_name, self.real_index_name)
+                conn.indices.delete_alias(
+                    index=self.index_name, name=self.real_index_name
+                )
             except exceptions.NotFoundError:
                 pass
         self.flush_indices()
@@ -231,7 +240,8 @@ class ElasticSearchManager:
         actual binary data is available to extract.
         """
 
-        if "attachment" not in self.connection.cat.plugins():
+        if (ELASTIC_SEARCH_VERSION == 7 and
+                "attachment" not in self.connection.cat.plugins()):
             return
 
         body = {
@@ -245,7 +255,6 @@ class ElasticSearchManager:
                             "attachment": {
                                 "target_field": "_ingest._value.attachment",
                                 "field": "_ingest._value.data",
-                                # "remove_binary": "true",  # version 8
                                 "properties": ["content"],
                             }
                         },
@@ -260,7 +269,9 @@ class ElasticSearchManager:
                                     if (ctx['attachments'][i]['attachment']['content'].length() > 0) {
                                         ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
                                     }
-                                    ctx['attachments'][i]['data'] = null;
+                                    if (ctx['attachments'][i].containsKey('data')) {
+                                        ctx['attachments'][i]['data'] = null;
+                                    }                                   
                                 }
                             }
                             """,
@@ -278,7 +289,11 @@ class ElasticSearchManager:
             #     }
             # ]
         }
-        self.connection.ingest.put_pipeline("cbor-attachments", body=body)
+
+        if ELASTIC_SEARCH_VERSION == 8:
+            body['processors'][0]['foreach']['processor']['attachment']['remove_binary'] = True
+
+        self.connection.ingest.put_pipeline(id="cbor-attachments", body=body)
 
         settings = {"index": {"default_pipeline": "cbor-attachments"}}
         self.connection.indices.put_settings(body=settings, index=self.index_name)

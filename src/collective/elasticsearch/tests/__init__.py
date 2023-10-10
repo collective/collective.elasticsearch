@@ -35,10 +35,18 @@ class BaseTest(unittest.TestCase):
         os.environ["PLONE_BACKEND"] = self.portal.absolute_url()
 
         settings = utils.get_settings()
-        # disable sniffing hosts in tests because docker...
-        settings.sniffer_timeout = None
         settings.enabled = True
-        settings.sniffer_timeout = 0.0
+
+        # Elasticsearch 8 requires a sniffing timeout, otherwise the python
+        # ES client tries to sniff first even though the new ES instance with
+        # index is not yet initialized.
+
+        # This means, basically never sniff during tests
+        # Since it's a single instance installation in tests sniffing does not
+        # make sense anyway.
+
+        # With ES 7 setting 0.0 was enough
+        settings.sniffer_timeout = 10000.0
 
         # Raise elastic search exceptions
         settings.raise_search_exception = True

@@ -5,6 +5,7 @@ from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcesso
 from collective.elasticsearch.interfaces import IndexingActions
 from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.utils import ELASTIC_SEARCH_VERSION
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import use_redis
 from pkg_resources import parse_version
@@ -203,10 +204,18 @@ class IndexProcessor:
         if self.manager.active and items:
             self.manager.bulk(data=actions.all())
 
-        # make sure attachment plugin and cbor-attachments pipeline are available
-        pipeline = "cbor-attachments" in self.manager.connection.ingest.get_pipeline()
-        plugin = "attachment" in self.manager.connection.cat.plugins()
-        if pipeline and plugin:
+        update_blob = False
+        if ELASTIC_SEARCH_VERSION == 8:
+            update_blob = True
+        else:
+            # make sure attachment plugin and cbor-attachments pipeline are available
+            pipeline = (
+                "cbor-attachments" in self.manager.connection.ingest.get_pipeline()
+            )
+            plugin = "attachment" in self.manager.connection.cat.plugins()
+            update_blob = pipeline and plugin
+
+        if update_blob:
             for item in self.actions.all_blob_actions():
                 self.manager.update_blob(item)
 

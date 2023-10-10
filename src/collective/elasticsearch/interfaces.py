@@ -1,3 +1,4 @@
+from collective.elasticsearch.utils import ELASTIC_SEARCH_VERSION
 from dataclasses import dataclass
 from Products.CMFCore.interfaces import IIndexQueueProcessor
 from typing import Dict
@@ -57,7 +58,7 @@ class IElasticSettings(Interface):
 
     hosts = schema.List(
         title="Hosts",
-        default=["127.0.0.1"],
+        default=ELASTIC_SEARCH_VERSION == 8 and ["http://127.0.0.1:9200"] or ["127.0.0.1"],
         unique=True,
         value_type=schema.TextLine(title="Host"),
     )

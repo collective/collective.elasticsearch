@@ -263,6 +263,14 @@ make format
 make lint
 ```
 
+# Upgrade from elasticsearch 7.17.7 to 8.10.x
+
+I you were already on elasticsearch 7.17.7 there is usually not mutch you need to do with elasticsearch itself. I will update itself automatically, once you update to elasticsearch 8 and restart the service.
+
+- If there is a configuration issue creating the new elasticsearch 8 container, make sure you have single or douple quotes around certain values. Like change http.cors.allow-origin=* to http.cors.allow-origin="*".
+- Add port to all hosts in the control panel hosts section. If there is no port defined we add port 9200 by default if you are running elasticsearch 8.
+- Please check the elasticsearch upgrade guide https://www.elastic.co/guide/en/elastic-stack/8.10/upgrading-elastic-stack.html#prepare-to-upgrade
+
 ## License
 
 The project is licensed under the GPLv2.
