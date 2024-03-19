@@ -243,10 +243,12 @@ class EZCTextIndex(BaseIndex):
             qs_value = self._make_simple_query_string(value)
 
             fields = []
-            if name in ("Title", "SearchableText"):
-                fields.extend(["Title^2", "SearchableText"])
-            else:
-                fields.append(name)
+            for field in getSearchFields():
+                # titles have most importance... we override here...
+                if field == "Title":
+                    fields.append("Title^2")
+                else:
+                    fields.append(field)
             query = {"simple_query_string": {"query": qs_value, "fields": fields}}
             return query
 
