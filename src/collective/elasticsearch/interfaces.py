@@ -68,6 +68,13 @@ class IElasticSettings(Interface):
         value_type=schema.TextLine(title="Index"),
     )
 
+    search_fields = schema.Set(
+        title="Indexes which are used when performing a search. "
+              "Note, indexes should also be present in the Index setting.",
+        default={"Title", "Description", "SearchableText"},
+        value_type=schema.TextLine(title="Search Fields"),
+    )
+
     sniff_on_start = schema.Bool(title="Sniff on start", default=False, required=False)
 
     sniff_on_connection_fail = schema.Bool(

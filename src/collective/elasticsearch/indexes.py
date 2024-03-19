@@ -1,6 +1,7 @@
 from Acquisition import aq_base
 from Acquisition import aq_parent
 from collective.elasticsearch import logger
+from collective.elasticsearch.utils import getSearchFields
 from datetime import date
 from datetime import datetime
 from DateTime import DateTime
@@ -214,14 +215,21 @@ class EZCTextIndex(BaseIndex):
         # ES doesn't care about * like zope catalog does
         clean_value = value.strip("*") if value else ""
         queries = [{"match_phrase": {name: {"query": clean_value, "slop": 2}}}]
-        if name in ("Title", "SearchableText"):
+        for search in getSearchFields():
+            # we add the base search field above, skip duplicating here...
+            if search == name:
+                continue
             # titles have most importance... we override here...
-            queries.append(
-                {"match_phrase_prefix": {"Title": {"query": clean_value, "boost": 2}}}
-            )
-        if name != "Title":
-            queries.append({"match": {name: {"query": clean_value}}})
-
+            if search == "Title":
+                queries.append(
+                    {
+                        "match_phrase_prefix": {
+                            "Title": {"query": clean_value, "boost": 2}
+                        }
+                    }
+                )
+            else:
+                queries.append({"match": {search: {"query": clean_value}}})
         return queries
 
 

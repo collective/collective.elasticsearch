@@ -68,6 +68,14 @@ def getESOnlyIndexes():
     except (KeyError, AttributeError):
         return {"Title", "Description", "SearchableText"}
 
+def getSearchFields():
+    settings = get_settings()
+    try:
+        search_fields = settings.search_fields
+        return set(search_fields) if search_fields else set()
+    except (KeyError, AttributeError):
+        return {"Title", "SearchableText"}
+
 
 def batches(data: list, size: int) -> List[List]:
     """Create a batch of lists from a base list."""
