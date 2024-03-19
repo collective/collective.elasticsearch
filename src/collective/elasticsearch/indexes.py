@@ -59,9 +59,10 @@ keyword_fields = (
 class BaseIndex:
     filter_query = True
 
-    def __init__(self, catalog, index):
+    def __init__(self, catalog, index, query_type="match"):
         self.catalog = catalog
         self.index = index
+        self.query_type = query_type
 
     def create_mapping(self, name):  # NOQA R0201
         if name in keyword_fields:
@@ -209,20 +210,40 @@ class EZCTextIndex(BaseIndex):
             return "\n".join(all_texts)
         return None
 
+    def _make_simple_query_string(self, query):
+        query = query.replace(" AND ", " + ")
+        return query
+
     def get_query(self, name, value):
         value = self._normalize_query(value)
         # ES doesn't care about * like zope catalog does
-        clean_value = value.strip("*") if value else ""
-        queries = [{"match_phrase": {name: {"query": clean_value, "slop": 2}}}]
-        if name in ("Title", "SearchableText"):
-            # titles have most importance... we override here...
-            queries.append(
-                {"match_phrase_prefix": {"Title": {"query": clean_value, "boost": 2}}}
-            )
-        if name != "Title":
-            queries.append({"match": {name: {"query": clean_value}}})
+        if self.query_type == "match":
+            clean_value = value.strip("*") if value else ""
+            queries = [{"match_phrase": {name: {"query": clean_value, "slop": 2}}}]
+            if name in ("Title", "SearchableText"):
+                # titles have most importance... we override here...
+                queries.append(
+                    {
+                        "match_phrase_prefix": {
+                            "Title": {"query": clean_value, "boost": 2}
+                        }
+                    }
+                )
+            if name != "Title":
+                queries.append({"match": {name: {"query": clean_value}}})
 
-        return queries
+            return queries
+
+        if self.query_type == "simple_query_string":
+            qs_value = self._make_simple_query_string(value)
+
+            fields = []
+            if name in ("Title", "SearchableText"):
+                fields.extend(["Title^2", "SearchableText"])
+            else:
+                fields.append(name)
+            query = {"simple_query_string": {"query": qs_value, "fields": fields}}
+            return query
 
 
 class EBooleanIndex(BaseIndex):
@@ -381,7 +402,7 @@ except ImportError:
     pass
 
 
-def getIndex(catalog, name):
+def getIndex(catalog, name, query_type="match"):
     catalog = getattr(catalog, "_catalog", catalog)
     try:
         index = aq_base(catalog.getIndex(name))
@@ -389,5 +410,5 @@ def getIndex(catalog, name):
         return None
     index_type = type(index)
     if index_type in INDEX_MAPPING:
-        return INDEX_MAPPING[index_type](catalog, index)
+        return INDEX_MAPPING[index_type](catalog, index, query_type=query_type)
     return None

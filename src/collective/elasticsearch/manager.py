@@ -104,6 +104,19 @@ class ElasticSearchManager:
         return value
 
     @property
+    def query_type(self):
+        """Query type chosen."""
+        try:
+            value = api.portal.get_registry_record(
+                "query_type", interfaces.IElasticSettings, "match"
+            )
+        except KeyError:
+            value = "match"
+        if value is None:
+            value = "match"
+        return value
+
+    @property
     def catalog(self):
         return api.portal.get_tool("portal_catalog")
 
@@ -367,6 +380,9 @@ class ElasticSearchManager:
                 "pre_tags": self.highlight_pre_tags.split("\n"),
                 "post_tags": self.highlight_post_tags.split("\n"),
             }
+        import json
+
+        print(json.dumps(body, indent=4))
         return self.connection.search(index=self.index_name, body=body, **query_params)
 
     def search(self, query: dict, factory=None, **query_params) -> LazyMap:
