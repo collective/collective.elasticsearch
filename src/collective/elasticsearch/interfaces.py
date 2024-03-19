@@ -78,6 +78,13 @@ class IElasticSettings(Interface):
         value_type=schema.TextLine(title="Index"),
     )
 
+    search_fields = schema.Set(
+        title="Indexes which are used when performing a search. "
+              "Note, indexes should also be present in the Index setting.",
+        default={"Title", "Description", "SearchableText"},
+        value_type=schema.TextLine(title="Search Fields"),
+    )
+
     query_type = schema.Choice(
         title="Query Type",
         description="Whether to use match/match_prefix queries or simple_query_string queries. See elastic search docs for more information.",
