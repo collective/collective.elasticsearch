@@ -20,12 +20,6 @@ except pkg_resources.DistributionNotFound:
     HAS_REDIS_MODULE = False
 
 
-PLONE_REDIS_DSN = os.environ.get("PLONE_REDIS_DSN", None)
-PLONE_USERNAME = os.environ.get("PLONE_USERNAME", None)
-PLONE_PASSWORD = os.environ.get("PLONE_PASSWORD", None)
-PLONE_BACKEND = os.environ.get("PLONE_BACKEND", None)
-
-
 def getUID(obj):
     value = IUUID(obj, None)
     if not value and hasattr(obj, "UID"):

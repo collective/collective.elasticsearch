@@ -54,6 +54,7 @@ def bulk_update(hosts, params, index_name, body):
     """
     Collects all the data and updates elasticsearch
     """
+    hosts = os.environ.get("PLONE_ELASTICSEARCH_HOST", hosts)
     connection = es_connection(hosts, **params)
 
     for item in body:
@@ -81,6 +82,7 @@ def update_file_data(hosts, params, index_name, body):
     """
     Get blob data from plone and index it via elasticsearch attachment pipeline
     """
+    hosts = os.environ.get("PLONE_ELASTICSEARCH_HOST", hosts)
     connection = es_connection(hosts, **params)
     uuid, data = body
 

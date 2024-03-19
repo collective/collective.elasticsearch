@@ -7,18 +7,52 @@ from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import use_redis
+from pkg_resources import parse_version
 from plone import api
+from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.dexterity.utils import iterSchemata
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
 from plone.namedfile.interfaces import INamedBlobFileField
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
+from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.schema import getFields
 
 import transaction
+
+
+if parse_version(api.env.plone_version()) < parse_version("6"):
+
+    def uuidToObject(uuid, unrestricted=False):
+        """Variation of this method, which support the parameter
+        'unrestricted', like the one from plone 6.
+        """
+
+        brain = uuidToCatalogBrain(uuid)
+        if brain is None:
+            return None
+
+        path = brain.getPath()
+
+        if not path:
+            return
+        site = getSite()
+        if site is None:
+            return
+        # Go to the parent of the item without restrictions.
+        parent_path, final_path = path.rpartition("/")[::2]
+        parent = site.unrestrictedTraverse(parent_path)
+        # Do check restrictions for the final object.
+        # Check if the object has restrictions
+        if unrestricted:
+            return parent.unrestrictedTraverse(final_path)
+        return parent.restrictedTraverse(final_path)
+
+else:
+    from plone.app.uuid.utils import uuidToObject
 
 
 @implementer(IElasticSearchIndexQueueProcessor)
@@ -89,6 +123,8 @@ class IndexProcessor:
 
     def index(self, obj, attributes=None):
         """Index the specified attributes for an obj."""
+        if not self.manager.active:
+            return
         actions = self.actions
         uuid, path = self._uuid_path(obj)
         actions.uuid_path[uuid] = path
@@ -122,10 +158,14 @@ class IndexProcessor:
 
     def reindex(self, obj, attributes=None, update_metadata=False):
         """Reindex the specified attributes for an obj."""
+        if not self.manager.active:
+            return
         self.index(obj, attributes)
 
     def unindex(self, obj):
         """Unindex the obj."""
+        if not self.manager.active:
+            return
         actions = self.actions
         uuid, path = self._uuid_path(obj)
         actions.uuid_path[uuid] = path
@@ -210,7 +250,7 @@ class IndexProcessor:
 
     def get_data_for_es(self, uuid, attributes=None):
         """Data to be sent to elasticsearch."""
-        obj = api.portal.get() if uuid == "/" else api.content.get(UID=uuid)
+        obj = api.portal.get() if uuid == "/" else uuidToObject(uuid, unrestricted=True)
         wrapped_object = self.wrap_object(obj)
         index_data = {}
         attributes = attributes if attributes else self.all_attributes
@@ -228,7 +268,7 @@ class IndexProcessor:
                 if value in (None, "None"):
                     # yes, we'll index null data...
                     value = None
-            elif index_name in self._es_attributes:
+            elif index_name in self.es_attributes:
                 indexer = queryMultiAdapter(
                     (wrapped_object, catalog), IIndexer, name=index_name
                 )
