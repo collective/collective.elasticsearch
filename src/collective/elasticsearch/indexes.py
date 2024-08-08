@@ -268,7 +268,7 @@ class EExtendedPathIndex(BaseIndex):
         return data[name]["path"]
 
     def get_query(self, name, value):
-        if isinstance(value, str):
+        if isinstance(value, str) or isinstance(value, list):
             paths = value
             depth = -1
             navtree = False
