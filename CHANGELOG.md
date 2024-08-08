@@ -26,6 +26,8 @@
 
 - Add support for multiple plone sites on one installation via PLONE_BACKEND_HOST @maethu
 
+- Support list of paths in PathIndex @maethu
+
 
 ## 5.0.0 (2022-10-11)
 
