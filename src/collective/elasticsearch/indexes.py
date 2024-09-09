@@ -284,6 +284,8 @@ class EExtendedPathIndex(BaseIndex):
             paths = [paths]
         andfilters = []
         for path in paths:
+            if isinstance(path, tuple) or isinstance(path, list):
+                path, depth = path
             spath = path.split("/")
             gtcompare = "gt"
             start = len(spath) - 1
