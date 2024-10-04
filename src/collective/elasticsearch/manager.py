@@ -29,7 +29,6 @@ INDEX_VERSION_ATTR = "_elasticindexversion"
 
 # Custom serializer to handle cases where set() data is passed to an index
 class PloneJSONSerializer(JSONSerializer):
-
     def default(self, data):
         if isinstance(data, set):
             return [i for i in data]
