@@ -2,6 +2,7 @@ from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from collective.elasticsearch import local
 from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.manager import PloneJSONSerializer
 from elasticsearch import Elasticsearch
 from rq import Queue
 from rq import Retry
@@ -30,7 +31,8 @@ def es_connection(hosts, **params):
     connection = local.get_local(ElasticSearchManager.connection_key)
     if not connection:
         local.set_local(
-            ElasticSearchManager.connection_key, Elasticsearch(hosts, **params)
+            ElasticSearchManager.connection_key,
+            Elasticsearch(hosts, serializer=PloneJSONSerializer(), **params),
         )
         connection = local.get_local(ElasticSearchManager.connection_key)
     return connection

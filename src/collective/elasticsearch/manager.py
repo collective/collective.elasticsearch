@@ -8,6 +8,7 @@ from collective.elasticsearch.utils import use_redis
 from DateTime import DateTime
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
+from elasticsearch import JSONSerializer
 from elasticsearch.exceptions import NotFoundError
 from plone import api
 from Products.CMFCore.indexing import processQueue
@@ -25,6 +26,14 @@ import warnings
 CONVERTED_ATTR = "_elasticconverted"
 CUSTOM_INDEX_NAME_ATTR = "_elasticcustomindex"
 INDEX_VERSION_ATTR = "_elasticindexversion"
+
+
+# Custom serializer to handle cases where set() data is passed to an index
+class PloneJSONSerializer(JSONSerializer):
+    def default(self, data):
+        if isinstance(data, set):
+            return [i for i in data]
+        super().default(data)
 
 
 @implementer(interfaces.IElasticSearchManager)
@@ -288,7 +297,10 @@ class ElasticSearchManager:
         conn = local.get_local(self.connection_key)
         if not conn:
             hosts, params = utils.get_connection_settings()
-            local.set_local(self.connection_key, Elasticsearch(hosts, **params))
+            local.set_local(
+                self.connection_key,
+                Elasticsearch(hosts, serializer=PloneJSONSerializer(), **params),
+            )
             conn = local.get_local(self.connection_key)
         return conn
 
