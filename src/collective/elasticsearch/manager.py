@@ -6,8 +6,9 @@ from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
 from collective.elasticsearch.utils import use_redis
 from DateTime import DateTime
-from elasticsearch import Elasticsearch, JSONSerializer
+from elasticsearch import Elasticsearch
 from elasticsearch import exceptions
+from elasticsearch import JSONSerializer
 from elasticsearch.exceptions import NotFoundError
 from plone import api
 from Products.CMFCore.indexing import processQueue

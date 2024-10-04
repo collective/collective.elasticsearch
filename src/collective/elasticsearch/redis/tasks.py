@@ -1,7 +1,8 @@
 from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from collective.elasticsearch import local
-from collective.elasticsearch.manager import ElasticSearchManager, PloneJSONSerializer
+from collective.elasticsearch.manager import ElasticSearchManager
+from collective.elasticsearch.manager import PloneJSONSerializer
 from elasticsearch import Elasticsearch
 from rq import Queue
 from rq import Retry
