@@ -20,6 +20,8 @@
 
 - Add support for optional es host in worker via PLONE_ELASTICSEARCH_HOST env variable @maethu
 
+- Serialize to list when indexed data contains sets @instification
+
 
 ## 5.0.0 (2022-10-11)
 
