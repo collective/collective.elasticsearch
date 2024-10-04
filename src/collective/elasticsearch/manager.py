@@ -26,6 +26,7 @@ CONVERTED_ATTR = "_elasticconverted"
 CUSTOM_INDEX_NAME_ATTR = "_elasticcustomindex"
 INDEX_VERSION_ATTR = "_elasticindexversion"
 
+
 # Custom serializer to handle cases where set() data is passed to an index
 class PloneJSONSerializer(JSONSerializer):
 
@@ -296,7 +297,10 @@ class ElasticSearchManager:
         conn = local.get_local(self.connection_key)
         if not conn:
             hosts, params = utils.get_connection_settings()
-            local.set_local(self.connection_key, Elasticsearch(hosts, serializer=PloneJSONSerializer(), **params))
+            local.set_local(
+                self.connection_key,
+                Elasticsearch(hosts, serializer=PloneJSONSerializer(), **params),
+            )
             conn = local.get_local(self.connection_key)
         return conn
 

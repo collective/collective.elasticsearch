@@ -30,7 +30,8 @@ def es_connection(hosts, **params):
     connection = local.get_local(ElasticSearchManager.connection_key)
     if not connection:
         local.set_local(
-            ElasticSearchManager.connection_key, Elasticsearch(hosts, serializer=PloneJSONSerializer(), **params)
+            ElasticSearchManager.connection_key,
+            Elasticsearch(hosts, serializer=PloneJSONSerializer(), **params),
         )
         connection = local.get_local(ElasticSearchManager.connection_key)
     return connection
