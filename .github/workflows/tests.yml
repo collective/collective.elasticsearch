@@ -54,6 +54,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           plone-version: ${{ matrix.plone }}
+          architecture: x64
 
       - name: Install package
         run: |
