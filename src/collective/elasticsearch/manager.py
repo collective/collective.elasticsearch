@@ -118,7 +118,7 @@ class ElasticSearchManager:
             value = api.portal.get_registry_record(
                 "enabled", interfaces.IElasticSettings, False
             )
-        except KeyError:
+        except (KeyError, ComponentLookupError):
             value = False
         return value
 
