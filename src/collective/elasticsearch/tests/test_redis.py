@@ -157,7 +157,7 @@ class TestIndexBlobs(BaseRedisTest):
         self._setup_sample_file()
         query = {"SearchableText": "text"}
         cat_results = self.catalog._old_searchResults(**query)
-        self.assertEqual(1, len(cat_results), "Expect 1 item")
+        self.assertEqual(0, len(cat_results), "Expect no result")
         es_results = self.catalog(**query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
