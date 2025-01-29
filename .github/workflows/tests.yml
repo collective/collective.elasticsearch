@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ["3.8", "3.9", "3.10"]
         plone: ["6.0-latest", "5.2-latest"]
         exclude:
           - plone: "5.2-latest"
@@ -25,7 +25,7 @@ jobs:
           - plone: "5.2-latest"
             python: "3.10"
           - plone: "6.0-latest"
-            python: "3.7"
+            python: "3.10"
 
     steps:
       # git checkout
