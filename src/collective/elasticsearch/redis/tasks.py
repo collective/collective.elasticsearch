@@ -49,7 +49,7 @@ queue_low = Queue(
 )  # Don't queue in tests
 
 
-@job(queue, retry=Retry(max=3, interval=30))
+@job(queue, connection=redis_connection(), retry=Retry(max=3, interval=30))
 def bulk_update(hosts, params, index_name, body):
     """
     Collects all the data and updates elasticsearch
@@ -77,7 +77,7 @@ def bulk_update(hosts, params, index_name, body):
     return "Done"
 
 
-@job(queue_low)
+@job(queue_low, connection=redis_connection())
 def update_file_data(hosts, params, index_name, body):
     """
     Get blob data from plone and index it via elasticsearch attachment pipeline
