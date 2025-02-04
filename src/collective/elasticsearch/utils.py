@@ -41,8 +41,8 @@ def get_brain_from_path(zcatalog: ZCatalog, path: str) -> AbstractCatalogBrain:
 
 def get_settings():
     """Return IElasticSettings values."""
-    registry = getUtility(IRegistry)
     try:
+        registry = getUtility(IRegistry)
         settings = registry.forInterface(IElasticSettings, check=False)
     except Exception:  # noQA
         settings = None

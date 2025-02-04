@@ -81,6 +81,7 @@ def bulk_update(hosts, params, index_name, body, plone_url):
     return "Done"
 
 
+
 @job(queue_low, connection=queue_low.connection)
 def update_file_data(hosts, params, index_name, body, plone_url):
     """

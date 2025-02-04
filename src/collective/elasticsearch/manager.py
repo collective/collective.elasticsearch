@@ -17,6 +17,7 @@ from Products.CMFPlone.CatalogTool import CatalogTool
 from zope.component import getMultiAdapter
 from zope.globalrequest import getRequest
 from zope.interface import implementer
+from zope.interface.interfaces import ComponentLookupError
 from ZTUtils.Lazy import LazyMap
 
 import os
@@ -41,7 +42,7 @@ class ElasticSearchManager:
             value = api.portal.get_registry_record(
                 "raise_search_exception", interfaces.IElasticSettings, False
             )
-        except KeyError:
+        except (KeyError, ComponentLookupError):
             value = False
         return value
 
@@ -118,7 +119,7 @@ class ElasticSearchManager:
             value = api.portal.get_registry_record(
                 "enabled", interfaces.IElasticSettings, False
             )
-        except KeyError:
+        except (KeyError, ComponentLookupError):
             value = False
         return value
 
