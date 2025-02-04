@@ -20,7 +20,10 @@
 
 - Add support for optional es host in worker via PLONE_ELASTICSEARCH_HOST env variable @maethu
 
+- Add support for multiple plone sites on one installation via PLONE_BACKEND_HOST @maethu
+
 - [Issue #118](https://github.com/collective/collective.elasticsearch/issues/118) Fix **ComponentLookupError** when adding a Plone Site (6.1) (@andreclimaco)
+
 
 ## 5.0.0 (2022-10-11)
 

@@ -276,7 +276,7 @@ class IndexProcessor:
                     value = indexer()
                 else:
                     attr = getattr(obj, index_name, None)
-                    value = attr() if callable(attr) else value
+                    value = attr() if callable(attr) else attr
             # Use str, if bytes value
             value = (
                 value.decode("utf-8", "ignore") if isinstance(value, bytes) else value

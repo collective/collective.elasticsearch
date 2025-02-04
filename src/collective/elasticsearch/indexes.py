@@ -268,7 +268,7 @@ class EExtendedPathIndex(BaseIndex):
         return data[name]["path"]
 
     def get_query(self, name, value):
-        if isinstance(value, str):
+        if isinstance(value, str) or isinstance(value, list):
             paths = value
             depth = -1
             navtree = False
@@ -284,6 +284,8 @@ class EExtendedPathIndex(BaseIndex):
             paths = [paths]
         andfilters = []
         for path in paths:
+            if isinstance(path, tuple) or isinstance(path, list):
+                path, depth = path
             spath = path.split("/")
             gtcompare = "gt"
             start = len(spath) - 1
