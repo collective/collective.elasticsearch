@@ -5,6 +5,16 @@ from typing import List
 from typing import Tuple
 from zope import schema
 from zope.interface import Interface
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
+
+
+query_types = SimpleVocabulary(
+    [
+        SimpleTerm(value="match", title="Match (Default)"),
+        SimpleTerm(value="simple_query_string", title="Simple Query String"),
+    ]
+)
 
 
 class IElasticSearchLayer(Interface):
@@ -66,6 +76,13 @@ class IElasticSettings(Interface):
         title="Indexes for which all searches are done through ElasticSearch",
         default={"Title", "Description", "SearchableText"},
         value_type=schema.TextLine(title="Index"),
+    )
+
+    query_type = schema.Choice(
+        title="Query Type",
+        description="Whether to use match/match_prefix queries or simple_query_string queries. See elastic search docs for more information.",
+        default="match",
+        vocabulary=query_types,
     )
 
     sniff_on_start = schema.Bool(title="Sniff on start", default=False, required=False)
