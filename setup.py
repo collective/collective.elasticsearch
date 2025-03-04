@@ -78,9 +78,8 @@ setup(
         ],
     },
     entry_points="""
-    [z3c.autoinclude.plugin]
-    target = plone
     [plone.autoinclude.plugin]
     target = plone
+    module = collective.elasticsearch
     """,
 )
