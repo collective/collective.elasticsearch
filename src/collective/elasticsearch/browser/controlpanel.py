@@ -36,9 +36,9 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     @property
     def connection_status(self):
         try:
-            return self.es.connection.status()["ok"]
-        except conerror:
-            return False
+            # Use cluster.health() which works in both ES 7 and ES 8
+            health_status = self.es.connection.cluster.health()["status"]
+            return health_status in ("green", "yellow")
         except (
             conerror,
             ConnectionError,
@@ -46,17 +46,7 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
             ConnectionRefusedError,
             AttributeError,
         ):
-            try:
-                health_status = self.es.connection.cluster.health()["status"]
-                return health_status in ("green", "yellow")
-            except (
-                conerror,
-                ConnectionError,
-                NewConnectionError,
-                ConnectionRefusedError,
-                AttributeError,
-            ):
-                return False
+            return False
 
     @property
     def es_info(self):
