@@ -131,6 +131,17 @@ class TestExtractRestApiEndpoint(BaseRedisTest):
 class TestIndexBlobs(BaseRedisTest):
     def setUp(self):
         super().setUp()
+        # Unregister PDF to text transform so catalog doesn't extract text from PDFs
+        # This ensures only ES ingest-attachment extracts the text
+        self._transforms = api.portal.get_tool("portal_transforms")
+        self._disabled_transforms = []
+        for transform_name in list(self._transforms.objectIds()):
+            if "pdf" in transform_name.lower():
+                self._transforms.unregisterTransform(transform_name)
+                self._disabled_transforms.append(transform_name)
+
+    def tearDown(self):
+        super().tearDown()
 
     def _setup_sample_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "assets/test.pdf")
