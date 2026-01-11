@@ -6,6 +6,7 @@ elasticsearch-py versions 7.x and 8.x.
 """
 from elasticsearch import VERSION as ES_VERSION
 
+
 ES_MAJOR_VERSION = ES_VERSION[0]
 IS_ES_8 = ES_MAJOR_VERSION >= 8
 

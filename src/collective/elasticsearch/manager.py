@@ -207,15 +207,21 @@ class ElasticSearchManager:
             if error_type is None:
                 # ES 8 style - check if it's an illegal_argument_exception
                 error_info = getattr(exc, "info", {}) or {}
-                error_body = error_info.get("error", {}) if isinstance(error_info, dict) else {}
-                error_type = error_body.get("type", "") if isinstance(error_body, dict) else ""
+                error_body = (
+                    error_info.get("error", {}) if isinstance(error_info, dict) else {}
+                )
+                error_type = (
+                    error_body.get("type", "") if isinstance(error_body, dict) else ""
+                )
             if error_type != "illegal_argument_exception":
                 raise
             conn.indices.delete_alias(index="_all", name=self.real_index_name)
 
         if self.index_version:
             try:
-                conn.indices.delete_alias(index=self.index_name, name=self.real_index_name)
+                conn.indices.delete_alias(
+                    index=self.index_name, name=self.real_index_name
+                )
             except exceptions.NotFoundError:
                 pass
         self.flush_indices()
