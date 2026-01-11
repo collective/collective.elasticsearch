@@ -20,13 +20,17 @@ PLONE6=6.0-latest
 
 INSTANCE_YAML=instance.yaml
 
-ELASTIC_SEARCH_IMAGE=elasticsearch:7.17.7
-ELASTIC_SEARCH_CONTAINER=elastictest
+# Elasticsearch configuration
+ELASTIC_SEARCH_7_IMAGE=elasticsearch:7.17.7
+ELASTIC_SEARCH_8_IMAGE=elasticsearch:8.17.0
+ELASTIC_SEARCH_7_CONTAINER=elastictest_7
+ELASTIC_SEARCH_8_CONTAINER=elastictest_8
 
 REDIS_IMAGE=redis:7.0.5
 REDIS_CONTAINER=redistest
 
-ELASTIC_SEARCH_CONTAINERS=$$(docker ps -q -a -f "name=${ELASTIC_SEARCH_CONTAINER}" | wc -l)
+ELASTIC_SEARCH_7_CONTAINERS=$$(docker ps -q -a -f "name=^${ELASTIC_SEARCH_7_CONTAINER}$$" | wc -l | tr -d ' ')
+ELASTIC_SEARCH_8_CONTAINERS=$$(docker ps -q -a -f "name=^${ELASTIC_SEARCH_8_CONTAINER}$$" | wc -l | tr -d ' ')
 REDIS_CONTAINERS=$$(docker ps -q -a -f "name=${REDIS_CONTAINER}" | wc -l)
 
 # Default env for elasticsearch with redis queue
@@ -138,41 +142,81 @@ lint-pyroma: ## validate using pyroma
 lint-zpretty: ## validate ZCML/XML using zpretty
 	$(LINT) zpretty ${CODEPATH}
 
-.PHONY: elastic
-elastic: ## Create Elastic Search container
-	@if [ $(ELASTIC_SEARCH_CONTAINERS) -eq 0 ]; then \
-		docker container create --name $(ELASTIC_SEARCH_CONTAINER) \
+# Elasticsearch 7 container management
+.PHONY: elastic-7
+elastic-7: ## Create Elasticsearch 7 container
+	@if [ $(ELASTIC_SEARCH_7_CONTAINERS) -eq 0 ]; then \
+		echo "$(GREEN)==> Creating Elasticsearch 7 container$(RESET)"; \
+		docker container create --name $(ELASTIC_SEARCH_7_CONTAINER) \
 		-e "discovery.type=single-node" \
 		-e "cluster.name=docker-cluster" \
 		-e "http.cors.enabled=true" \
 		-e "http.cors.allow-origin=*" \
 		-e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
 		-e "http.cors.allow-credentials=true" \
+		-e "xpack.security.enabled=false" \
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
 		-p 9300:9300 \
-		$(ELASTIC_SEARCH_IMAGE); \
-		docker start $(ELASTIC_SEARCH_CONTAINER); \
-		docker exec $(ELASTIC_SEARCH_CONTAINER) /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
-		docker stop $(ELASTIC_SEARCH_CONTAINER);fi
+		$(ELASTIC_SEARCH_7_IMAGE); \
+		docker start $(ELASTIC_SEARCH_7_CONTAINER); \
+		docker exec $(ELASTIC_SEARCH_7_CONTAINER) /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
+		docker stop $(ELASTIC_SEARCH_7_CONTAINER); \
+	fi
 
-.PHONY: start-elastic
-start-elastic: elastic ## Start Elastic Search
-	@echo "$(GREEN)==> Start Elastic Search$(RESET)"
-	@docker start $(ELASTIC_SEARCH_CONTAINER)
+# Elasticsearch 8 container management
+.PHONY: elastic-8
+elastic-8: ## Create Elasticsearch 8 container
+	@if [ $(ELASTIC_SEARCH_8_CONTAINERS) -eq 0 ]; then \
+		echo "$(GREEN)==> Creating Elasticsearch 8 container$(RESET)"; \
+		docker container create --name $(ELASTIC_SEARCH_8_CONTAINER) \
+		-e "discovery.type=single-node" \
+		-e "cluster.name=docker-cluster" \
+		-e "xpack.security.enabled=false" \
+		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+		-p 9200:9200 \
+		-p 9300:9300 \
+		$(ELASTIC_SEARCH_8_IMAGE); \
+		docker start $(ELASTIC_SEARCH_8_CONTAINER); \
+		docker stop $(ELASTIC_SEARCH_8_CONTAINER); \
+	fi
 
-.PHONY: stop-elastic
-stop-elastic: ## Stop Elastic Search
-	@echo "$(GREEN)==> Stop Elastic Search$(RESET)"
-	@docker stop $(ELASTIC_SEARCH_CONTAINER)
+.PHONY: start-elastic-7
+start-elastic-7: elastic-7 ## Start Elasticsearch 7
+	@echo "$(GREEN)==> Start Elasticsearch 7$(RESET)"
+	@docker start $(ELASTIC_SEARCH_7_CONTAINER)
+	@sleep 10
+
+.PHONY: stop-elastic-7
+stop-elastic-7: ## Stop Elasticsearch 7
+	@echo "$(GREEN)==> Stop Elasticsearch 7$(RESET)"
+	@docker stop $(ELASTIC_SEARCH_7_CONTAINER) 2>/dev/null || true
+
+.PHONY: start-elastic-8
+start-elastic-8: elastic-8 ## Start Elasticsearch 8
+	@echo "$(GREEN)==> Start Elasticsearch 8$(RESET)"
+	@docker start $(ELASTIC_SEARCH_8_CONTAINER)
+	@sleep 10
+
+.PHONY: stop-elastic-8
+stop-elastic-8: ## Stop Elasticsearch 8
+	@echo "$(GREEN)==> Stop Elasticsearch 8$(RESET)"
+	@docker stop $(ELASTIC_SEARCH_8_CONTAINER) 2>/dev/null || true
+
+.PHONY: remove-elastic-7
+remove-elastic-7: ## Remove Elasticsearch 7 container
+	@docker rm -f $(ELASTIC_SEARCH_7_CONTAINER) 2>/dev/null || true
+
+.PHONY: remove-elastic-8
+remove-elastic-8: ## Remove Elasticsearch 8 container
+	@docker rm -f $(ELASTIC_SEARCH_8_CONTAINER) 2>/dev/null || true
 
 .PHONY: redis
-redis: ## Create redis Search container
+redis: ## Create redis container
 	@if [ $(REDIS_CONTAINERS) -eq 0 ]; then \
 		docker container create --name $(REDIS_CONTAINER) \
 		-p 6379:6379 \
 		$(REDIS_IMAGE);fi
-
 
 .PHONY: start-redis
 start-redis: redis ## Start redis
@@ -182,16 +226,33 @@ start-redis: redis ## Start redis
 .PHONY: stop-redis
 stop-redis: ## Stop redis
 	@echo "$(GREEN)==> Stop redis$(RESET)"
-	@docker stop $(REDIS_CONTAINER)
+	@docker stop $(REDIS_CONTAINER) 2>/dev/null || true
 
-
+# Test targets
 .PHONY: test
-test: ## run tests
-	make start-elastic
-	make start-redis
+test: test-es7 test-es8 ## Run tests against ES 7 and ES 8
+
+.PHONY: test-es7
+test-es7: ## Run tests with Elasticsearch 7
+	@echo "$(GREEN)==> Running tests with Elasticsearch 7$(RESET)"
+	@make stop-elastic-8 2>/dev/null || true
+	@make start-elastic-7
+	@make start-redis
+	./bin/pip install "elasticsearch>=7.17.0,<8.0.0" --quiet
 	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
-	make stop-elastic
-	make stop-redis
+	@make stop-elastic-7
+	@make stop-redis
+
+.PHONY: test-es8
+test-es8: ## Run tests with Elasticsearch 8
+	@echo "$(GREEN)==> Running tests with Elasticsearch 8$(RESET)"
+	@make stop-elastic-7 2>/dev/null || true
+	@make start-elastic-8
+	@make start-redis
+	./bin/pip install "elasticsearch>=8.0.0,<9.0.0" --quiet
+	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
+	@make stop-elastic-8
+	@make stop-redis
 
 .PHONY: start
 start: ## Start a Plone instance on localhost:8080
