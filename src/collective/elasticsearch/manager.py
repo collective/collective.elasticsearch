@@ -2,6 +2,12 @@ from collective.elasticsearch import interfaces
 from collective.elasticsearch import local
 from collective.elasticsearch import logger
 from collective.elasticsearch import utils
+from collective.elasticsearch.compat import es_bulk
+from collective.elasticsearch.compat import es_search
+from collective.elasticsearch.compat import has_attachment_processor
+from collective.elasticsearch.compat import indices_put_mapping
+from collective.elasticsearch.compat import indices_put_settings
+from collective.elasticsearch.compat import ingest_put_pipeline
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
 from collective.elasticsearch.utils import use_redis
@@ -195,14 +201,21 @@ class ElasticSearchManager:
             conn.indices.delete(index=self.real_index_name)
         except exceptions.NotFoundError:
             pass
-        except exceptions.TransportError as exc:
-            if exc.error != "illegal_argument_exception":
+        except Exception as exc:
+            # Handle ES 7 TransportError and ES 8 BadRequestError/ApiError
+            error_type = getattr(exc, "error", None)
+            if error_type is None:
+                # ES 8 style - check if it's an illegal_argument_exception
+                error_info = getattr(exc, "info", {}) or {}
+                error_body = error_info.get("error", {}) if isinstance(error_info, dict) else {}
+                error_type = error_body.get("type", "") if isinstance(error_body, dict) else ""
+            if error_type != "illegal_argument_exception":
                 raise
             conn.indices.delete_alias(index="_all", name=self.real_index_name)
 
         if self.index_version:
             try:
-                conn.indices.delete_alias(self.index_name, self.real_index_name)
+                conn.indices.delete_alias(index=self.index_name, name=self.real_index_name)
             except exceptions.NotFoundError:
                 pass
         self.flush_indices()
@@ -212,7 +225,7 @@ class ElasticSearchManager:
         setattr(self.catalog, CONVERTED_ATTR, True)
         self.catalog._p_changed = True
         mapping = getMultiAdapter((getRequest(), self), interfaces.IMappingProvider)()
-        self.connection.indices.put_mapping(body=mapping, index=self.index_name)
+        indices_put_mapping(self.connection, self.index_name, mapping)
         self._setup_attachment_pipeline_and_default_index()
 
     def _setup_attachment_pipeline_and_default_index(self):
@@ -232,7 +245,7 @@ class ElasticSearchManager:
         actual binary data is available to extract.
         """
 
-        if "attachment" not in self.connection.cat.plugins():
+        if not has_attachment_processor(self.connection):
             return
 
         body = {
@@ -279,10 +292,10 @@ class ElasticSearchManager:
             #     }
             # ]
         }
-        self.connection.ingest.put_pipeline("cbor-attachments", body=body)
+        ingest_put_pipeline(self.connection, "cbor-attachments", body)
 
         settings = {"index": {"default_pipeline": "cbor-attachments"}}
-        self.connection.indices.put_settings(body=settings, index=self.index_name)
+        indices_put_settings(self.connection, self.index_name, settings)
 
     @property
     def connection(self) -> Elasticsearch:
@@ -302,7 +315,7 @@ class ElasticSearchManager:
     def _bulk_call_direct(self, batch):
         data = [item for sublist in batch for item in sublist]
         logger.info(f"Bulk call with {len(data)} entries and {len(batch)} actions.")
-        result = self.connection.bulk(index=self.index_name, body=data)
+        result = es_bulk(self.connection, self.index_name, data)
         if "errors" in result and result["errors"] is True:
             logger.error(f"Error in bulk operation: {result}")
 
@@ -345,7 +358,7 @@ class ElasticSearchManager:
 
     def get_record_by_path(self, path: str) -> dict:
         body = {"query": {"match": {"path.path": path}}}
-        results = self.connection.search(index=self.index_name, body=body)
+        results = es_search(self.connection, self.index_name, body)
         hits = results.get("hits", {}).get("hits", [])
         record = hits[0]["_source"] if hits else {}
         return record
@@ -368,7 +381,7 @@ class ElasticSearchManager:
                 "pre_tags": self.highlight_pre_tags.split("\n"),
                 "post_tags": self.highlight_post_tags.split("\n"),
             }
-        return self.connection.search(index=self.index_name, body=body, **query_params)
+        return es_search(self.connection, self.index_name, body, **query_params)
 
     def search(self, query: dict, factory=None, **query_params) -> LazyMap:
         """

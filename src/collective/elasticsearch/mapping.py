@@ -1,3 +1,4 @@
+from collective.elasticsearch.compat import indices_create
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IMappingProvider
 from zope.interface import implementer
@@ -48,7 +49,7 @@ class MappingAdapter:
 
         conn = manager.connection
         index_name = manager.index_name
-        if conn.indices.exists(index_name):
+        if conn.indices.exists(index=index_name):
             # created BEFORE we started creating this as aliases to versions,
             # we can't go anywhere from here beside try updating...
             pass
@@ -57,8 +58,8 @@ class MappingAdapter:
                 # need to initialize version value
                 manager._bump_index_version()
             index_name_v = f"{index_name}_{manager.index_version}"
-            if not conn.indices.exists(index_name_v):
-                conn.indices.create(index_name_v, body=self.get_index_creation_body())
+            if not conn.indices.exists(index=index_name_v):
+                indices_create(conn, index_name_v, self.get_index_creation_body())
             if not conn.indices.exists_alias(name=index_name):
                 conn.indices.put_alias(index=index_name_v, name=index_name)
 
