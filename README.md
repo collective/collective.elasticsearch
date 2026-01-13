@@ -29,17 +29,27 @@ Then, ElasticSearch queries are ONLY used when Title, Description and Searchable
 
 ## Install Elastic Search
 
-For a comprehensive documentation about the different options of installing Elastic Search, please read [their documentation](https://www.elastic.co/guide/en/elasticsearch/reference/7.7/install-elasticsearch.html).
+For a comprehensive documentation about the different options of installing Elastic Search, please read [their documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html).
 
 A quick start, using Docker would be:
 
 ```shell
+# Elasticsearch 8.x
+docker run \
+		-e "discovery.type=single-node" \
+		-e "cluster.name=docker-cluster" \
+		-e "xpack.security.enabled=false" \
+		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+		-p 9200:9200 \
+		elasticsearch:8.17.0
+
+# Elasticsearch 7.x
 docker run \
 		-e "discovery.type=single-node" \
 		-e "cluster.name=docker-cluster" \
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
-		elasticsearch:7.7.0
+		elasticsearch:7.17.7
 ```
 
 ### Test the installation
@@ -206,9 +216,17 @@ This feature aims to have a minimal impact in terms of responsiveness of the plo
 
 ## Compatibility
 
-- Python 3
-- Plone 5.2 and above
-- Tested with Elastic Search 7.17.0
+- Python 3.8+
+- Plone 5.2 and 6.0
+- Elasticsearch 7.17.x and 8.x
+
+**Note:** Install the matching Python client for your ES version:
+- ES 7: `pip install "elasticsearch>=7.17.0,<8.0.0"`
+- ES 8: `pip install "elasticsearch>=8.0.0,<9.0.0"`
+
+### Upgrading from Elasticsearch 7 to 8
+
+Indices created in ES 7.x are compatible with ES 8.x - no data migration or reindexing required. Simply upgrade your ES server and update the Python client. See the [official upgrade guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-upgrade.html) for details.
 
 ## State
 
