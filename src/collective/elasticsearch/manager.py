@@ -202,18 +202,7 @@ class ElasticSearchManager:
         except exceptions.NotFoundError:
             pass
         except Exception as exc:
-            # Handle ES 7 TransportError and ES 8 BadRequestError/ApiError
-            error_type = getattr(exc, "error", None)
-            if error_type is None:
-                # ES 8 style - check if it's an illegal_argument_exception
-                error_info = getattr(exc, "info", {}) or {}
-                error_body = (
-                    error_info.get("error", {}) if isinstance(error_info, dict) else {}
-                )
-                error_type = (
-                    error_body.get("type", "") if isinstance(error_body, dict) else ""
-                )
-            if error_type != "illegal_argument_exception":
+            if "illegal_argument_exception" not in str(exc):
                 raise
             conn.indices.delete_alias(index="_all", name=self.real_index_name)
 
