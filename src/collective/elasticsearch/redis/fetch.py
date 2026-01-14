@@ -17,9 +17,10 @@ session_data.auth = (
 )
 
 
-def fetch_data(uuid, attributes):
-    backend = os.environ.get("PLONE_BACKEND", None)
-    url = backend + "/@elasticsearch_extractdata"
+def fetch_data(plone_url, uuid, attributes):
+    if not plone_url:
+        plone_url = os.environ.get("PLONE_BACKEND", None)
+    url = plone_url + "/@elasticsearch_extractdata"
     payload = {"uuid": uuid, "attributes:list": attributes}
     response = session.get(url, params=payload, verify=False, timeout=60)
     if response.status_code == 200:
@@ -30,8 +31,11 @@ def fetch_data(uuid, attributes):
         raise Exception("Bad response from Plone Backend")
 
 
-def fetch_blob_data(fieldname, data):
-    backend = os.environ.get("PLONE_BACKEND", None)
-    download_url = "/".join([backend, data[fieldname]["path"], "@@download", fieldname])
+def fetch_blob_data(plone_url, fieldname, data):
+    if not plone_url:
+        plone_url = os.environ.get("PLONE_BACKEND", None)
+    download_url = "/".join(
+        [plone_url, data[fieldname]["path"], "@@download", fieldname]
+    )
     file_ = session_data.get(download_url)
     return io.BytesIO(file_.content)

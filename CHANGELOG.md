@@ -24,6 +24,9 @@
 
 - Feature: Elasticsearch 8 Support
 
+- Add support for multiple plone sites on one installation via PLONE_BACKEND_HOST @maethu
+
+
 ## 5.0.0 (2022-10-11)
 
 - Rename `master` branch to `main` @ericof
