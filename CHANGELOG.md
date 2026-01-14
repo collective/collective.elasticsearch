@@ -28,6 +28,8 @@
 
 - Support list of paths in PathIndex @maethu
 
+- Fix fallback value if attr is not callable in queueprocessor @maethu
+
 
 ## 5.0.0 (2022-10-11)
 
