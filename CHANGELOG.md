@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.1 (unreleased)
+## 6.0.0 (unreleased)
 
 - Update elasticsearch to 7.17.7 (Ready for 8.x and apple silicon images are available) @maethu
 
@@ -21,6 +21,8 @@
 - Add support for optional es host in worker via PLONE_ELASTICSEARCH_HOST env variable @maethu
 
 - [Issue #118](https://github.com/collective/collective.elasticsearch/issues/118) Fix **ComponentLookupError** when adding a Plone Site (6.1) (@andreclimaco)
+
+- Feature: Elasticsearch 8 Support
 
 ## 5.0.0 (2022-10-11)
 
