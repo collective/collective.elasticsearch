@@ -30,6 +30,8 @@
 
 - Fix fallback value if attr is not callable in queueprocessor @maethu
 
+- Fix autoinclude plugin config @maethu
+
 
 ## 5.0.0 (2022-10-11)
 
