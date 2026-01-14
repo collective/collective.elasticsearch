@@ -1,4 +1,6 @@
 from collective.elasticsearch import logger
+from collective.elasticsearch.compat import get_connection_params
+from collective.elasticsearch.compat import normalize_hosts
 from collective.elasticsearch.interfaces import IElasticSettings
 from plone.registry.interfaces import IRegistry
 from plone.uuid.interfaces import IUUID
@@ -51,13 +53,7 @@ def get_settings():
 
 def get_connection_settings():
     settings = get_settings()
-    return settings.hosts, {
-        "retry_on_timeout": settings.retry_on_timeout,
-        "sniff_on_connection_fail": settings.sniff_on_connection_fail,
-        "sniff_on_start": settings.sniff_on_start,
-        "sniffer_timeout": settings.sniffer_timeout,
-        "timeout": settings.timeout,
-    }
+    return normalize_hosts(settings.hosts), get_connection_params(settings)
 
 
 def getESOnlyIndexes():

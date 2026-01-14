@@ -1,6 +1,8 @@
 from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from collective.elasticsearch import local
+from collective.elasticsearch.compat import es_bulk
+from collective.elasticsearch.compat import es_update
 from collective.elasticsearch.manager import ElasticSearchManager
 from elasticsearch import Elasticsearch
 from rq import Queue
@@ -73,7 +75,7 @@ def bulk_update(hosts, params, index_name, body):
             item[1]["doc"] = data
 
     es_data = [item for sublist in body for item in sublist]
-    connection.bulk(index=index_name, body=es_data)
+    es_bulk(connection, index_name, es_data)
     return "Done"
 
 
@@ -98,7 +100,8 @@ def update_file_data(hosts, params, index_name, body):
             }
         )
 
-    connection.update(
+    es_update(
+        connection,
         index_name,
         uuid,
         cbor2.dumps({"doc": attachments}),

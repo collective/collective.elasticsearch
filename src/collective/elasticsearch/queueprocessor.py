@@ -1,4 +1,5 @@
 from collective.elasticsearch import logger
+from collective.elasticsearch.compat import has_attachment_processor
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcessor
@@ -203,10 +204,10 @@ class IndexProcessor:
         if self.manager.active and items:
             self.manager.bulk(data=actions.all())
 
-        # make sure attachment plugin and cbor-attachments pipeline are available
+        # make sure attachment processor and cbor-attachments pipeline are available
         pipeline = "cbor-attachments" in self.manager.connection.ingest.get_pipeline()
-        plugin = "attachment" in self.manager.connection.cat.plugins()
-        if pipeline and plugin:
+        has_attachment = has_attachment_processor(self.manager.connection)
+        if pipeline and has_attachment:
             for item in self.actions.all_blob_actions():
                 self.manager.update_blob(item)
 

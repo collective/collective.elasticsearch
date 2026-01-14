@@ -1,4 +1,5 @@
 from collective.elasticsearch import utils
+from collective.elasticsearch.compat import indices_put_settings
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.tests import BaseRedisTest
 from plone import api
@@ -131,6 +132,17 @@ class TestExtractRestApiEndpoint(BaseRedisTest):
 class TestIndexBlobs(BaseRedisTest):
     def setUp(self):
         super().setUp()
+        # Unregister PDF to text transform so catalog doesn't extract text from PDFs
+        # This ensures only ES ingest-attachment extracts the text
+        self._transforms = api.portal.get_tool("portal_transforms")
+        self._disabled_transforms = []
+        for transform_name in list(self._transforms.objectIds()):
+            if "pdf" in transform_name.lower():
+                self._transforms.unregisterTransform(transform_name)
+                self._disabled_transforms.append(transform_name)
+
+    def tearDown(self):
+        super().tearDown()
 
     def _setup_sample_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "assets/test.pdf")
@@ -182,7 +194,7 @@ class TestIndexBlobs(BaseRedisTest):
 
     def test_make_sure_binary_data_are_removed_from_es(self):
         file_ = self._setup_sample_file()
-        es_data = self.es.connection.get(self.es.index_name, file_.UID())
+        es_data = self.es.connection.get(index=self.es.index_name, id=file_.UID())
         self.assertIsNone(es_data["_source"]["attachments"][0]["data"])
 
     def test_multiple_file_fields(self):
@@ -208,7 +220,7 @@ class TestIndexBlobs(BaseRedisTest):
         es_results = self.catalog(**query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
-        es_data = self.es.connection.get(self.es.index_name, file_.UID())
+        es_data = self.es.connection.get(index=self.es.index_name, id=file_.UID())
         self.assertIsNone(es_data["_source"]["attachments"][0]["data"])
         self.assertIsNone(es_data["_source"]["attachments"][1]["data"])
 
@@ -224,8 +236,8 @@ class TestIndexBlobs(BaseRedisTest):
 
     def test_dont_queue_blob_extraction_jobs_if_not_possible(self):
         settings = {"index": {"default_pipeline": None}}
-        self.es.connection.indices.put_settings(body=settings, index=self.es.index_name)
-        self.es.connection.ingest.delete_pipeline("cbor-attachments")
+        indices_put_settings(self.es.connection, self.es.index_name, settings)
+        self.es.connection.ingest.delete_pipeline(id="cbor-attachments")
         file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
         with io.FileIO(file_path, "rb") as pdf:
             self._file = api.content.create(
@@ -251,7 +263,7 @@ class TestIndexBlobs(BaseRedisTest):
             )
         self.commit(wait=1)
 
-        es_data = self.es.connection.get(self.es.index_name, _image.UID())
+        es_data = self.es.connection.get(index=self.es.index_name, id=_image.UID())
         self.assertNotIn(
             "attachments",
             es_data["_source"],

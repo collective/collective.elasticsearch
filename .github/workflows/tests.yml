@@ -1,12 +1,24 @@
 name: Tests
 on: [push]
 jobs:
-  build:
+  test-es7:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8", "3.10", "3.11"]
+        plone: ["5.2-latest", "6.0-latest"]
+        exclude:
+          - plone: "5.2-latest"
+            python: "3.10"
+          - plone: "5.2-latest"
+            python: "3.11"
+          - plone: "6.0-latest"
+            python: "3.8"
+
     services:
       redis:
         image: redis:7.0.5
-        # Set health checks to wait until redis has started
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -14,54 +26,111 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+
+      elasticsearch:
+        image: elasticsearch:7.17.7
+        env:
+          discovery.type: single-node
+          cluster.name: docker-cluster
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        options: >-
+          --health-cmd "curl -sf http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 10s
+          --health-timeout 30s
+          --health-retries 30
+        ports:
+          - 9200:9200
+          - 9300:9300
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install ingest-attachment plugin
+        run: |
+          CONTAINER_ID=$(docker ps -q -f "ancestor=elasticsearch:7.17.7")
+          docker exec $CONTAINER_ID bin/elasticsearch-plugin install ingest-attachment -b
+          docker restart $CONTAINER_ID
+          for i in {1..30}; do
+            curl -s http://localhost:9200/_cluster/health && break
+            echo "Waiting for Elasticsearch..."
+            sleep 2
+          done
+
+      - name: Install Plone and package
+        run: |
+          pip install -U pip wheel
+          pip install Plone -c https://dist.plone.org/release/${{ matrix.plone }}/constraints.txt
+          pip install "elasticsearch>=7.17.0,<8.0.0"
+          pip install -e ".[test, redis]"
+
+      - name: Run tests
+        run: |
+          zope-testrunner --auto-color --auto-progress --test-path src
+
+  test-es8:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8", "3.9", "3.10"]
-        plone: ["6.0-latest", "5.2-latest"]
+        python: ["3.8", "3.10", "3.11"]
+        plone: ["5.2-latest", "6.0-latest"]
         exclude:
           - plone: "5.2-latest"
-            python: "3.9"
-          - plone: "5.2-latest"
             python: "3.10"
+          - plone: "5.2-latest"
+            python: "3.11"
           - plone: "6.0-latest"
             python: "3.8"
-          - plone: "6.0-latest"
-            python: "3.9"
+
+    services:
+      redis:
+        image: redis:7.0.5
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      elasticsearch:
+        image: elasticsearch:8.17.0
+        env:
+          discovery.type: single-node
+          cluster.name: docker-cluster
+          xpack.security.enabled: "false"
+          xpack.security.enrollment.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        options: >-
+          --health-cmd "curl -sf http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 10s
+          --health-timeout 30s
+          --health-retries 30
+        ports:
+          - 9200:9200
+          - 9300:9300
 
     steps:
-      # git checkout
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup elasticsearch docker container with ingest attachment plugin
-        run: |
-          docker container create --name elastictest \
-          -e "discovery.type=single-node" \
-          -e "cluster.name=docker-cluster" \
-          -e "http.cors.enabled=true" \
-          -e "http.cors.allow-origin=*" \
-          -e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
-          -e "http.cors.allow-credentials=true" \
-          -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
-          -p 9200:9200 \
-          -p 9300:9300 \
-          elasticsearch:7.17.7; \
-          docker start elastictest; \
-          docker exec elastictest /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
-          docker restart elastictest
-
-      - name: Setup Plone ${{ matrix.plone }} with Python ${{ matrix.python }}
-        id: setup
-        uses: plone/setup-plone@v1.0.0
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-          plone-version: ${{ matrix.plone }}
 
-      - name: Install package
+      - name: Install Plone and package
         run: |
+          pip install -U pip wheel
+          pip install Plone -c https://dist.plone.org/release/${{ matrix.plone }}/constraints.txt
+          pip install "elasticsearch>=8.0.0,<9.0.0"
           pip install -e ".[test, redis]"
 
-      # test
-      - name: test
+      - name: Run tests
         run: |
           zope-testrunner --auto-color --auto-progress --test-path src
