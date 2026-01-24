@@ -89,6 +89,11 @@ def es_search(conn, index, body, **kwargs):
         Search response (dict-like object).
     """
     if IS_ES_8:
+        # ES8 renamed _source to source
+        if "_source" in kwargs:
+            kwargs["source"] = kwargs.pop("_source")
+        if "_source" in body:
+            body["source"] = body.pop("_source")
         return conn.search(index=index, **body, **kwargs)
     return conn.search(index=index, body=body, **kwargs)
 
