@@ -1,3 +1,4 @@
+from collective.elasticsearch import local
 from collective.elasticsearch import utils
 from collective.elasticsearch.compat import indices_put_settings
 from collective.elasticsearch.tests import BaseFunctionalTest
@@ -18,6 +19,7 @@ import io
 import json
 import os
 import transaction
+import unittest
 
 
 ENV_FOR_REDIS = {
@@ -26,6 +28,28 @@ ENV_FOR_REDIS = {
     "PLONE_USERNAME": "admin",
     "PLONE_PASSWORD": "password",
 }
+
+
+class TestFetchSessionInitialization(unittest.TestCase):
+    def setUp(self):
+        local.localData.__dict__.clear()
+
+    def tearDown(self):
+        local.localData.__dict__.clear()
+
+    def test_session_is_only_initialized_once(self):
+        from collective.elasticsearch.redis import fetch
+
+        session1 = fetch.get_session()
+        session2 = fetch.get_session()
+        self.assertIs(session1, session2)
+
+    def test_session_data_is_only_initialized_once(self):
+        from collective.elasticsearch.redis import fetch
+
+        session1 = fetch.get_session_data()
+        session2 = fetch.get_session_data()
+        self.assertIs(session1, session2)
 
 
 class TestRedisUtils(BaseFunctionalTest):
