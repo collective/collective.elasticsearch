@@ -8,6 +8,7 @@ from collective.elasticsearch.compat import has_attachment_processor
 from collective.elasticsearch.compat import indices_put_mapping
 from collective.elasticsearch.compat import indices_put_settings
 from collective.elasticsearch.compat import ingest_put_pipeline
+from collective.elasticsearch.events import BlobIndexJobCreated
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
 from collective.elasticsearch.utils import use_redis
@@ -21,6 +22,7 @@ from Products.CMFCore.permissions import AccessInactivePortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.CatalogTool import CatalogTool
 from zope.component import getMultiAdapter
+from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.interface.interfaces import ComponentLookupError
@@ -336,13 +338,14 @@ class ElasticSearchManager:
         hosts, params = utils.get_connection_settings()
 
         if item[1]:
-            update_file_data.delay(
+            job = update_file_data.delay(
                 hosts,
                 params,
                 index_name=self.index_name,
                 body=item,
                 plone_url=self.get_plone_url(),
             )
+            notify(BlobIndexJobCreated(uid=item[0], job=job))
             logger.info("redis task to index blob data created")
 
     def flush_indices(self):

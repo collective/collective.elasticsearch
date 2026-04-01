@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Fire BlobIndexJobCreated event after blob extraction job is enqueued, allowing downstream packages to chain dependent jobs via RQ's depends_on @maethu
+
 - Update elasticsearch to 7.17.7 (Ready for 8.x and apple silicon images are available) @maethu
 
 - Control-Panel: Fix potential issue with bool fields @maethu
