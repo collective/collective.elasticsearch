@@ -9,16 +9,16 @@ from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from typing import List
 from zope.component import getUtility
 
+import importlib.metadata
 import math
 import os
-import pkg_resources
 
 
 HAS_REDIS_MODULE = False
 try:
-    pkg_resources.get_distribution("redis")
+    importlib.metadata.distribution("redis")
     HAS_REDIS_MODULE = True
-except pkg_resources.DistributionNotFound:
+except importlib.metadata.PackageNotFoundError:
     HAS_REDIS_MODULE = False
 
 

@@ -8,7 +8,6 @@ from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import use_redis
-from pkg_resources import parse_version
 from plone import api
 from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.dexterity.utils import iterSchemata
@@ -25,7 +24,7 @@ from zope.schema import getFields
 import transaction
 
 
-if parse_version(api.env.plone_version()) < parse_version("6"):
+if int(api.env.plone_version().split(".")[0]) < 6:
 
     def uuidToObject(uuid, unrestricted=False):
         """Variation of this method, which support the parameter
