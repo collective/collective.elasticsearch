@@ -8,7 +8,7 @@ from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import use_redis
-from pkg_resources import parse_version
+from packaging.version import Version as parse_version
 from plone import api
 from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.dexterity.utils import iterSchemata
