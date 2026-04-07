@@ -16,7 +16,7 @@ RESET=`tput sgr0`
 YELLOW=`tput setaf 3`
 
 PLONE5=5.2-latest
-PLONE6=6.0-latest
+PLONE6=6.2-latest
 
 INSTANCE_YAML=instance.yaml
 
@@ -83,15 +83,15 @@ build-plone-5: bin/pip ## Build Plone 5.2
 	make instance
 
 .PHONY: build-plone-6
-build-plone-6: bin/pip ## Build Plone 6.0
-	@echo "$(GREEN)==> Build with Plone 6.0$(RESET)"
+build-plone-6: bin/pip ## Build Plone 6.2
+	@echo "$(GREEN)==> Build with Plone 6.2$(RESET)"
 	bin/pip install Plone -c https://dist.plone.org/release/$(PLONE6)/constraints.txt
 	bin/pip install "zest.releaser[recommended]"
 	bin/pip install -e ".[test, redis]"
 	make instance
 
 .PHONY: build
-build: build-plone-6 ## Build Plone 6.0
+build: build-plone-6 ## Build Plone 6.2
 
 .PHONY: clean
 clean: ## Remove old virtualenv and creates a new one

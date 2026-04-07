@@ -7,13 +7,13 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.8", "3.10", "3.11"]
-        plone: ["5.2-latest", "6.0-latest"]
+        plone: ["5.2-latest", "6.2-latest"]
         exclude:
           - plone: "5.2-latest"
             python: "3.10"
           - plone: "5.2-latest"
             python: "3.11"
-          - plone: "6.0-latest"
+          - plone: "6.2-latest"
             python: "3.8"
 
     services:
@@ -79,13 +79,13 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.8", "3.10", "3.11"]
-        plone: ["5.2-latest", "6.0-latest"]
+        plone: ["5.2-latest", "6.2-latest"]
         exclude:
           - plone: "5.2-latest"
             python: "3.10"
           - plone: "5.2-latest"
             python: "3.11"
-          - plone: "6.0-latest"
+          - plone: "6.2-latest"
             python: "3.8"
 
     services:

@@ -92,6 +92,10 @@ class TestPloneBackendHost(BaseRedisTest):
         os.environ[
             "PLONE_BACKEND_HOST"
         ] = f'http://{self.layer["host"]}:{self.layer["port"]}'
+        self._transforms = api.portal.get_tool("portal_transforms")
+        for transform_name in list(self._transforms.objectIds()):
+            if "pdf" in transform_name.lower():
+                self._transforms.unregisterTransform(transform_name)
 
     def tearDown(self):
         super().tearDown()
@@ -307,9 +311,18 @@ class TestIndexBlobs(BaseRedisTest):
         self._set_model_file(fti, "plone.app.contenttypes.schema:file.xml")
 
     def test_dont_queue_blob_extraction_jobs_if_not_possible(self):
+        conn = self.es.connection
         settings = {"index": {"default_pipeline": None}}
-        indices_put_settings(self.es.connection, self.es.index_name, settings)
-        self.es.connection.ingest.delete_pipeline(id="cbor-attachments")
+        all_indices = conn.indices.get_settings(index="*")
+        for idx_name, idx_settings in all_indices.items():
+            dp = (
+                idx_settings.get("settings", {})
+                .get("index", {})
+                .get("default_pipeline")
+            )
+            if dp == "cbor-attachments":
+                indices_put_settings(conn, idx_name, settings)
+        conn.ingest.delete_pipeline(id="cbor-attachments")
         file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
         with io.FileIO(file_path, "rb") as pdf:
             self._file = api.content.create(
