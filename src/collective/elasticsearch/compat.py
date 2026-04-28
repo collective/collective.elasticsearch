@@ -242,32 +242,3 @@ def has_attachment_processor(conn):
             return False
     else:
         return "attachment" in conn.cat.plugins()
-
-
-def scan_search(conn, index, query):
-    """
-    Prepare scan/scroll search parameters compatible with both ES 7 and ES 8.
-
-    In ES 8, the scan helper no longer accepts a full body with 'query' key,
-    instead it expects the query directly.
-
-    Args:
-        conn: Elasticsearch client connection.
-        index: Index name to search.
-        query: Query dictionary (full body with 'query' and '_source' keys).
-
-    Returns:
-        Dictionary of kwargs to pass to elasticsearch.helpers.scan()
-    """
-    if IS_ES_8:
-        return {
-            "client": conn,
-            "index": index,
-            "query": query.get("query"),
-            "_source": query.get("_source"),
-        }
-    return {
-        "client": conn,
-        "index": index,
-        "query": query,
-    }

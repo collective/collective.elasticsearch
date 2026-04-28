@@ -1,6 +1,5 @@
 from AccessControl import Unauthorized
 from Acquisition import aq_parent
-from collective.elasticsearch.compat import scan_search
 from collective.elasticsearch.manager import ElasticSearchManager
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch.helpers import scan
@@ -96,10 +95,10 @@ class Utils(BrowserView):
 
     @property
     def _uids_elasticsearch(self):
-        query = {"query": {"match_all": {}}, "_source": ["UID"]}
-        scan_kwargs = scan_search(self._es_conn, self._es.index_name, query)
         items = scan(
-            **scan_kwargs,
+            client=self._es_conn,
+            index=self._es.index_name,
+            query={"query": {"match_all": {}}, "_source": ["UID"]},
             preserve_order=True,
             size=10000,
         )
