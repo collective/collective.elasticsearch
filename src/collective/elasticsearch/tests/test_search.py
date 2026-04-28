@@ -1,3 +1,4 @@
+from collective.elasticsearch.compat import IS_ES_8
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
@@ -7,6 +8,7 @@ from DateTime import DateTime
 from parameterized import parameterized
 from parameterized import parameterized_class
 from plone import api
+from plone.app.textfield.value import RichTextValue
 from Products.ZCatalog.interfaces import ICatalogBrain
 
 
@@ -181,6 +183,35 @@ class TestSearch(BaseFunctionalTest):
         results = self.search(query)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].Description, "page <em>Some</em> Page")
+
+    def test_highlight_respects_max_analyzed_offset(self):
+        if not IS_ES_8:
+            self.skipTest("Only run on Elasticsearch 8")
+
+        settings = get_settings()
+        settings.highlight = True
+        settings.highlight_pre_tags = "<em>"
+        settings.highlight_post_tags = "</em>"
+        lorem = (
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+            "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+        )
+        long_text = lorem * 15000
+        self.assertGreater(len(long_text), 1000000)
+        api.content.create(
+            self.portal,
+            "Document",
+            "long-page",
+            title="Long",
+            text=RichTextValue(long_text, "text/plain", "text/html"),
+        )
+        self.commit(wait=1)
+        results = self.search({"SearchableText": "lorem"})
+        self.assertEqual(
+            len(results),
+            1,
+            "Search must succeed even when SearchableText exceeds the cluster's highlight.max_analyzed_offset",
+        )
 
     def test_not_query(self):
         api.content.create(self.portal, "Document", "page", title="New Content")

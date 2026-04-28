@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Set `max_analyzed_offset` on the SearchableText highlight field to avoid `search_phase_execution_exception` on documents whose SearchableText exceeds the cluster's `index.highlight.max_analyzed_offset` (ES default: 1,000,000) @maethu
+
 - Run tests against Plone 6.2 @maethu
 
 - Fire BlobIndexJobCreated event after blob extraction job is enqueued, allowing downstream packages to chain dependent jobs via RQ's depends_on @maethu

@@ -397,7 +397,12 @@ class ElasticSearchManager:
         warnings.simplefilter("ignore", ResourceWarning)
         if self.highlight:
             body["highlight"] = {
-                "fields": {"SearchableText": {"number_of_fragments": 5}},
+                "fields": {
+                    "SearchableText": {
+                        "number_of_fragments": 5,
+                        "max_analyzed_offset": 999999,
+                    }
+                },
                 "pre_tags": self.highlight_pre_tags.split("\n"),
                 "post_tags": self.highlight_post_tags.split("\n"),
             }
