@@ -195,9 +195,19 @@ class IndexProcessor:
 
         transaction.get().addAfterCommitHook(self._commit_hook_redis)
 
-    def _commit_hook_redis(self, wait=None):
+    def _commit_hook_redis(self, status, wait=None):
         """The after commit hook from redis, includes updateing blobs as
-        well."""
+        well.
+
+        ``addAfterCommitHook`` always passes the transaction outcome
+        (``True`` committed, ``False`` aborted) as the first argument. Skip
+        enqueueing when the transaction was aborted (e.g. ConflictError):
+        Redis is not transactional with ZODB, so a job enqueued from a
+        failed transaction would ship stale data to Elasticsearch.
+        """
+        if not status:
+            self._clean_up()
+            return
         actions = self.actions
         items = len(actions) if actions else 0
         if self.manager.active and items:
