@@ -57,6 +57,8 @@ def get_connection_settings():
         "sniff_on_start": settings.sniff_on_start,
         "sniffer_timeout": settings.sniffer_timeout,
         "timeout": settings.timeout,
+        # client selection: 'elasticsearch' (default) or 'opensearch'
+        "client": getattr(settings, "search_client", "elasticsearch"),
     }
 
 

@@ -23,6 +23,13 @@ from ZTUtils.Lazy import LazyMap
 import warnings
 
 
+# optional OpenSearch client
+try:
+    from opensearchpy import OpenSearch
+except Exception:  # pragma: no cover - optional dependency
+    OpenSearch = None
+
+
 CONVERTED_ATTR = "_elasticconverted"
 CUSTOM_INDEX_NAME_ATTR = "_elasticcustomindex"
 INDEX_VERSION_ATTR = "_elasticindexversion"
@@ -268,16 +275,6 @@ class ElasticSearchManager:
                     }
                 },
             ],
-            # Enable this for debugging the pipeline
-            # "on_failure": [
-            #     {
-            #         "set": {
-            #             "description": "Record error information",
-            #             "field": "error_information",
-            #             "value": "Processor {{ _ingest.on_failure_processor_type }} with tag {{ _ingest.on_failure_processor_tag }} in pipeline {{ _ingest.on_failure_pipeline }} failed with message {{ _ingest.on_failure_message }}"
-            #         }
-            #     }
-            # ]
         }
         self.connection.ingest.put_pipeline("cbor-attachments", body=body)
 
@@ -285,13 +282,53 @@ class ElasticSearchManager:
         self.connection.indices.put_settings(body=settings, index=self.index_name)
 
     @property
-    def connection(self) -> Elasticsearch:
+    def connection(self):
+        """
+        Return a cached search client (Elasticsearch or OpenSearch) selected by
+        params['client'] from get_connection_settings(). Ping the cached client
+        and recreate it if it appears unhealthy. On creation failure, re-raise
+        if raise_search_exception is set, otherwise return the previous client.
+        """
         conn = local.get_local(self.connection_key)
-        if not conn:
-            hosts, params = utils.get_connection_settings()
-            local.set_local(self.connection_key, Elasticsearch(hosts, **params))
-            conn = local.get_local(self.connection_key)
-        return conn
+
+        # If we have a cached client, check it's still alive
+        if conn is not None:
+            try:
+                if getattr(conn, "ping", lambda: True)():
+                    return conn
+                logger.warning("Cached search client ping() failed; recreating client")
+            except Exception:
+                logger.exception("Error pinging cached search client; recreating")
+
+        hosts, params = utils.get_connection_settings()
+        params = params or {}
+        # allow explicit client choice from settings (opensearch or elasticsearch)
+        client_choice = str(params.pop("client", "elasticsearch")).lower()
+
+        if client_choice in ("opensearch", "opensearch-py"):
+            if OpenSearch is None:
+                logger.error("OpenSearch requested but opensearch-py is not installed")
+                raise RuntimeError("opensearch-py is not available; install opensearch-py")
+            ClientClass = OpenSearch
+        else:
+            ClientClass = Elasticsearch
+
+        try:
+            client = ClientClass(hosts, **params) if params else ClientClass(hosts)
+            # lightweight validation of the new client
+            try:
+                if not getattr(client, "ping", lambda: True)():
+                    logger.warning("New search client ping() returned False")
+            except Exception:
+                logger.exception("Error pinging newly created search client (continuing)")
+            local.set_local(self.connection_key, client)
+            return client
+        except Exception:
+            logger.exception("Failed to create search client")
+            if self.raise_search_exception:
+                raise
+            # fallback: return the previous (possibly None) client
+            return conn
 
     def _bulk_call(self, batch):
         method = self._bulk_call_direct
