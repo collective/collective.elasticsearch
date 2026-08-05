@@ -22,14 +22,14 @@
 
 ## Introduction
 
-This package aims to index all fields the portal_catalog indexes and allows you to delete the `Title`, `Description` and `SearchableText` indexes which can provide significant improvement to performance and RAM usage.
+This package aims to index all fields the portal_catalog indexes and allows you to delete the `Title`, `Description` and `SearchableText` indexes which can provide significant improvement to performance for many sites.
 
-Then, ElasticSearch queries are ONLY used when Title, Description and SearchableText text are in the query. Otherwise, the plone's default catalog will be used. This is because Plone's default catalog is faster on normal queries than using ElasticSearch.
+Then, ElasticSearch queries are ONLY used when Title, Description and SearchableText text are in the query. Otherwise, the plone's default catalog will be used. This is because Plone's default catalog is still useful for many other queries and keeps a good fallback for permissions and special indexes.
 
 
 ## Install Elastic Search
 
-For a comprehensive documentation about the different options of installing Elastic Search, please read [their documentation](https://www.elastic.co/guide/en/elasticsearch/reference/7.7/install-elasticsearch.html).
+For a comprehensive documentation about the different options of installing Elastic Search, please read [their documentation](https://www.elastic.co/guide/en/elasticsearch/reference/7.7/install-elasticsearch.html)
 
 A quick start, using Docker would be:
 
@@ -68,6 +68,27 @@ Now, go to `Add-on Configuration` and:
 - Click "Rebuild Catalog"
 
 You now have a insanely scalable modern search engine. Now live the life of the Mind!
+
+
+## OpenSearch support
+
+This package supports using either Elasticsearch (`elasticsearch-py`) or OpenSearch (`opensearch-py`) as the Python client backend.
+
+A new control-panel option "Search client backend" (in the Add-on Configuration page) lets you choose which client to use: `Elasticsearch` (default) or `OpenSearch`.
+
+How to enable OpenSearch:
+
+1. Install the optional extra which will install the `opensearch-py` client:
+
+```shell
+pip install collective.elasticsearch[opensearch]
+```
+
+2. In Plone, go to the Add-on Configuration for Elastic Search and set "Search client backend" to "OpenSearch".
+
+Notes:
+- If you select OpenSearch but the `opensearch-py` package is not installed, the manager will raise a clear RuntimeError to indicate the missing dependency. This is to avoid silently misconfigured backends. If you prefer a fallback behavior, adjust the code accordingly.
+- The code paths used in this package (ping, info, indices, ingest, search) are compatible between the two clients for the versions commonly used, but you should verify API compatibility for advanced features.
 
 
 ## Redis queue integration with blob indexing support
@@ -212,7 +233,7 @@ This feature aims to have a minimal impact in terms of responsiveness of the plo
 
 ## State
 
-Support for all index column types is done EXCEPT for the DateRecurringIndex index column type. If you are doing a full text search along with a query that contains a DateRecurringIndex column, it will not work.
+Support for all index column types is done EXCEPT for the DateRecurringIndex index column type. If you are doing a full text search along with a query that contains a DateRecurringIndex column, i[...] 
 
 
 ## Search Highlighting
@@ -227,7 +248,7 @@ This is the number of characters to show in the description. Fragments will be a
 
 ### Pre/Post Tags
 
-Highlighted terms can be wrapped in html which can be used to enhance the results further, such as by adding a custom background color. Note that the default Plone search results will not render html so to use this feature you will need to create a custom saearch result view.
+Highlighted terms can be wrapped in html which can be used to enhance the results further, such as by adding a custom background color. Note that the default Plone search results will not render [...]
 
 ## Developing this package
 
@@ -256,6 +277,7 @@ make tests
 ```shell
 make format
 ```
+
 
 ### Linting the codebase
 

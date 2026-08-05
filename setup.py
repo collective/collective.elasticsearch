@@ -1,14 +1,12 @@
-"""Installer for the collective.elasticsearch package."""
-from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
-
+from pathlib import Path
 
 long_description = f"""
-{Path("README.md").read_text()}\n
-{Path("CHANGELOG.md").read_text()}\n
-"""
+{Path('README.md').read_text()}
 
+{Path('CHANGELOG.md').read_text()}
+"""
 
 setup(
     name="collective.elasticsearch",
@@ -75,6 +73,9 @@ setup(
             "rq",
             "requests",
             "cbor2",
+        ],
+        "opensearch": [
+            "opensearch-py",
         ],
     },
     entry_points="""
