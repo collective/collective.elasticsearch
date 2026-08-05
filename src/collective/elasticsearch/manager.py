@@ -301,6 +301,7 @@ class ElasticSearchManager:
                 logger.exception("Error pinging cached search client; recreating")
 
         hosts, params = utils.get_connection_settings()
+        # guard params
         params = params or {}
         # allow explicit client choice from settings (opensearch or elasticsearch)
         client_choice = str(params.pop("client", "elasticsearch")).lower()
