@@ -33,18 +33,29 @@ class ElasticSearchBrain:
         # the ones that happen to have a value.
         return name in self._record or name in self._schema()
 
-    def __getattr__(self, name):
-        if name.startswith("_"):
-            # Internal names are never part of a record. Looking them up would
-            # recurse as long as _record and _catalog are not set.
-            raise AttributeError(name)
+    def __getitem__(self, name):
         if name in self._record:
             return self._record[name]
         if name in self._schema():
             # A real brain holds every metadata column of the catalog and
             # fills the ones without a value with Missing.Value.
             return MV
-        raise AttributeError(f"'ElasticSearchBrain' object has no attribute '{name}'")
+        raise KeyError(name)
+
+    def __setitem__(self, name, value):
+        self._record[name] = value
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            # Internal names are never part of a record. Looking them up would
+            # recurse as long as _record and _catalog are not set.
+            raise AttributeError(name)
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(
+                f"'ElasticSearchBrain' object has no attribute '{name}'"
+            )
 
     def getPath(self):
         """Get the physical path for this record"""
@@ -87,8 +98,8 @@ def BrainFactory(manager):
         if path:
             brain = get_brain_from_path(zcatalog, path)
             if not brain:
-                result = manager.get_record_by_path(path)
-                brain = ElasticSearchBrain(record=result, catalog=catalog)
+                record = manager.get_record_by_path(path)
+                brain = ElasticSearchBrain(record=record, catalog=catalog)
             if manager.highlight and result.get("highlight"):
                 fragments = []
                 fraglen = 0

@@ -1,5 +1,6 @@
 from collective.elasticsearch.result import ElasticSearchBrain
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.utils import get_settings
 from Missing import MV
 from plone import api
 
@@ -79,3 +80,24 @@ class TestElasticSearchBrain(BaseFunctionalTest):
     def test_internal_name_raises_attribute_error(self):
         with self.assertRaises(AttributeError):
             self.get_brain()._v_no_such_column
+
+    def test_item_access_returns_indexed_value(self):
+        self.assertEqual(self.get_brain()["Title"], "Some Page")
+
+    def test_item_access_of_metadata_column_without_value_is_missing_value(self):
+        self.assertIs(self.get_brain()["CreationDate"], MV)
+
+    def test_item_access_of_unknown_name_raises_key_error(self):
+        with self.assertRaises(KeyError):
+            self.get_brain()["no_such_column"]
+
+    def test_highlight_is_applied_to_the_description(self):
+        settings = get_settings()
+        settings.highlight = True
+        settings.highlight_pre_tags = "<em>"
+        settings.highlight_post_tags = "</em>"
+        self.assertIn(
+            "<em>",
+            self.get_brain().Description,
+            "Highlighting must reach brains of records without a catalog entry",
+        )
