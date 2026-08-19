@@ -3,6 +3,7 @@ from Acquisition import aq_get
 from Acquisition import aq_parent
 from collective.elasticsearch import interfaces
 from collective.elasticsearch.utils import get_brain_from_path
+from Missing import MV
 from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from Products.ZCatalog.interfaces import ICatalogBrain
 from typing import Union
@@ -20,18 +21,41 @@ class ElasticSearchBrain:
         self._record = record
         self._catalog = catalog
 
+    def _schema(self):
+        """The metadata columns declared by the catalog."""
+        return self._catalog.schema()
+
     def has_key(self, key):
-        return key in self._record
+        return key in self
 
     def __contains__(self, name):
-        return name in self._record
+        # Like a real brain, which reports the columns it can serve and not
+        # the ones that happen to have a value.
+        return name in self._record or name in self._schema()
+
+    def __getitem__(self, name):
+        if name in self._record:
+            return self._record[name]
+        if name in self._schema():
+            # A real brain holds every metadata column of the catalog and
+            # fills the ones without a value with Missing.Value.
+            return MV
+        raise KeyError(name)
+
+    def __setitem__(self, name, value):
+        self._record[name] = value
 
     def __getattr__(self, name):
-        if not self.__contains__(name):
+        if name.startswith("_"):
+            # Internal names are never part of a record. Looking them up would
+            # recurse as long as _record and _catalog are not set.
+            raise AttributeError(name)
+        try:
+            return self[name]
+        except KeyError:
             raise AttributeError(
                 f"'ElasticSearchBrain' object has no attribute '{name}'"
             )
-        return self._record[name]
 
     def getPath(self):
         """Get the physical path for this record"""
@@ -74,8 +98,8 @@ def BrainFactory(manager):
         if path:
             brain = get_brain_from_path(zcatalog, path)
             if not brain:
-                result = manager.get_record_by_path(path)
-                brain = ElasticSearchBrain(record=result, catalog=catalog)
+                record = manager.get_record_by_path(path)
+                brain = ElasticSearchBrain(record=record, catalog=catalog)
             if manager.highlight and result.get("highlight"):
                 fragments = []
                 fraglen = 0
