@@ -26,10 +26,12 @@ class ElasticSearchBrain:
         return self._catalog.schema()
 
     def has_key(self, key):
-        return key in self._record
+        return key in self
 
     def __contains__(self, name):
-        return name in self._record
+        # Like a real brain, which reports the columns it can serve and not
+        # the ones that happen to have a value.
+        return name in self._record or name in self._schema()
 
     def __getattr__(self, name):
         if name.startswith("_"):

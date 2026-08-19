@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Let `has_key` and `in` on an elasticsearch only brain report the metadata columns declared by the catalog, like a real catalog brain does, instead of only the keys stored in the elasticsearch document @maethu
+
 - Return `Missing.Value` instead of raising an `AttributeError` when a metadata column declared by the catalog has no value on an elasticsearch only brain. Real catalog brains hold every metadata column, so templates rendering records that live only in elasticsearch no longer fail with a `LocationError` @maethu
 
 - Use a native PEP 420 namespace @maethu

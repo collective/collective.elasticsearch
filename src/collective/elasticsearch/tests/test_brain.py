@@ -54,6 +54,24 @@ class TestElasticSearchBrain(BaseFunctionalTest):
             "A metadata column without a value must not raise an AttributeError",
         )
 
+    def test_metadata_column_without_value_is_contained(self):
+        brain = self.get_brain()
+        self.assertIn(
+            "CreationDate",
+            brain,
+            "A metadata column must be reported even without a value",
+        )
+        self.assertTrue(
+            brain.has_key("CreationDate"),  # NOQA W601
+            "has_key must agree with the containment check",
+        )
+
+    def test_indexed_value_is_contained(self):
+        self.assertIn("SearchableText", self.get_brain())
+
+    def test_unknown_name_is_not_contained(self):
+        self.assertNotIn("no_such_column", self.get_brain())
+
     def test_unknown_name_raises_attribute_error(self):
         with self.assertRaises(AttributeError):
             self.get_brain().no_such_column
