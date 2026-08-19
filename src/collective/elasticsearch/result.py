@@ -3,6 +3,7 @@ from Acquisition import aq_get
 from Acquisition import aq_parent
 from collective.elasticsearch import interfaces
 from collective.elasticsearch.utils import get_brain_from_path
+from Missing import MV
 from Products.ZCatalog.CatalogBrains import AbstractCatalogBrain
 from Products.ZCatalog.interfaces import ICatalogBrain
 from typing import Union
@@ -20,6 +21,10 @@ class ElasticSearchBrain:
         self._record = record
         self._catalog = catalog
 
+    def _schema(self):
+        """The metadata columns declared by the catalog."""
+        return self._catalog.schema()
+
     def has_key(self, key):
         return key in self._record
 
@@ -27,11 +32,17 @@ class ElasticSearchBrain:
         return name in self._record
 
     def __getattr__(self, name):
-        if not self.__contains__(name):
-            raise AttributeError(
-                f"'ElasticSearchBrain' object has no attribute '{name}'"
-            )
-        return self._record[name]
+        if name.startswith("_"):
+            # Internal names are never part of a record. Looking them up would
+            # recurse as long as _record and _catalog are not set.
+            raise AttributeError(name)
+        if name in self._record:
+            return self._record[name]
+        if name in self._schema():
+            # A real brain holds every metadata column of the catalog and
+            # fills the ones without a value with Missing.Value.
+            return MV
+        raise AttributeError(f"'ElasticSearchBrain' object has no attribute '{name}'")
 
     def getPath(self):
         """Get the physical path for this record"""

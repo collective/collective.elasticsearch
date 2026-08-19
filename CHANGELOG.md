@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Return `Missing.Value` instead of raising an `AttributeError` when a metadata column declared by the catalog has no value on an elasticsearch only brain. Real catalog brains hold every metadata column, so templates rendering records that live only in elasticsearch no longer fail with a `LocationError` @maethu
+
 - Use a native PEP 420 namespace @maethu
 
 - Skip Redis enqueue when the ZODB transaction was aborted (e.g. ConflictError). The after-commit hook now respects the transaction outcome, preventing stale data from being shipped to Elasticsearch after a retried/aborted transaction @maethu
