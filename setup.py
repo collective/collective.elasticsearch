@@ -1,6 +1,6 @@
 """Installer for the collective.elasticsearch package."""
 from pathlib import Path
-from setuptools import find_packages
+from setuptools import find_namespace_packages
 from setuptools import setup
 
 
@@ -49,8 +49,12 @@ setup(
         "Tracker": "https://github.com/collective/collective.elasticsearch/issues",
     },
     license="GPL version 2",
-    packages=find_packages("src", exclude=["ez_setup"]),
-    namespace_packages=["collective"],
+    packages=find_namespace_packages(
+        "src",
+        include=["collective", "collective.*"],
+        # Data only directories, their content ships via include_package_data
+        exclude=["*.profiles", "*.profiles.*", "*.assets"],
+    ),
     package_dir={"": "src"},
     include_package_data=True,
     zip_safe=False,

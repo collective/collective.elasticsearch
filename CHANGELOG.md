@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Use a native PEP 420 namespace @maethu
+
 - Skip Redis enqueue when the ZODB transaction was aborted (e.g. ConflictError). The after-commit hook now respects the transaction outcome, preventing stale data from being shipped to Elasticsearch after a retried/aborted transaction @maethu
 
 - Set `max_analyzed_offset` on the SearchableText highlight field to avoid `search_phase_execution_exception` on documents whose SearchableText exceeds the cluster's `index.highlight.max_analyzed_offset` (ES default: 1,000,000) @maethu
