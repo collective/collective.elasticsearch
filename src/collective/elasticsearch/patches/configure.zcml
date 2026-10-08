@@ -4,6 +4,8 @@
     i18n_domain="collective.elasticsearch"
     >
 
+  <include package="collective.monkeypatcher" />
+
   <!-- CMFPlone CatalogTool patches -->
   <monkey:patch
       original="searchResults"
