@@ -1,10 +1,19 @@
+from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
+from collective.elasticsearch.testing import ElasticSearch_NO_SEARCH_PATCHES_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
+from parameterized import parameterized_class
 from plone import api
 from plone.app.testing import logout
 
 
+@parameterized_class(
+    [
+        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+        {"layer": ElasticSearch_NO_SEARCH_PATCHES_TESTING},
+    ]
+)
 class TestSecureSearch(BaseFunctionalTest):
     def create_expired_page(self):
         page = api.content.create(self.portal, "Document", "page", title="Expired Page")

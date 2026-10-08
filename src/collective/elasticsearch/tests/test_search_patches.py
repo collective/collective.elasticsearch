@@ -1,4 +1,7 @@
 from collective.elasticsearch import local
+from collective.elasticsearch.testing import DISABLE_SEARCH_PATCHES
+from collective.elasticsearch.testing import ElasticSearch_NO_SEARCH_PATCHES_TESTING
+from collective.elasticsearch.testing import SEARCH_PATCHED_METHODS
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import get_settings
 from collective.elasticsearch.utils import getESOnlyIndexes
@@ -15,8 +18,6 @@ import os
 import unittest
 
 
-DISABLE_SEARCH_PATCHES = "PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES"
-SEARCH_METHODS = {"searchResults", "__call__", "unrestrictedSearchResults"}
 MAINTENANCE_METHODS = {
     "manage_catalogRebuild",
     "manage_catalogClear",
@@ -106,7 +107,7 @@ class TestSearchPatchSwitch(unittest.TestCase):
     def test_search_patches_are_loaded_by_default(self):
         self.assertEqual(
             self.patched_catalog_methods(),
-            SEARCH_METHODS | MAINTENANCE_METHODS,
+            set(SEARCH_PATCHED_METHODS) | MAINTENANCE_METHODS,
             "Without the environment variable the search must be patched",
         )
 
@@ -116,4 +117,42 @@ class TestSearchPatchSwitch(unittest.TestCase):
             self.patched_catalog_methods(),
             MAINTENANCE_METHODS,
             "The environment variable must only disable the search patches",
+        )
+
+
+class TestWithoutSearchPatches(BaseFunctionalTest):
+    layer = ElasticSearch_NO_SEARCH_PATCHES_TESTING
+
+    def test_catalog_search_is_not_patched(self):
+        for name in SEARCH_PATCHED_METHODS:
+            self.assertNotEqual(
+                getattr(CatalogTool, name).__module__,
+                "collective.elasticsearch.patches",
+                f"CatalogTool.{name} must not be patched",
+            )
+            self.assertNotIn(
+                f"_old_{name}",
+                CatalogTool.__dict__,
+                f"CatalogTool.{name} must not keep a patched original",
+            )
+
+    def test_maintenance_patches_are_applied(self):
+        for name in MAINTENANCE_METHODS:
+            self.assertEqual(
+                getattr(CatalogTool, name).__module__,
+                "collective.elasticsearch.patches",
+                f"CatalogTool.{name} must be patched to keep elasticsearch in sync",
+            )
+
+    def test_catalog_searches_the_catalog_only(self):
+        api.content.create(self.portal, "Document", "page", title="A Fancy Title")
+        self.commit(wait=1)
+        for idx in getESOnlyIndexes():
+            self.catalog._catalog.delIndex(idx)
+        self.commit()
+        results = self.catalog(portal_type="Document", SearchableText="nothing")
+        self.assertEqual(
+            [brain.getId for brain in results],
+            ["page"],
+            "The catalog ignores the removed SearchableText index",
         )

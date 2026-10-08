@@ -10,6 +10,7 @@ from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
 from plone.testing import zope
+from Products.CMFPlone.CatalogTool import CatalogTool
 
 import collective.elasticsearch
 import os
@@ -18,6 +19,8 @@ import time
 
 
 MAX_CONNECTION_RETRIES = 20
+DISABLE_SEARCH_PATCHES = "PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES"
+SEARCH_PATCHED_METHODS = ("searchResults", "__call__", "unrestrictedSearchResults")
 
 
 class ElasticSearch(PloneSandboxLayer):
@@ -86,4 +89,46 @@ ElasticSearch_REDIS_FIXTURE = RedisElasticSearch()
 ElasticSearch_REDIS_TESTING = FunctionalTesting(
     bases=(zope.WSGI_SERVER_FIXTURE, ElasticSearch_REDIS_FIXTURE),
     name="ElasticSearch:Redis",
+)
+
+
+class ElasticSearchWithoutSearchPatches(ElasticSearch):
+    """Load the package with PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES set.
+
+    Monkey patches can not be unloaded, so search patches applied by another
+    layer of the same test run are removed while this layer is set up and
+    restored afterwards.
+    """
+
+    def setUpZope(self, app, configurationContext):
+        self.env_value = os.environ.get(DISABLE_SEARCH_PATCHES)
+        os.environ[DISABLE_SEARCH_PATCHES] = "1"
+        self.search_patches = {}
+        for name in SEARCH_PATCHED_METHODS:
+            old_name = f"_old_{name}"
+            if old_name in CatalogTool.__dict__:
+                original = CatalogTool.__dict__[old_name]
+                self.search_patches[name] = (CatalogTool.__dict__[name], original)
+                delattr(CatalogTool, old_name)
+                delattr(CatalogTool, name)
+                # Methods inherited from CMFCore were not defined on CatalogTool
+                if getattr(CatalogTool, name) is not original:
+                    setattr(CatalogTool, name, original)
+        super().setUpZope(app, configurationContext)
+
+    def tearDownZope(self, app):
+        super().tearDownZope(app)
+        for name, (replacement, original) in self.search_patches.items():
+            setattr(CatalogTool, f"_old_{name}", original)
+            setattr(CatalogTool, name, replacement)
+        if self.env_value is None:
+            del os.environ[DISABLE_SEARCH_PATCHES]
+        else:
+            os.environ[DISABLE_SEARCH_PATCHES] = self.env_value
+
+
+ElasticSearch_NO_SEARCH_PATCHES_FIXTURE = ElasticSearchWithoutSearchPatches()
+ElasticSearch_NO_SEARCH_PATCHES_TESTING = FunctionalTesting(
+    bases=(ElasticSearch_NO_SEARCH_PATCHES_FIXTURE,),
+    name="ElasticSearch:NoSearchPatches",
 )
