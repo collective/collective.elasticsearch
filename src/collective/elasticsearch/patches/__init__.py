@@ -20,12 +20,12 @@ def route_search(catalog, request, kw, check_perms):
         original = catalog._old_searchResults
     else:
         original = catalog._old_unrestrictedSearchResults
-    manager = ElasticSearchManager()
-    if not (manager.active and getESOnlyIndexes().intersection(kw.keys())):
-        return original(request, **kw)
-
     query = request.copy() if isinstance(request, dict) else {}
     query.update(kw)
+    manager = ElasticSearchManager()
+    if not (manager.active and getESOnlyIndexes().intersection(query)):
+        return original(request, **kw)
+
     logger.debug(f"Running query: {query}")
     try:
         if check_perms:
@@ -37,7 +37,7 @@ def route_search(catalog, request, kw, check_perms):
         if manager.raise_search_exception is True:
             raise
         logger.error(f"Error running Query: {query}", exc_info=True)
-        return catalog._old_searchResults(request, **kw)
+        return original(request, **kw)
 
 
 def unrestrictedSearchResults(self, REQUEST=None, **kw):

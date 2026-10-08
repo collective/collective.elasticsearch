@@ -2,6 +2,10 @@
 
 ## 6.0.0 (unreleased)
 
+- Fall back to the unrestricted catalog search when an unrestricted search fails in elasticsearch. It fell back to the restricted search, so it only returned what the current user may see @maethu
+
+- Send catalog queries to elasticsearch also when the elasticsearch only index is passed in the query dict, e.g. `catalog({"SearchableText": "foo"})`. Only keyword arguments were checked, so the catalog ignored the removed index and returned all content @maethu
+
 - BREAKING: Remove `ElasticSearchManager.search_results`. The catalog patches now decide which queries go to elasticsearch. To query elasticsearch directly, use `secure_search` or `search` @maethu
 
 - Add `ElasticSearchManager.secure_search(query)`. It searches elasticsearch with the same restrictions as the catalog's `searchResults` (allowed roles and users, inactive content) and never falls back to the catalog, so dedicated search endpoints can use it. Restricted searches sent to elasticsearch now handle `show_inactive` like Plone's catalog: an explicit `show_inactive=False` also hides inactive content from managers, and a local "Access inactive portal content" permission on the queried paths is respected @maethu
