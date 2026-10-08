@@ -1,6 +1,8 @@
 from collective.elasticsearch import interfaces
+from collective.elasticsearch import logger
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import get_brain_from_path
+from collective.elasticsearch.utils import getESOnlyIndexes
 from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.interfaces import IContentish
 from time import process_time
@@ -12,18 +14,38 @@ import time
 import urllib
 
 
-def unrestrictedSearchResults(self, REQUEST=None, **kw):
+def route_search(catalog, request, kw, check_perms):
+    """Send catalog queries using elasticsearch only indexes to elasticsearch."""
+    if check_perms:
+        original = catalog._old_searchResults
+    else:
+        original = catalog._old_unrestrictedSearchResults
     manager = ElasticSearchManager()
-    active = manager.active
-    method = manager.search_results if active else self._old_unrestrictedSearchResults
-    return method(REQUEST, check_perms=False, **kw)
+    if not (manager.active and getESOnlyIndexes().intersection(kw.keys())):
+        return original(request, **kw)
+
+    query = request.copy() if isinstance(request, dict) else {}
+    query.update(kw)
+    logger.debug(f"Running query: {query}")
+    try:
+        if check_perms:
+            return manager.secure_search(query)
+        # Make sure any pending index tasks have been processed
+        processQueue()
+        return manager.search(query)
+    except Exception:  # NOQA W0703
+        if manager.raise_search_exception is True:
+            raise
+        logger.error(f"Error running Query: {query}", exc_info=True)
+        return catalog._old_searchResults(request, **kw)
+
+
+def unrestrictedSearchResults(self, REQUEST=None, **kw):
+    return route_search(self, REQUEST, kw, check_perms=False)
 
 
 def safeSearchResults(self, REQUEST=None, **kw):
-    manager = ElasticSearchManager()
-    active = manager.active
-    method = manager.search_results if active else self._old_searchResults
-    return method(REQUEST, check_perms=True, **kw)
+    return route_search(self, REQUEST, kw, check_perms=True)
 
 
 def manage_catalogRebuild(self, RESPONSE=None, URL1=None):  # NOQA W0613
