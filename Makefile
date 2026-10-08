@@ -15,7 +15,6 @@ GREEN=`tput setaf 2`
 RESET=`tput sgr0`
 YELLOW=`tput setaf 3`
 
-PLONE5=5.2-latest
 PLONE6=6.2-latest
 
 INSTANCE_YAML=instance.yaml
@@ -73,14 +72,6 @@ instance: cookiecutter ## create configuration for an zope (plone) instance
 	@echo "$(GREEN)Create Plone/Zope configuration$(RESET)"
 	rm -fr ./etc
 	bin/cookiecutter -f --no-input --config-file ${INSTANCE_YAML} https://github.com/bluedynamics/cookiecutter-zope-instance
-
-.PHONY: build-plone-5
-build-plone-5: bin/pip ## Build Plone 5.2
-	@echo "$(GREEN)==> Build with Plone 5.2$(RESET)"
-	bin/pip install Paste Plone -c https://dist.plone.org/release/$(PLONE5)/constraints.txt
-	bin/pip install "zest.releaser[recommended]"
-	bin/pip install -e ".[test, redis]"
-	make instance
 
 .PHONY: build-plone-6
 build-plone-6: bin/pip ## Build Plone 6.2

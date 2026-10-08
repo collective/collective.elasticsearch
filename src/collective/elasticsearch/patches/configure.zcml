@@ -1,7 +1,6 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:monkey="http://namespaces.plone.org/monkey"
-    xmlns:zcml="http://namespaces.zope.org/zcml"
     i18n_domain="collective.elasticsearch"
     >
 
@@ -50,16 +49,6 @@
       preserveOriginal="True"
       />
   <!-- Reordering support -->
-  <configure zcml:condition="not-have plone-60">
-    <monkey:patch
-        original="moveObjectsByDelta"
-        replacement=".moveObjectsByDelta"
-        class="Products.CMFPlone.Portal.PloneSite"
-        description="moveObjectsByDelta"
-        preserveOriginal="True"
-        />
-  </configure>
-
   <monkey:patch
       original="moveObjectsByDelta"
       replacement=".moveObjectsByDelta"

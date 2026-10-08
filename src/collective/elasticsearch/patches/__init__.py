@@ -1,7 +1,6 @@
 from collective.elasticsearch import interfaces
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import get_brain_from_path
-from plone.folder.interfaces import IOrdering
 from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.interfaces import IContentish
 from time import process_time
@@ -80,23 +79,13 @@ def uncatalog_object(self, *args, **kwargs):
     return self._old_uncatalog_object(*args, **kwargs)
 
 
-def get_ordered_ids(context) -> dict:
-    """Return all object ids in a context, ordered."""
-    if IOrdering.providedBy(context):
-        return {oid: idx for idx, oid in enumerate(context.idsInOrder())}
-    else:
-        # For Plone 5.2, we care only about Dexterity content
-        objects = [
-            obj
-            for obj in list(context._objects)
-            if obj.get("meta_type").startswith("Dexterity")
-        ]
-        return {oid: idx for idx, oid in enumerate(context.getIdsSubset(objects))}
+def get_ordered_ids(ordering) -> dict:
+    """Return all object ids of an ordering, mapped to their position."""
+    return {oid: idx for idx, oid in enumerate(ordering.idsInOrder())}
 
 
 def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False):
     manager = ElasticSearchManager()
-    ordered = self if IOrdering.providedBy(self) else None
     before = get_ordered_ids(self)
     res = self._old_moveObjectsByDelta(
         ids, delta, subset_ids=subset_ids, suppress_events=suppress_events
@@ -104,9 +93,8 @@ def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False)
     if manager.active:
         after = get_ordered_ids(self)
         diff = [oid for oid, idx in after.items() if idx != before[oid]]
-        context = self.context if ordered else self
         for oid in diff:
-            obj = context[oid]
+            obj = self.context[oid]
             # We only reindex content objects
             if not IContentish.providedBy(obj):
                 continue

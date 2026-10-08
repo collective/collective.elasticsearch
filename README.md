@@ -216,8 +216,8 @@ This feature aims to have a minimal impact in terms of responsiveness of the plo
 
 ## Compatibility
 
-- Python 3.8+
-- Plone 5.2 and 6.0
+- Python 3.10+
+- Plone 6.0, 6.1 and 6.2
 - Elasticsearch 7.17.x and 8.x
 
 **Note:** Install the matching Python client for your ES version:
