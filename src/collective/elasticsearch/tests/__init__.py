@@ -62,6 +62,16 @@ class BaseTest(unittest.TestCase):
         if wait:
             time.sleep(wait)
 
+    def create_private_page(self):
+        page = api.content.create(self.portal, "Document", "page", title="Secret Page")
+        api.content.transition(obj=page, to_state="private")
+        self.commit(wait=1)
+
+    def delete_es_only_indexes_from_catalog(self):
+        for idx in utils.getESOnlyIndexes():
+            self.catalog._catalog.delIndex(idx)
+        self.commit()
+
     def tearDown(self):
         super().tearDown()
         real_index_name = f"{self.es.real_index_name}_1"

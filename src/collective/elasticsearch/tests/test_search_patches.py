@@ -4,7 +4,6 @@ from collective.elasticsearch.testing import ElasticSearch_NO_SEARCH_PATCHES_TES
 from collective.elasticsearch.testing import SEARCH_PATCHED_METHODS
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import get_settings
-from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.monkeypatcher.meta import _do_patch
 from contextlib import contextmanager
 from plone import api
@@ -30,9 +29,7 @@ class TestSearchPatchRouting(BaseFunctionalTest):
         api.content.create(self.portal, "Document", "fancy", title="A Fancy Title")
         api.content.create(self.portal, "Document", "other", title="Other Page")
         self.commit(wait=1)
-        for idx in getESOnlyIndexes():
-            self.catalog._catalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
         results = self.catalog({"portal_type": "Document", "SearchableText": "fancy"})
         self.assertEqual(
             [brain.getId for brain in results],
@@ -45,9 +42,7 @@ class TestSearchPatchFallback(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
         get_settings().raise_search_exception = False
-        page = api.content.create(self.portal, "Document", "page", title="Secret Page")
-        api.content.transition(obj=page, to_state="private")
-        self.commit(wait=1)
+        self.create_private_page()
 
     @contextmanager
     def unreachable_elasticsearch(self):
@@ -147,9 +142,7 @@ class TestWithoutSearchPatches(BaseFunctionalTest):
     def test_catalog_searches_the_catalog_only(self):
         api.content.create(self.portal, "Document", "page", title="A Fancy Title")
         self.commit(wait=1)
-        for idx in getESOnlyIndexes():
-            self.catalog._catalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
         results = self.catalog(portal_type="Document", SearchableText="nothing")
         self.assertEqual(
             [brain.getId for brain in results],
