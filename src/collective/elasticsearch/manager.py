@@ -12,8 +12,6 @@ from elasticsearch import exceptions
 from elasticsearch.exceptions import NotFoundError
 from plone import api
 from Products.CMFCore.indexing import processQueue
-from Products.CMFCore.permissions import AccessInactivePortalContent
-from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.CatalogTool import CatalogTool
 from zope.component import getMultiAdapter
 from zope.event import notify
@@ -411,6 +409,26 @@ class ElasticSearchManager:
         result = ElasticResult(self, query, **query_params)
         return LazyMap(factory, result, result.count)
 
+    def secure_search(self, query: dict) -> LazyMap:
+        """Search elasticsearch for the content the current user may see.
+
+        Restricts the query like the catalog's searchResults does: by
+        allowedRolesAndUsers, and by effectiveRange unless show_inactive is
+        set or the user may access inactive content. Errors are raised, there
+        is no fallback to the catalog.
+        """
+        # Make sure any pending index tasks have been processed
+        processQueue()
+        query = dict(query)
+        show_inactive = query.get("show_inactive")
+        if show_inactive is None:
+            show_inactive = self.catalog.allow_inactive(query)
+        user = api.user.get_current()
+        query["allowedRolesAndUsers"] = self.catalog._listAllowedRolesAndUsers(user)
+        if not show_inactive:
+            query["effectiveRange"] = DateTime()
+        return self.search(query)
+
     def search_results(self, request=None, check_perms=False, **kw):
         # Make sure any pending index tasks have been processed
         processQueue()
@@ -424,25 +442,13 @@ class ElasticSearchManager:
 
         query = request.copy() if isinstance(request, dict) else {}
         query.update(kw)
-
-        if check_perms:
-            show_inactive = query.get("show_inactive", False)
-            if isinstance(request, dict) and not show_inactive:
-                show_inactive = "show_inactive" in request
-
-            user = api.user.get_current()
-            query["allowedRolesAndUsers"] = self.catalog._listAllowedRolesAndUsers(user)
-
-            if not show_inactive and not _checkPermission(
-                AccessInactivePortalContent, self.catalog
-            ):
-                query["effectiveRange"] = DateTime()
-        orig_query = query.copy()
-        logger.debug(f"Running query: {orig_query}")
+        logger.debug(f"Running query: {query}")
         try:
+            if check_perms:
+                return self.secure_search(query)
             return self.search(query)
         except Exception:  # NOQA W0703
             if self.raise_search_exception is True:
                 raise
-            logger.error(f"Error running Query: {orig_query}", exc_info=True)
+            logger.error(f"Error running Query: {query}", exc_info=True)
             return self.catalog._old_searchResults(request, **kw)

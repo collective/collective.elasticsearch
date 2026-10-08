@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Add `ElasticSearchManager.secure_search(query)`. It searches elasticsearch with the same restrictions as the catalog's `searchResults` (allowed roles and users, inactive content) and never falls back to the catalog, so dedicated search endpoints can use it. Restricted searches sent to elasticsearch now handle `show_inactive` like Plone's catalog: an explicit `show_inactive=False` also hides inactive content from managers, and a local "Access inactive portal content" permission on the queried paths is respected @maethu
+
 - BREAKING: Drop support for Elasticsearch 7. The `collective.elasticsearch.compat` module is removed, the ES 8 client is called directly @maethu
 
 - BREAKING: Drop support for Plone 5.2 and Python < 3.10. Plone 6.0, 6.1 and 6.2 are supported @maethu
