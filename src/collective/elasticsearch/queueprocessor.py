@@ -1,5 +1,4 @@
 from collective.elasticsearch import logger
-from collective.elasticsearch.compat import has_attachment_processor
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcessor
@@ -7,6 +6,7 @@ from collective.elasticsearch.interfaces import IndexingActions
 from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.elasticsearch.utils import has_attachment_processor
 from collective.elasticsearch.utils import use_redis
 from plone import api
 from plone.app.uuid.utils import uuidToObject

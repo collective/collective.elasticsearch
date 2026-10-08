@@ -2,12 +2,6 @@ from collective.elasticsearch import interfaces
 from collective.elasticsearch import local
 from collective.elasticsearch import logger
 from collective.elasticsearch import utils
-from collective.elasticsearch.compat import es_bulk
-from collective.elasticsearch.compat import es_search
-from collective.elasticsearch.compat import has_attachment_processor
-from collective.elasticsearch.compat import indices_put_mapping
-from collective.elasticsearch.compat import indices_put_settings
-from collective.elasticsearch.compat import ingest_put_pipeline
 from collective.elasticsearch.events import BlobIndexJobCreated
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
@@ -223,7 +217,7 @@ class ElasticSearchManager:
         setattr(self.catalog, CONVERTED_ATTR, True)
         self.catalog._p_changed = True
         mapping = getMultiAdapter((getRequest(), self), interfaces.IMappingProvider)()
-        indices_put_mapping(self.connection, self.index_name, mapping)
+        self.connection.indices.put_mapping(index=self.index_name, **mapping)
         self._setup_attachment_pipeline_and_default_index()
 
     def _setup_attachment_pipeline_and_default_index(self):
@@ -243,7 +237,7 @@ class ElasticSearchManager:
         actual binary data is available to extract.
         """
 
-        if not has_attachment_processor(self.connection):
+        if not utils.has_attachment_processor(self.connection):
             return
 
         body = {
@@ -290,10 +284,10 @@ class ElasticSearchManager:
             #     }
             # ]
         }
-        ingest_put_pipeline(self.connection, "cbor-attachments", body)
+        self.connection.ingest.put_pipeline(id="cbor-attachments", **body)
 
         settings = {"index": {"default_pipeline": "cbor-attachments"}}
-        indices_put_settings(self.connection, self.index_name, settings)
+        self.connection.indices.put_settings(index=self.index_name, settings=settings)
 
     @property
     def connection(self) -> Elasticsearch:
@@ -313,7 +307,7 @@ class ElasticSearchManager:
     def _bulk_call_direct(self, batch):
         data = [item for sublist in batch for item in sublist]
         logger.info(f"Bulk call with {len(data)} entries and {len(batch)} actions.")
-        result = es_bulk(self.connection, self.index_name, data)
+        result = self.connection.bulk(index=self.index_name, operations=data)
         if "errors" in result and result["errors"] is True:
             logger.error(f"Error in bulk operation: {result}")
 
@@ -370,7 +364,7 @@ class ElasticSearchManager:
 
     def get_record_by_path(self, path: str) -> dict:
         body = {"query": {"match": {"path.path": path}}}
-        results = es_search(self.connection, self.index_name, body)
+        results = self.connection.search(index=self.index_name, **body)
         hits = results.get("hits", {}).get("hits", [])
         record = hits[0]["_source"] if hits else {}
         return record
@@ -406,7 +400,7 @@ class ElasticSearchManager:
                 "pre_tags": self.highlight_pre_tags.split("\n"),
                 "post_tags": self.highlight_post_tags.split("\n"),
             }
-        return es_search(self.connection, self.index_name, body, **query_params)
+        return self.connection.search(index=self.index_name, **body, **query_params)
 
     def search(self, query: dict, factory=None, **query_params) -> LazyMap:
         """

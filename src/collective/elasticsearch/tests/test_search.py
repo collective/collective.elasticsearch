@@ -1,4 +1,3 @@
-from collective.elasticsearch.compat import IS_ES_8
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
@@ -185,9 +184,6 @@ class TestSearch(BaseFunctionalTest):
         self.assertEqual(results[0].Description, "page <em>Some</em> Page")
 
     def test_highlight_respects_max_analyzed_offset(self):
-        if not IS_ES_8:
-            self.skipTest("Only run on Elasticsearch 8")
-
         settings = get_settings()
         settings.highlight = True
         settings.highlight_pre_tags = "<em>"

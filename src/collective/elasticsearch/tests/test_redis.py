@@ -1,6 +1,5 @@
 from collective.elasticsearch import local
 from collective.elasticsearch import utils
-from collective.elasticsearch.compat import indices_put_settings
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.tests import BaseRedisTest
 from plone import api
@@ -321,7 +320,7 @@ class TestIndexBlobs(BaseRedisTest):
                 .get("default_pipeline")
             )
             if dp == "cbor-attachments":
-                indices_put_settings(conn, idx_name, settings)
+                conn.indices.put_settings(index=idx_name, settings=settings)
         conn.ingest.delete_pipeline(id="cbor-attachments")
         file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
         with io.FileIO(file_path, "rb") as pdf:

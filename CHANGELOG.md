@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- BREAKING: Drop support for Elasticsearch 7. The `collective.elasticsearch.compat` module is removed, the ES 8 client is called directly @maethu
+
 - BREAKING: Drop support for Plone 5.2 and Python < 3.10. Plone 6.0, 6.1 and 6.2 are supported @maethu
 
 - Apply search highlighting to records that only live in elasticsearch. The hit was shadowed by the fetched record, so the highlight was silently dropped for those brains, and `ElasticSearchBrain` did not support item assignment at all @maethu
