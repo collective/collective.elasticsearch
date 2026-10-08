@@ -1,33 +1,18 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:monkey="http://namespaces.plone.org/monkey"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     i18n_domain="collective.elasticsearch"
     >
 
   <include package="collective.monkeypatcher" />
 
-  <!-- CMFPlone CatalogTool patches -->
-  <monkey:patch
-      original="searchResults"
-      replacement=".safeSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="searchResults"
-      preserveOriginal="True"
+  <include
+      file="search.zcml"
+      zcml:condition="not-envvar PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES"
       />
-  <monkey:patch
-      original="__call__"
-      replacement=".safeSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="searchResults"
-      preserveOriginal="True"
-      />
-  <monkey:patch
-      original="unrestrictedSearchResults"
-      replacement=".unrestrictedSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="unrestrictedSearchResults"
-      preserveOriginal="True"
-      />
+
+  <!-- CMFPlone CatalogTool patches keeping elasticsearch in sync -->
   <monkey:patch
       original="manage_catalogRebuild"
       replacement=".manage_catalogRebuild"

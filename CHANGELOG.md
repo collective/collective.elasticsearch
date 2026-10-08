@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Add the environment variable `PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES`. When set, the catalog search is not patched, so Plone searches the catalog only, while content is still indexed in elasticsearch. Use `ElasticSearchManager.secure_search` to search elasticsearch, e.g. from a dedicated search endpoint. Requires `zope.configuration>=6.0` @maethu
+
 - Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu
 
 - Fall back to the unrestricted catalog search when an unrestricted search fails in elasticsearch. It fell back to the restricted search, so it only returned what the current user may see @maethu

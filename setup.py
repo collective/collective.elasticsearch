@@ -62,6 +62,7 @@ setup(
         "plone.app.registry",
         "plone.api",
         "setuptools",
+        "zope.configuration>=6.0",
     ],
     extras_require={
         "test": [

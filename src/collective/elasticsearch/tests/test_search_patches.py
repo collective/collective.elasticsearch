@@ -2,9 +2,26 @@ from collective.elasticsearch import local
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import get_settings
 from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.monkeypatcher.meta import _do_patch
 from contextlib import contextmanager
 from plone import api
 from plone.app.testing import logout
+from Products.CMFPlone.CatalogTool import CatalogTool
+from zope.configuration import config
+from zope.configuration import xmlconfig
+
+import collective.elasticsearch.patches
+import os
+import unittest
+
+
+DISABLE_SEARCH_PATCHES = "PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES"
+SEARCH_METHODS = {"searchResults", "__call__", "unrestrictedSearchResults"}
+MAINTENANCE_METHODS = {
+    "manage_catalogRebuild",
+    "manage_catalogClear",
+    "uncatalog_object",
+}
 
 
 class TestSearchPatchRouting(BaseFunctionalTest):
@@ -59,4 +76,44 @@ class TestSearchPatchFallback(BaseFunctionalTest):
             results = self.catalog(SearchableText="secret")
         self.assertEqual(
             len(results), 0, "The fallback of a restricted search must stay restricted"
+        )
+
+
+class TestSearchPatchSwitch(unittest.TestCase):
+    def setUp(self):
+        self.env_value = os.environ.pop(DISABLE_SEARCH_PATCHES, None)
+
+    def tearDown(self):
+        os.environ.pop(DISABLE_SEARCH_PATCHES, None)
+        if self.env_value is not None:
+            os.environ[DISABLE_SEARCH_PATCHES] = self.env_value
+
+    def patched_catalog_methods(self):
+        context = config.ConfigurationMachine()
+        xmlconfig.registerCommonDirectives(context)
+        xmlconfig.file(
+            "configure.zcml",
+            collective.elasticsearch.patches,
+            context=context,
+            execute=False,
+        )
+        return {
+            action["args"][2]
+            for action in context.actions
+            if action["callable"] is _do_patch and action["args"][1] is CatalogTool
+        }
+
+    def test_search_patches_are_loaded_by_default(self):
+        self.assertEqual(
+            self.patched_catalog_methods(),
+            SEARCH_METHODS | MAINTENANCE_METHODS,
+            "Without the environment variable the search must be patched",
+        )
+
+    def test_environment_variable_disables_only_the_search_patches(self):
+        os.environ[DISABLE_SEARCH_PATCHES] = "1"
+        self.assertEqual(
+            self.patched_catalog_methods(),
+            MAINTENANCE_METHODS,
+            "The environment variable must only disable the search patches",
         )
