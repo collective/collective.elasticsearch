@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu
+
 - Fall back to the unrestricted catalog search when an unrestricted search fails in elasticsearch. It fell back to the restricted search, so it only returned what the current user may see @maethu
 
 - Send catalog queries to elasticsearch also when the elasticsearch only index is passed in the query dict, e.g. `catalog({"SearchableText": "foo"})`. Only keyword arguments were checked, so the catalog ignored the removed index and returned all content @maethu
