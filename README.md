@@ -42,14 +42,6 @@ docker run \
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
 		elasticsearch:8.17.0
-
-# Elasticsearch 7.x
-docker run \
-		-e "discovery.type=single-node" \
-		-e "cluster.name=docker-cluster" \
-		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
-		-p 9200:9200 \
-		elasticsearch:7.17.7
 ```
 
 ### Test the installation
@@ -218,11 +210,7 @@ This feature aims to have a minimal impact in terms of responsiveness of the plo
 
 - Python 3.10+
 - Plone 6.0, 6.1 and 6.2
-- Elasticsearch 7.17.x and 8.x
-
-**Note:** Install the matching Python client for your ES version:
-- ES 7: `pip install "elasticsearch>=7.17.0,<8.0.0"`
-- ES 8: `pip install "elasticsearch>=8.0.0,<9.0.0"`
+- Elasticsearch 8.x
 
 ### Upgrading from Elasticsearch 7 to 8
 

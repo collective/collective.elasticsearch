@@ -58,7 +58,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "setuptools",
-        "elasticsearch>=7.17.7,<9.0.0",
+        "elasticsearch>=8.0.0,<9.0.0",
         "plone.app.registry",
         "plone.api",
         "setuptools",
