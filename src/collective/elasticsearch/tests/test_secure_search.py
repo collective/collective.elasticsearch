@@ -1,5 +1,4 @@
 from collective.elasticsearch.tests import BaseFunctionalTest
-from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from plone import api
 from plone.app.testing import logout
@@ -11,7 +10,6 @@ class TestSecureSearch(BaseFunctionalTest):
         page.setExpirationDate(DateTime() - 1)
         page.reindexObject()
         self.commit(wait=1)
-        return page
 
     def test_anonymous_does_not_find_private_content(self):
         page = api.content.create(self.portal, "Document", "page", title="Secret Page")
@@ -60,9 +58,7 @@ class TestSecureSearch(BaseFunctionalTest):
     def test_finds_content_when_es_only_indexes_are_removed_from_catalog(self):
         api.content.create(self.portal, "Document", "page", title="A Fancy Title")
         self.commit(wait=1)
-        for idx in getESOnlyIndexes():
-            self.catalog._catalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
         results = self.es.secure_search({"SearchableText": "fancy"})
         self.assertEqual(
             [brain.getId for brain in results],
