@@ -20,7 +20,6 @@ import os
 import transaction
 import unittest
 
-
 ENV_FOR_REDIS = {
     "PLONE_REDIS_DSN": "redis://localhost:6379/0",
     "PLONE_BACKEND": "http://localhost/plone",
@@ -88,9 +87,9 @@ class TestPloneBackendHost(BaseRedisTest):
         super().setUp()
         self.original_plone_backend = os.environ["PLONE_BACKEND"]
         del os.environ["PLONE_BACKEND"]
-        os.environ[
-            "PLONE_BACKEND_HOST"
-        ] = f'http://{self.layer["host"]}:{self.layer["port"]}'
+        os.environ["PLONE_BACKEND_HOST"] = (
+            f'http://{self.layer["host"]}:{self.layer["port"]}'
+        )
         self._transforms = api.portal.get_tool("portal_transforms")
         for transform_name in list(self._transforms.objectIds()):
             if "pdf" in transform_name.lower():

@@ -1,8 +1,8 @@
 """Installer for the collective.elasticsearch package."""
+
 from pathlib import Path
 from setuptools import find_namespace_packages
 from setuptools import setup
-
 
 long_description = f"""
 {Path("README.md").read_text()}\n

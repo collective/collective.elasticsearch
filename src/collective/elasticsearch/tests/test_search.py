@@ -9,7 +9,6 @@ from plone import api
 from plone.app.textfield.value import RichTextValue
 from Products.ZCatalog.interfaces import ICatalogBrain
 
-
 EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 DOCUMENT_KLASS = "plone.app.contenttypes.interfaces.IDocument"
 

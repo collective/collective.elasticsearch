@@ -17,7 +17,6 @@ import os
 import redis
 import time
 
-
 MAX_CONNECTION_RETRIES = 20
 DISABLE_SEARCH_PATCHES = "PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES"
 SEARCH_PATCHED_METHODS = ("searchResults", "__call__", "unrestrictedSearchResults")

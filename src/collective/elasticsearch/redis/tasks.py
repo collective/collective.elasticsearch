@@ -11,7 +11,6 @@ import cbor2
 import os
 import redis
 
-
 REDIS_CONNECTION_KEY = "redis_connection"
 
 

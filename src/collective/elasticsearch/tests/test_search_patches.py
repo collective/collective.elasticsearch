@@ -16,7 +16,6 @@ import collective.elasticsearch.patches
 import os
 import unittest
 
-
 MAINTENANCE_METHODS = {
     "manage_catalogRebuild",
     "manage_catalogClear",

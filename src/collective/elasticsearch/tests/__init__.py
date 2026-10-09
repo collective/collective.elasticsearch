@@ -15,7 +15,6 @@ import time
 import transaction
 import unittest
 
-
 MAX_CONNECTION_RETRIES = 20
 
 
