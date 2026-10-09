@@ -188,7 +188,6 @@ test-es8: ## Run tests with Elasticsearch 8
 	@echo "$(GREEN)==> Running tests with Elasticsearch 8$(RESET)"
 	@make start-elastic-8
 	@make start-redis
-	./bin/pip install "elasticsearch>=8.0.0,<9.0.0" --quiet
 	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
 	@make stop-elastic-8
 	@make stop-redis
