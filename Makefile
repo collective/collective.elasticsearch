@@ -39,7 +39,7 @@ ifndef LOG_LEVEL
 	LOG_LEVEL=INFO
 endif
 
-CODE_QUALITY_VERSION=2.0.0
+CODE_QUALITY_VERSION=2.1.3
 CURRENT_USER=$$(whoami)
 USER_INFO=$$(id -u ${CURRENT_USER}):$$(getent group ${CURRENT_USER}|cut -d: -f3)
 BASE_FOLDER=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
