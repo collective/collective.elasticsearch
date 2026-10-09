@@ -49,7 +49,6 @@ jobs:
         run: |
           pip install -U pip wheel
           pip install Plone -c https://dist.plone.org/release/${{ matrix.plone }}/constraints.txt
-          pip install "elasticsearch>=8.0.0,<9.0.0"
           pip install -e ".[test, redis]"
 
       - name: Run tests
