@@ -2,7 +2,6 @@ from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import get_settings
-from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from parameterized import parameterized
 from parameterized import parameterized_class
@@ -423,13 +422,7 @@ class TestSearchOnRemovedIndex(BaseFunctionalTest):
         )
         # Force indexing in ES
         self.commit(wait=1)
-        # Now delete the index from the catalog
-        zcatalog = self.catalog._catalog
-        # Delete indexes that should be only in ES
-        idxs = getESOnlyIndexes()
-        for idx in idxs:
-            zcatalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
 
     def test_search_results(self):
         el_results = self.search({"portal_type": "Document", "SearchableText": "Fancy"})
