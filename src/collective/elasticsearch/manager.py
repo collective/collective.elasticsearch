@@ -222,11 +222,9 @@ class ElasticSearchManager:
         """
         Setup the cbor-attachments pipeline:
         1. Iterate over all attachments (field) and use the attachment processor
-           to extract text data from the binary/data field called 'data'.
+           to extract text data from the binary/data field called 'data'. The
+           binary data is removed afterwards to save some space.
         2. Iterate over all extracted data and extend the SearchableText.
-           At same time remove the binary data to save some space. With
-           Version 8 of elasticsearch we could use the remove_binary flag, but
-           it does not exist yet in version 7.
         It's called cbor-attachment pipeline, because the data is transfered
         using cbor. This eliminates the base64 overhead.
 
@@ -249,7 +247,7 @@ class ElasticSearchManager:
                             "attachment": {
                                 "target_field": "_ingest._value.attachment",
                                 "field": "_ingest._value.data",
-                                # "remove_binary": "true",  # version 8
+                                "remove_binary": True,
                                 "properties": ["content"],
                             }
                         },
@@ -260,11 +258,9 @@ class ElasticSearchManager:
                         "if": 'ctx.containsKey("attachments")',
                         "source": """
                             for(int i=0; i<ctx['attachments'].length;++i) {
-                                if(ctx['attachments'][i]['attachment'].containsKey('content')) {
-                                    if (ctx['attachments'][i]['attachment']['content'].length() > 0) {
-                                        ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
-                                    }
-                                    ctx['attachments'][i]['data'] = null;
+                                def attachment = ctx['attachments'][i]['attachment'];
+                                if (attachment.containsKey('content') && attachment['content'].length() > 0) {
+                                    ctx['SearchableText'] += attachment['content'];
                                 }
                             }
                             """,

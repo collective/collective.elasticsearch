@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Remove the binary data of attachments in elasticsearch with the `remove_binary` option of the attachment processor. It was only removed when text could be extracted, so files without extractable text kept their binary data in the index. Run the upgrade step to update the pipeline of existing sites, already indexed files keep their data until they are reindexed @maethu
+
 - Add the environment variable `PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES`. When set, the catalog search is not patched, so Plone searches the catalog only, while content is still indexed in elasticsearch. Use `ElasticSearchManager.secure_search` to search elasticsearch, e.g. from a dedicated search endpoint. Requires `zope.configuration>=6.0` @maethu
 
 - Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu
