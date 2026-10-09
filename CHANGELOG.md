@@ -2,6 +2,24 @@
 
 ## 6.0.0 (unreleased)
 
+- Remove the binary data of attachments in elasticsearch with the `remove_binary` option of the attachment processor. It was only removed when text could be extracted, so files without extractable text kept their binary data in the index. Run the upgrade step to update the pipeline of existing sites, already indexed files keep their data until they are reindexed @maethu
+
+- Add the environment variable `PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES`. When set, the catalog search is not patched, so Plone searches the catalog only, while content is still indexed in elasticsearch. Use `ElasticSearchManager.secure_search` to search elasticsearch, e.g. from a dedicated search endpoint. Requires `zope.configuration>=6.0` @maethu
+
+- Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu
+
+- Fall back to the unrestricted catalog search when an unrestricted search fails in elasticsearch. It fell back to the restricted search, so it only returned what the current user may see @maethu
+
+- Send catalog queries to elasticsearch also when the elasticsearch only index is passed in the query dict, e.g. `catalog({"SearchableText": "foo"})`. Only keyword arguments were checked, so the catalog ignored the removed index and returned all content @maethu
+
+- BREAKING: Remove `ElasticSearchManager.search_results`. The catalog patches now decide which queries go to elasticsearch. To query elasticsearch directly, use `secure_search` or `search` @maethu
+
+- Add `ElasticSearchManager.secure_search(query)`. It searches elasticsearch with the same restrictions as the catalog's `searchResults` (allowed roles and users, inactive content) and never falls back to the catalog, so dedicated search endpoints can use it. Restricted searches sent to elasticsearch now handle `show_inactive` like Plone's catalog: an explicit `show_inactive=False` also hides inactive content from managers, and a local "Access inactive portal content" permission on the queried paths is respected @maethu
+
+- BREAKING: Drop support for Elasticsearch 7. The `collective.elasticsearch.compat` module is removed, the ES 8 client is called directly @maethu
+
+- BREAKING: Drop support for Plone 5.2 and Python < 3.10. Plone 6.0, 6.1 and 6.2 are supported @maethu
+
 - Apply search highlighting to records that only live in elasticsearch. The hit was shadowed by the fetched record, so the highlight was silently dropped for those brains, and `ElasticSearchBrain` did not support item assignment at all @maethu
 
 - Let `has_key` and `in` on an elasticsearch only brain report the metadata columns declared by the catalog, like a real catalog brain does, instead of only the keys stored in the elasticsearch document @maethu

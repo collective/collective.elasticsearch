@@ -18,15 +18,17 @@ text are in the query. Otherwise, the plone's default catalog will be used.
 This is because Plone's default catalog is faster on normal queries than using
 ElasticSearch.
 
+Set the environment variable ``PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES`` to
+keep the catalog search untouched. Content is still indexed in ElasticSearch,
+search it with ``ElasticSearchManager().secure_search(query)``.
+
 
 Compatibility
 -------------
 
-Only unit tested with Plone 5 with Dexterity types and archetypes.
-
-It should also work with Plone 4.3 and Plone 5.1.
-
-Deployed with Elasticsearch 7.6.0
+- Python 3.10+
+- Plone 6.0, 6.1 and 6.2
+- Elasticsearch 8.x
 
 State
 -----
@@ -34,15 +36,6 @@ State
 Support for all index column types is done EXCEPT for the DateRecurringIndex
 index column type. If you are doing a full text search along with a query that
 contains a DateRecurringIndex column, it will not work.
-
-
-Celery support
---------------
-
-This package comes with Celery support where all indexing operations will be pushed
-into celery to be run asynchronously.
-
-Please see instructions for collective.celery to see how this works.
 
 Contents:
 

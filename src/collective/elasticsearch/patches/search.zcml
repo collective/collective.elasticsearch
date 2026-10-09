@@ -1,0 +1,31 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:monkey="http://namespaces.plone.org/monkey"
+    i18n_domain="collective.elasticsearch"
+    >
+
+  <!-- Send catalog queries using elasticsearch only indexes to elasticsearch.
+       Not loaded when PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES is set. -->
+  <monkey:patch
+      original="searchResults"
+      replacement=".safeSearchResults"
+      class="Products.CMFPlone.CatalogTool.CatalogTool"
+      description="searchResults"
+      preserveOriginal="True"
+      />
+  <monkey:patch
+      original="__call__"
+      replacement=".safeSearchResults"
+      class="Products.CMFPlone.CatalogTool.CatalogTool"
+      description="searchResults"
+      preserveOriginal="True"
+      />
+  <monkey:patch
+      original="unrestrictedSearchResults"
+      replacement=".unrestrictedSearchResults"
+      class="Products.CMFPlone.CatalogTool.CatalogTool"
+      description="unrestrictedSearchResults"
+      preserveOriginal="True"
+      />
+
+</configure>

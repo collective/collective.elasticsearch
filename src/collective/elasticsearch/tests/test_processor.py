@@ -1,7 +1,6 @@
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
-from collective.elasticsearch.utils import getESOnlyIndexes
 from collective.elasticsearch.utils import getUID
 from parameterized import parameterized_class
 from plone import api
@@ -170,13 +169,7 @@ class TestRemoveIndexFromCatalog(BaseFunctionalTest):
         )
         # Force indexing in ES
         self.commit(wait=1)
-        # Now delete the index from the catalog
-        zcatalog = self.catalog._catalog
-        # Delete indexes that should be only in ES
-        idxs = getESOnlyIndexes()
-        for idx in idxs:
-            zcatalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
 
     def test_reindex_object(self):
         processor = self.get_processor()

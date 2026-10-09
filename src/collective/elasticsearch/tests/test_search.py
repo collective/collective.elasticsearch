@@ -1,16 +1,13 @@
-from collective.elasticsearch.compat import IS_ES_8
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.utils import get_settings
-from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from parameterized import parameterized
 from parameterized import parameterized_class
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from Products.ZCatalog.interfaces import ICatalogBrain
-
 
 EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 DOCUMENT_KLASS = "plone.app.contenttypes.interfaces.IDocument"
@@ -185,9 +182,6 @@ class TestSearch(BaseFunctionalTest):
         self.assertEqual(results[0].Description, "page <em>Some</em> Page")
 
     def test_highlight_respects_max_analyzed_offset(self):
-        if not IS_ES_8:
-            self.skipTest("Only run on Elasticsearch 8")
-
         settings = get_settings()
         settings.highlight = True
         settings.highlight_pre_tags = "<em>"
@@ -427,13 +421,7 @@ class TestSearchOnRemovedIndex(BaseFunctionalTest):
         )
         # Force indexing in ES
         self.commit(wait=1)
-        # Now delete the index from the catalog
-        zcatalog = self.catalog._catalog
-        # Delete indexes that should be only in ES
-        idxs = getESOnlyIndexes()
-        for idx in idxs:
-            zcatalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
 
     def test_search_results(self):
         el_results = self.search({"portal_type": "Document", "SearchableText": "Fancy"})

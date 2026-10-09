@@ -26,6 +26,22 @@ This package aims to index all fields the portal_catalog indexes and allows you 
 
 Then, ElasticSearch queries are ONLY used when Title, Description and SearchableText text are in the query. Otherwise, the plone's default catalog will be used. This is because Plone's default catalog is faster on normal queries than using ElasticSearch.
 
+### Disabling the search patches
+
+The catalog search is patched to send queries using the elasticsearch only indexes (`es_only_indexes` in the control panel, by default `Title`, `Description` and `SearchableText`) to elasticsearch.
+
+Set the environment variable `PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES` to a true value (e.g. `1`) before Plone starts to keep the catalog search untouched. Content is still indexed in elasticsearch. Search elasticsearch from your own code, e.g. a dedicated search endpoint, with:
+
+```python
+from collective.elasticsearch.manager import ElasticSearchManager
+
+results = ElasticSearchManager().secure_search({"SearchableText": "plone"})
+```
+
+`secure_search` applies the same restrictions as the catalog search (allowed roles and users, inactive content).
+
+**Warning:** Without the search patches, the catalog ignores query values for indexes it does not have. If you delete the elasticsearch only indexes from the catalog, every search that still uses the catalog, like `@@search`, `@search` or collections, returns all content the user may see.
+
 
 ## Install Elastic Search
 
@@ -42,14 +58,6 @@ docker run \
 		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
 		-p 9200:9200 \
 		elasticsearch:8.17.0
-
-# Elasticsearch 7.x
-docker run \
-		-e "discovery.type=single-node" \
-		-e "cluster.name=docker-cluster" \
-		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
-		-p 9200:9200 \
-		elasticsearch:7.17.7
 ```
 
 ### Test the installation
@@ -216,13 +224,9 @@ This feature aims to have a minimal impact in terms of responsiveness of the plo
 
 ## Compatibility
 
-- Python 3.8+
-- Plone 5.2 and 6.0
-- Elasticsearch 7.17.x and 8.x
-
-**Note:** Install the matching Python client for your ES version:
-- ES 7: `pip install "elasticsearch>=7.17.0,<8.0.0"`
-- ES 8: `pip install "elasticsearch>=8.0.0,<9.0.0"`
+- Python 3.10+
+- Plone 6.0, 6.1 and 6.2
+- Elasticsearch 8.x
 
 ### Upgrading from Elasticsearch 7 to 8
 

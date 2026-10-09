@@ -1,7 +1,8 @@
 from collective.elasticsearch import interfaces
+from collective.elasticsearch import logger
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import get_brain_from_path
-from plone.folder.interfaces import IOrdering
+from collective.elasticsearch.utils import getESOnlyIndexes
 from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.interfaces import IContentish
 from time import process_time
@@ -13,18 +14,38 @@ import time
 import urllib
 
 
-def unrestrictedSearchResults(self, REQUEST=None, **kw):
+def route_search(catalog, request, kw, check_perms):
+    """Send catalog queries using elasticsearch only indexes to elasticsearch."""
+    if check_perms:
+        original = catalog._old_searchResults
+    else:
+        original = catalog._old_unrestrictedSearchResults
+    query = request.copy() if isinstance(request, dict) else {}
+    query.update(kw)
     manager = ElasticSearchManager()
-    active = manager.active
-    method = manager.search_results if active else self._old_unrestrictedSearchResults
-    return method(REQUEST, check_perms=False, **kw)
+    if not (manager.active and getESOnlyIndexes().intersection(query)):
+        return original(request, **kw)
+
+    logger.debug(f"Running query: {query}")
+    try:
+        if check_perms:
+            return manager.secure_search(query)
+        # Make sure any pending index tasks have been processed
+        processQueue()
+        return manager.search(query)
+    except Exception:  # NOQA W0703
+        if manager.raise_search_exception is True:
+            raise
+        logger.error(f"Error running Query: {query}", exc_info=True)
+        return original(request, **kw)
+
+
+def unrestrictedSearchResults(self, REQUEST=None, **kw):
+    return route_search(self, REQUEST, kw, check_perms=False)
 
 
 def safeSearchResults(self, REQUEST=None, **kw):
-    manager = ElasticSearchManager()
-    active = manager.active
-    method = manager.search_results if active else self._old_searchResults
-    return method(REQUEST, check_perms=True, **kw)
+    return route_search(self, REQUEST, kw, check_perms=True)
 
 
 def manage_catalogRebuild(self, RESPONSE=None, URL1=None):  # NOQA W0613
@@ -80,23 +101,13 @@ def uncatalog_object(self, *args, **kwargs):
     return self._old_uncatalog_object(*args, **kwargs)
 
 
-def get_ordered_ids(context) -> dict:
-    """Return all object ids in a context, ordered."""
-    if IOrdering.providedBy(context):
-        return {oid: idx for idx, oid in enumerate(context.idsInOrder())}
-    else:
-        # For Plone 5.2, we care only about Dexterity content
-        objects = [
-            obj
-            for obj in list(context._objects)
-            if obj.get("meta_type").startswith("Dexterity")
-        ]
-        return {oid: idx for idx, oid in enumerate(context.getIdsSubset(objects))}
+def get_ordered_ids(ordering) -> dict:
+    """Return all object ids of an ordering, mapped to their position."""
+    return {oid: idx for idx, oid in enumerate(ordering.idsInOrder())}
 
 
 def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False):
     manager = ElasticSearchManager()
-    ordered = self if IOrdering.providedBy(self) else None
     before = get_ordered_ids(self)
     res = self._old_moveObjectsByDelta(
         ids, delta, subset_ids=subset_ids, suppress_events=suppress_events
@@ -104,9 +115,8 @@ def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False)
     if manager.active:
         after = get_ordered_ids(self)
         diff = [oid for oid, idx in after.items() if idx != before[oid]]
-        context = self.context if ordered else self
         for oid in diff:
-            obj = context[oid]
+            obj = self.context[oid]
             # We only reindex content objects
             if not IContentish.providedBy(obj):
                 continue

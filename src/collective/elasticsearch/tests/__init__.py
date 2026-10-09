@@ -15,7 +15,6 @@ import time
 import transaction
 import unittest
 
-
 MAX_CONNECTION_RETRIES = 20
 
 
@@ -61,6 +60,16 @@ class BaseTest(unittest.TestCase):
         self.es.flush_indices()
         if wait:
             time.sleep(wait)
+
+    def create_private_page(self):
+        page = api.content.create(self.portal, "Document", "page", title="Secret Page")
+        api.content.transition(obj=page, to_state="private")
+        self.commit(wait=1)
+
+    def delete_es_only_indexes_from_catalog(self):
+        for idx in utils.getESOnlyIndexes():
+            self.catalog._catalog.delIndex(idx)
+        self.commit()
 
     def tearDown(self):
         super().tearDown()

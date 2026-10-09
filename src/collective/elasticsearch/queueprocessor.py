@@ -1,5 +1,4 @@
 from collective.elasticsearch import logger
-from collective.elasticsearch.compat import has_attachment_processor
 from collective.elasticsearch.indexes import getIndex
 from collective.elasticsearch.interfaces import IAdditionalIndexDataProvider
 from collective.elasticsearch.interfaces import IElasticSearchIndexQueueProcessor
@@ -7,52 +6,21 @@ from collective.elasticsearch.interfaces import IndexingActions
 from collective.elasticsearch.interfaces import IReindexActive
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.elasticsearch.utils import has_attachment_processor
 from collective.elasticsearch.utils import use_redis
 from plone import api
-from plone.app.uuid.utils import uuidToCatalogBrain
+from plone.app.uuid.utils import uuidToObject
 from plone.dexterity.utils import iterSchemata
 from plone.indexer.interfaces import IIndexableObject
 from plone.indexer.interfaces import IIndexer
 from plone.namedfile.interfaces import INamedBlobFileField
 from zope.component import getAdapters
 from zope.component import queryMultiAdapter
-from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.schema import getFields
 
 import transaction
-
-
-if int(api.env.plone_version().split(".")[0]) < 6:
-
-    def uuidToObject(uuid, unrestricted=False):
-        """Variation of this method, which support the parameter
-        'unrestricted', like the one from plone 6.
-        """
-
-        brain = uuidToCatalogBrain(uuid)
-        if brain is None:
-            return None
-
-        path = brain.getPath()
-
-        if not path:
-            return
-        site = getSite()
-        if site is None:
-            return
-        # Go to the parent of the item without restrictions.
-        parent_path, final_path = path.rpartition("/")[::2]
-        parent = site.unrestrictedTraverse(parent_path)
-        # Do check restrictions for the final object.
-        # Check if the object has restrictions
-        if unrestricted:
-            return parent.unrestrictedTraverse(final_path)
-        return parent.restrictedTraverse(final_path)
-
-else:
-    from plone.app.uuid.utils import uuidToObject
 
 
 @implementer(IElasticSearchIndexQueueProcessor)

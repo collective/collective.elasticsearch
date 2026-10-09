@@ -79,4 +79,18 @@
 
   </genericsetup:upgradeSteps>
 
+  <genericsetup:upgradeSteps
+      profile="collective.elasticsearch:default"
+      source="4"
+      destination="5"
+      >
+
+    <genericsetup:upgradeStep
+        title="Remove the binary data of attachments in elasticsearch."
+        description=""
+        handler=".upgrades.update_attachment_pipeline"
+        />
+
+  </genericsetup:upgradeSteps>
+
 </configure>

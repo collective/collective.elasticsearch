@@ -5,28 +5,14 @@
     i18n_domain="collective.elasticsearch"
     >
 
-  <!-- CMFPlone CatalogTool patches -->
-  <monkey:patch
-      original="searchResults"
-      replacement=".safeSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="searchResults"
-      preserveOriginal="True"
+  <include package="collective.monkeypatcher" />
+
+  <include
+      file="search.zcml"
+      zcml:condition="not-envvar PLONE_ELASTICSEARCH_DISABLE_SEARCH_PATCHES"
       />
-  <monkey:patch
-      original="__call__"
-      replacement=".safeSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="searchResults"
-      preserveOriginal="True"
-      />
-  <monkey:patch
-      original="unrestrictedSearchResults"
-      replacement=".unrestrictedSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="unrestrictedSearchResults"
-      preserveOriginal="True"
-      />
+
+  <!-- CMFPlone CatalogTool patches keeping elasticsearch in sync -->
   <monkey:patch
       original="manage_catalogRebuild"
       replacement=".manage_catalogRebuild"
@@ -50,16 +36,6 @@
       preserveOriginal="True"
       />
   <!-- Reordering support -->
-  <configure zcml:condition="not-have plone-60">
-    <monkey:patch
-        original="moveObjectsByDelta"
-        replacement=".moveObjectsByDelta"
-        class="Products.CMFPlone.Portal.PloneSite"
-        description="moveObjectsByDelta"
-        preserveOriginal="True"
-        />
-  </configure>
-
   <monkey:patch
       original="moveObjectsByDelta"
       replacement=".moveObjectsByDelta"

@@ -2,12 +2,6 @@ from collective.elasticsearch import interfaces
 from collective.elasticsearch import local
 from collective.elasticsearch import logger
 from collective.elasticsearch import utils
-from collective.elasticsearch.compat import es_bulk
-from collective.elasticsearch.compat import es_search
-from collective.elasticsearch.compat import has_attachment_processor
-from collective.elasticsearch.compat import indices_put_mapping
-from collective.elasticsearch.compat import indices_put_settings
-from collective.elasticsearch.compat import ingest_put_pipeline
 from collective.elasticsearch.events import BlobIndexJobCreated
 from collective.elasticsearch.result import BrainFactory
 from collective.elasticsearch.result import ElasticResult
@@ -18,8 +12,6 @@ from elasticsearch import exceptions
 from elasticsearch.exceptions import NotFoundError
 from plone import api
 from Products.CMFCore.indexing import processQueue
-from Products.CMFCore.permissions import AccessInactivePortalContent
-from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.CatalogTool import CatalogTool
 from zope.component import getMultiAdapter
 from zope.event import notify
@@ -30,7 +22,6 @@ from ZTUtils.Lazy import LazyMap
 
 import os
 import warnings
-
 
 CONVERTED_ATTR = "_elasticconverted"
 CUSTOM_INDEX_NAME_ATTR = "_elasticcustomindex"
@@ -223,18 +214,16 @@ class ElasticSearchManager:
         setattr(self.catalog, CONVERTED_ATTR, True)
         self.catalog._p_changed = True
         mapping = getMultiAdapter((getRequest(), self), interfaces.IMappingProvider)()
-        indices_put_mapping(self.connection, self.index_name, mapping)
+        self.connection.indices.put_mapping(index=self.index_name, **mapping)
         self._setup_attachment_pipeline_and_default_index()
 
     def _setup_attachment_pipeline_and_default_index(self):
         """
         Setup the cbor-attachments pipeline:
         1. Iterate over all attachments (field) and use the attachment processor
-           to extract text data from the binary/data field called 'data'.
+           to extract text data from the binary/data field called 'data'. The
+           binary data is removed afterwards to save some space.
         2. Iterate over all extracted data and extend the SearchableText.
-           At same time remove the binary data to save some space. With
-           Version 8 of elasticsearch we could use the remove_binary flag, but
-           it does not exist yet in version 7.
         It's called cbor-attachment pipeline, because the data is transfered
         using cbor. This eliminates the base64 overhead.
 
@@ -243,7 +232,7 @@ class ElasticSearchManager:
         actual binary data is available to extract.
         """
 
-        if not has_attachment_processor(self.connection):
+        if not utils.has_attachment_processor(self.connection):
             return
 
         body = {
@@ -257,7 +246,7 @@ class ElasticSearchManager:
                             "attachment": {
                                 "target_field": "_ingest._value.attachment",
                                 "field": "_ingest._value.data",
-                                # "remove_binary": "true",  # version 8
+                                "remove_binary": True,
                                 "properties": ["content"],
                             }
                         },
@@ -268,11 +257,9 @@ class ElasticSearchManager:
                         "if": 'ctx.containsKey("attachments")',
                         "source": """
                             for(int i=0; i<ctx['attachments'].length;++i) {
-                                if(ctx['attachments'][i]['attachment'].containsKey('content')) {
-                                    if (ctx['attachments'][i]['attachment']['content'].length() > 0) {
-                                        ctx['SearchableText'] += ctx['attachments'][i]['attachment']['content'];
-                                    }
-                                    ctx['attachments'][i]['data'] = null;
+                                def attachment = ctx['attachments'][i]['attachment'];
+                                if (attachment.containsKey('content') && attachment['content'].length() > 0) {
+                                    ctx['SearchableText'] += attachment['content'];
                                 }
                             }
                             """,
@@ -290,10 +277,10 @@ class ElasticSearchManager:
             #     }
             # ]
         }
-        ingest_put_pipeline(self.connection, "cbor-attachments", body)
+        self.connection.ingest.put_pipeline(id="cbor-attachments", **body)
 
         settings = {"index": {"default_pipeline": "cbor-attachments"}}
-        indices_put_settings(self.connection, self.index_name, settings)
+        self.connection.indices.put_settings(index=self.index_name, settings=settings)
 
     @property
     def connection(self) -> Elasticsearch:
@@ -313,7 +300,7 @@ class ElasticSearchManager:
     def _bulk_call_direct(self, batch):
         data = [item for sublist in batch for item in sublist]
         logger.info(f"Bulk call with {len(data)} entries and {len(batch)} actions.")
-        result = es_bulk(self.connection, self.index_name, data)
+        result = self.connection.bulk(index=self.index_name, operations=data)
         if "errors" in result and result["errors"] is True:
             logger.error(f"Error in bulk operation: {result}")
 
@@ -370,7 +357,7 @@ class ElasticSearchManager:
 
     def get_record_by_path(self, path: str) -> dict:
         body = {"query": {"match": {"path.path": path}}}
-        results = es_search(self.connection, self.index_name, body)
+        results = self.connection.search(index=self.index_name, **body)
         hits = results.get("hits", {}).get("hits", [])
         record = hits[0]["_source"] if hits else {}
         return record
@@ -406,7 +393,7 @@ class ElasticSearchManager:
                 "pre_tags": self.highlight_pre_tags.split("\n"),
                 "post_tags": self.highlight_post_tags.split("\n"),
             }
-        return es_search(self.connection, self.index_name, body, **query_params)
+        return self.connection.search(index=self.index_name, **body, **query_params)
 
     def search(self, query: dict, factory=None, **query_params) -> LazyMap:
         """
@@ -420,38 +407,22 @@ class ElasticSearchManager:
         result = ElasticResult(self, query, **query_params)
         return LazyMap(factory, result, result.count)
 
-    def search_results(self, request=None, check_perms=False, **kw):
+    def secure_search(self, query: dict) -> LazyMap:
+        """Search elasticsearch for the content the current user may see.
+
+        Restricts the query like the catalog's searchResults does: by
+        allowedRolesAndUsers, and by effectiveRange unless show_inactive is
+        set or the user may access inactive content. Errors are raised, there
+        is no fallback to the catalog.
+        """
         # Make sure any pending index tasks have been processed
         processQueue()
-        if not (self.active and utils.getESOnlyIndexes().intersection(kw.keys())):
-            method = (
-                self.catalog._old_searchResults
-                if check_perms
-                else self.catalog._old_unrestrictedSearchResults
-            )
-            return method(request, **kw)
-
-        query = request.copy() if isinstance(request, dict) else {}
-        query.update(kw)
-
-        if check_perms:
-            show_inactive = query.get("show_inactive", False)
-            if isinstance(request, dict) and not show_inactive:
-                show_inactive = "show_inactive" in request
-
-            user = api.user.get_current()
-            query["allowedRolesAndUsers"] = self.catalog._listAllowedRolesAndUsers(user)
-
-            if not show_inactive and not _checkPermission(
-                AccessInactivePortalContent, self.catalog
-            ):
-                query["effectiveRange"] = DateTime()
-        orig_query = query.copy()
-        logger.debug(f"Running query: {orig_query}")
-        try:
-            return self.search(query)
-        except Exception:  # NOQA W0703
-            if self.raise_search_exception is True:
-                raise
-            logger.error(f"Error running Query: {orig_query}", exc_info=True)
-            return self.catalog._old_searchResults(request, **kw)
+        query = dict(query)
+        show_inactive = query.get("show_inactive")
+        if show_inactive is None:
+            show_inactive = self.catalog.allow_inactive(query)
+        user = api.user.get_current()
+        query["allowedRolesAndUsers"] = self.catalog._listAllowedRolesAndUsers(user)
+        if not show_inactive:
+            query["effectiveRange"] = DateTime()
+        return self.search(query)
