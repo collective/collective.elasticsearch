@@ -1,6 +1,7 @@
 .*project
 .coverage
 .coverage.*
+.flakeheaven_cache/
 .installed.cfg
 .mr.developer.cfg
 .tox/
