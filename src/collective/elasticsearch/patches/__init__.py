@@ -1,15 +1,6 @@
-from collective.elasticsearch import interfaces
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import get_brain_from_path
-from Products.CMFCore.indexing import processQueue
 from Products.CMFCore.interfaces import IContentish
-from time import process_time
-from zope.globalrequest import getRequest
-from zope.interface import alsoProvides
-from zope.interface import noLongerProvides
-
-import time
-import urllib
 
 
 def unrestrictedSearchResults(self, REQUEST=None, **kw):
@@ -24,35 +15,6 @@ def safeSearchResults(self, REQUEST=None, **kw):
     active = manager.active
     method = manager.search_results if active else self._old_searchResults
     return method(REQUEST, check_perms=True, **kw)
-
-
-def manage_catalogRebuild(self, RESPONSE=None, URL1=None):  # NOQA W0613
-    """need to be publishable"""
-    manager = ElasticSearchManager()
-    if manager.enabled:
-        manager._recreate_catalog()
-        alsoProvides(getRequest(), interfaces.IReindexActive)
-
-    elapse = time.time()
-    c_elapse = process_time()
-
-    self.clearFindAndRebuild()
-
-    elapse = time.time() - elapse
-    c_elapse = process_time() - c_elapse
-
-    msg = f"Catalog Rebuilt\nTotal time: {elapse}\nTotal CPU time: {c_elapse}"
-
-    if manager.enabled:
-        processQueue()
-        manager.flush_indices()
-        noLongerProvides(getRequest(), interfaces.IReindexActive)
-    if RESPONSE is not None:
-        RESPONSE.redirect(
-            URL1
-            + "/manage_catalogAdvanced?manage_tabs_message="
-            + urllib.parse.quote(msg)
-        )
 
 
 def manage_catalogClear(self, *args, **kwargs):

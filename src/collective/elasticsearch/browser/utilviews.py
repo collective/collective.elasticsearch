@@ -43,7 +43,7 @@ class Utils(BrowserView):
             if not authenticator.verify():
                 raise Unauthorized
 
-            self.context.manage_catalogRebuild()
+            self._es.rebuild_from_catalog()
 
         site = aq_parent(self.context)
         self.request.response.redirect(f"{site.absolute_url()}/@@elastic-controlpanel")

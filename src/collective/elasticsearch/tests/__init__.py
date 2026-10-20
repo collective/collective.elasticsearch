@@ -49,7 +49,7 @@ class BaseTest(unittest.TestCase):
         self.catalog._elasticcustomindex = "plone-test-index"
         self.es = ElasticSearchManager()
 
-        self.catalog.manage_catalogRebuild()
+        self.es.rebuild_from_catalog()
         # need to commit here so all tests start with a baseline
         # of elastic enabled
         time.sleep(0.1)

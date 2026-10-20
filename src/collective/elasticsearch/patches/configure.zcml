@@ -29,13 +29,6 @@
       preserveOriginal="True"
       />
   <monkey:patch
-      original="manage_catalogRebuild"
-      replacement=".manage_catalogRebuild"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="manage_catalogRebuild"
-      preserveOriginal="True"
-      />
-  <monkey:patch
       original="manage_catalogClear"
       replacement=".manage_catalogClear"
       class="Products.CMFPlone.CatalogTool.CatalogTool"

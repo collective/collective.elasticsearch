@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- BREAKING: Rebuilding no longer goes through the ZCatalog. `ElasticSearchManager.rebuild_from_catalog` recreates the elasticsearch index from the objects in the catalog and leaves the ZCatalog untouched; the control panel "Rebuild Elasticsearch Index" action and the `@elasticsearch` rebuild action use it. The ZMI "Clear and Rebuild" (`manage_catalogRebuild`) is not patched anymore and only rebuilds the ZCatalog @maethu
+
 - Fix negative index lookups on elasticsearch results. The bucket arithmetic was off, so e.g. `results[-1]` could return the second to last record and lookups past the first batch could return a record a few positions away @maethu
 
 - Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu

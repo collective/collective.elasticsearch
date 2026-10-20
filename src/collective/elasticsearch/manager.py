@@ -14,6 +14,7 @@ from plone import api
 from Products.CMFCore.indexing import processQueue
 from Products.CMFPlone.CatalogTool import CatalogTool
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.interface import implementer
@@ -21,6 +22,7 @@ from zope.interface.interfaces import ComponentLookupError
 from ZTUtils.Lazy import LazyMap
 
 import os
+import transaction
 import warnings
 
 
@@ -210,6 +212,35 @@ class ElasticSearchManager:
                 pass
         self.flush_indices()
         self._convert_catalog_to_elastic()
+
+    def rebuild_from_catalog(self):
+        """Recreate the elasticsearch index from the objects in the catalog.
+
+        Every cataloged object is passed straight to the elasticsearch index
+        queue processor in batches. The ZCatalog is not modified.
+        """
+        self._recreate_catalog()
+        processor = getUtility(
+            interfaces.IElasticSearchIndexQueueProcessor, name="elasticsearch"
+        )
+        portal = api.portal.get()
+        processor.index(portal)
+        brains = self.catalog.unrestrictedSearchResults(
+            path="/".join(portal.getPhysicalPath())
+        )
+        for index, brain in enumerate(brains, 1):
+            try:
+                processor.index(brain._unrestrictedGetObject())
+            except (AttributeError, KeyError):
+                logger.error(
+                    f"Could not index the object at {brain.getPath()}", exc_info=True
+                )
+            if index % self.bulk_size == 0:
+                processor.commit()
+                transaction.commit()
+        processor.commit()
+        transaction.commit()
+        self.flush_indices()
 
     def _convert_catalog_to_elastic(self):
         setattr(self.catalog, CONVERTED_ATTR, True)

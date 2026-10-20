@@ -83,13 +83,13 @@
                         <form class="actionsForm" method="POST" class="rebuild" action="${purl}/@@elastic-rebuild">
                             <span tal:replace="structure context/@@authenticator/authenticator" />
                             <p class="formHelp">
-                              The <b>"Rebuild Catalog"</b> action clears the catalog and indexes all objects with an 'indexObject' method. This may take a long time.
+                              The <b>"Rebuild Elasticsearch Index"</b> action recreates the elasticsearch index from the objects in the catalog. The catalog itself is not modified. This may take a long time.
                             </p>
                             <div class="portalMessage warning" role="status">
                               <strong>Warning</strong>
                               Could take a very long time. Use carefully.
                             </div>
-                            <button type="submit" name="convert" class="btn btn-danger">Rebuild Catalog</button>
+                            <button type="submit" name="convert" class="btn btn-danger">Rebuild Elasticsearch Index</button>
                         </form>
                     </div>
                 </div>
