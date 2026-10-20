@@ -9,7 +9,7 @@ Basic configuration
 - Click "Elastic Search" in "Add-on Configuration"
 - Enable
 - Click "Convert Catalog"
-- Click "Rebuild Catalog"
+- Click "Rebuild Elasticsearch Index"
 
 
 Changing the index used for elasticsearch

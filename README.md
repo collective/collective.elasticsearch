@@ -22,9 +22,9 @@
 
 ## Introduction
 
-This package aims to index all fields the portal_catalog indexes and allows you to delete the `Title`, `Description` and `SearchableText` indexes which can provide significant improvement to performance and RAM usage.
+This package indexes all fields the portal_catalog indexes into Elasticsearch and allows you to delete the `Title`, `Description` and `SearchableText` indexes from the catalog, which can provide significant improvement to performance and RAM usage.
 
-Then, ElasticSearch queries are ONLY used when Title, Description and SearchableText text are in the query. Otherwise, the plone's default catalog will be used. This is because Plone's default catalog is faster on normal queries than using ElasticSearch.
+Searching elasticsearch is explicit: catalog queries are never routed to elasticsearch. See [Searching](#searching).
 
 
 ## Install Elastic Search
@@ -67,9 +67,41 @@ Now, go to `Add-on Configuration` and:
 
 - Check "Enable"
 - Click "Convert Catalog"
-- Click "Rebuild Catalog"
+- Click "Rebuild Elasticsearch Index"
 
 You now have a insanely scalable modern search engine. Now live the life of the Mind!
+
+## Searching
+
+Content is indexed into elasticsearch through the Plone indexing queue. Searching elasticsearch is explicit, the portal_catalog behaves like stock Plone. Query elasticsearch with the manager:
+
+```python
+from collective.elasticsearch.manager import ElasticSearchManager
+
+results = ElasticSearchManager().secure_search({"SearchableText": "foo"})
+```
+
+`secure_search` restricts the results like the catalog's `searchResults` does: by allowed roles and users, and by hiding inactive content unless `show_inactive` is passed or the user may access inactive content. Use `search` to run a query unrestricted:
+
+```python
+results = ElasticSearchManager().search({"SearchableText": "foo"})
+```
+
+Both return a lazy sequence of catalog brains. The "Indexes for which all searches are done through ElasticSearch" setting (`Title`, `Description` and `SearchableText` by default) still controls which attributes are indexed into elasticsearch on top of the catalog indexes, and those keys stay queryable in elasticsearch even after the indexes were deleted from the portal_catalog.
+
+## Maintenance
+
+The control panel and the `@elasticsearch` REST service offer three actions:
+
+- **Convert Catalog**: creates the elasticsearch index, maps all catalog indexes and enables indexing into elasticsearch. Run it once after installing and after mapping changes.
+- **Rebuild Elasticsearch Index**: recreates the elasticsearch index from the objects in the catalog. The ZCatalog is not modified. Run it when the elasticsearch index is lost or outdated.
+- **Synchronize**: compares the UIDs in the catalog with the documents in elasticsearch, indexes missing objects and deletes documents without a catalog entry. Run it to fix drift without a full rebuild.
+
+### Caveats
+
+- The ZMI catalog maintenance ("Clear and Rebuild", "Clear", the "Catalog" button and `refreshCatalog`) only operates on the ZCatalog and does not reach elasticsearch. The ZMI "Remove" on the Catalog tab does delete the selected records from elasticsearch, once the transaction committed. Run **Synchronize** after other ZMI catalog surgery.
+- Reordering content does not update `getObjPositionInParent` in elasticsearch, the indexed value is the position at the time the object was last indexed.
+- If you delete the `Title`, `Description` and `SearchableText` indexes from the portal_catalog, catalog queries silently ignore those keys and match everything else. Search elasticsearch explicitly for text queries.
 
 
 ## Redis queue integration with blob indexing support
@@ -85,7 +117,7 @@ Your Plone site should be up and running: http://localhost:8080/Plone
 - Go to `Add-on Configuration`
 - Check "Enable"
 - Click "Convert Catalog"
-- Click "Rebuild Catalog"
+- Click "Rebuild Elasticsearch Index"
 
 ### Why
 
@@ -182,7 +214,7 @@ make worker
 
 - Check "Enable"
 - Click "Convert Catalog"
-- Click "Rebuild Catalog"
+- Click "Rebuild Elasticsearch Index"
 
 ### Technical documentation for elasticsearch
 
