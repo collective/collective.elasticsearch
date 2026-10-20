@@ -17,14 +17,6 @@ def safeSearchResults(self, REQUEST=None, **kw):
     return method(REQUEST, check_perms=True, **kw)
 
 
-def manage_catalogClear(self, *args, **kwargs):
-    """need to be publishable"""
-    manager = ElasticSearchManager()
-    if manager.enabled and not manager.active:
-        manager._recreate_catalog()
-    return self._old_manage_catalogClear(*args, **kwargs)
-
-
 def uncatalog_object(self, *args, **kwargs):
     manager = ElasticSearchManager()
     if manager.active:
