@@ -5,7 +5,6 @@ from plone.registry import Record
 from plone.registry.interfaces import IRegistry
 from zope.component import getUtility
 
-
 RAISE_SEARCH_EXCEPTION_RECORD = (
     "collective.elasticsearch.interfaces.IElasticSettings.raise_search_exception"
 )

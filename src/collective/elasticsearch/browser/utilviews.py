@@ -12,7 +12,6 @@ import logging
 import time
 import transaction
 
-
 logger = logging.getLogger(__name__)
 
 

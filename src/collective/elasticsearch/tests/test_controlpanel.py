@@ -4,7 +4,6 @@ from unittest import mock
 
 import os
 
-
 ENV_FOR_REDIS = {
     "PLONE_REDIS_DSN": "",
     "PLONE_BACKEND": "",

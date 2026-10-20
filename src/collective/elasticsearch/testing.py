@@ -16,7 +16,6 @@ import os
 import redis
 import time
 
-
 MAX_CONNECTION_RETRIES = 20
 
 

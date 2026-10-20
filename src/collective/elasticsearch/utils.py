@@ -11,7 +11,6 @@ import importlib.metadata
 import math
 import os
 
-
 HAS_REDIS_MODULE = False
 try:
     importlib.metadata.distribution("redis")
