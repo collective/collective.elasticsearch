@@ -35,13 +35,5 @@
       description="manage_uncatalogObject"
       preserveOriginal="True"
       />
-  <!-- Reordering support -->
-  <monkey:patch
-      original="moveObjectsByDelta"
-      replacement=".moveObjectsByDelta"
-      class="plone.folder.default.DefaultOrdering"
-      description="moveObjectsByDelta"
-      preserveOriginal="True"
-      />
 
 </configure>

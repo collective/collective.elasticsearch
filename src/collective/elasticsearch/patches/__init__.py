@@ -1,6 +1,5 @@
 from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import get_brain_from_path
-from Products.CMFCore.interfaces import IContentish
 
 import transaction
 
@@ -34,26 +33,3 @@ def manage_uncatalogObject(self, REQUEST, RESPONSE, URL1, urls=None):
         if data:
             transaction.get().addAfterCommitHook(delete_from_elasticsearch, (data,))
     return self._old_manage_uncatalogObject(REQUEST, RESPONSE, URL1, urls=urls)
-
-
-def get_ordered_ids(ordering) -> dict:
-    """Return all object ids of an ordering, mapped to their position."""
-    return {oid: idx for idx, oid in enumerate(ordering.idsInOrder())}
-
-
-def moveObjectsByDelta(self, ids, delta, subset_ids=None, suppress_events=False):
-    manager = ElasticSearchManager()
-    before = get_ordered_ids(self)
-    res = self._old_moveObjectsByDelta(
-        ids, delta, subset_ids=subset_ids, suppress_events=suppress_events
-    )
-    if manager.active:
-        after = get_ordered_ids(self)
-        diff = [oid for oid, idx in after.items() if idx != before[oid]]
-        for oid in diff:
-            obj = self.context[oid]
-            # We only reindex content objects
-            if not IContentish.providedBy(obj):
-                continue
-            obj.reindexObject(idxs=["getObjPositionInParent"])
-    return res
