@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Remove the `raise_search_exception` setting. Without the catalog patches there is no fallback search anymore, elasticsearch errors are always raised. An upgrade step removes the stale registry record @maethu
+
 - BREAKING: Remove the portal_catalog search patches (`searchResults`, `__call__`, `unrestrictedSearchResults`) and `ElasticSearchManager.search_results`. Catalog queries are never routed to elasticsearch anymore, search elasticsearch explicitly with `ElasticSearchManager().secure_search(query)` (restricted) or `.search(query)` (unrestricted). The `_old_searchResults` and `_old_unrestrictedSearchResults` aliases are gone. Note that if the elasticsearch only indexes were deleted from portal_catalog, catalog queries silently ignore those keys and match everything else @maethu
 
 - BREAKING: Remove the `moveObjectsByDelta` patch. Reordering content no longer updates `getObjPositionInParent` in elasticsearch, the indexed value is the position at indexing time @maethu

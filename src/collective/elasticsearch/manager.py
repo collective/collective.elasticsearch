@@ -38,17 +38,6 @@ class ElasticSearchManager:
     connection_key = "elasticsearch_connection"
 
     @property
-    def raise_search_exception(self):
-        """Whether to raise search exceptions or fallback to old catalog search"""
-        try:
-            value = api.portal.get_registry_record(
-                "raise_search_exception", interfaces.IElasticSettings, False
-            )
-        except (KeyError, ComponentLookupError):
-            value = False
-        return value
-
-    @property
     def bulk_size(self) -> int:
         """Bulk size of ElasticSearch calls."""
         try:
