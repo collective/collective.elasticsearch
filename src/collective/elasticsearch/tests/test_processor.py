@@ -1,6 +1,7 @@
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.tests import DIRECT_AND_REDIS_LAYERS
 from collective.elasticsearch.utils import getUID
 from parameterized import parameterized_class
 from plone import api
@@ -13,12 +14,7 @@ from Products.CMFCore.indexing import processQueue
 from zope.component import getMultiAdapter
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestQueueProcessor(BaseFunctionalTest):
     def test_has_right_brain_data(self):
         processor = self.get_processor()
@@ -94,12 +90,7 @@ class TestQueueProcessor(BaseFunctionalTest):
         self.assertIn(obj.UID(), processor.actions.index)
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestRemoveIndexFromCatalog(BaseFunctionalTest):
     def setUp(self):
         super().setUp()

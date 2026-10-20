@@ -1,6 +1,5 @@
-from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
-from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.tests import DIRECT_AND_REDIS_LAYERS
 from collective.monkeypatcher.meta import _do_patch
 from parameterized import parameterized_class
 from plone import api
@@ -12,12 +11,7 @@ import transaction
 import unittest
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestZmiRemoveSyncsElasticsearch(BaseFunctionalTest):
     def setUp(self):
         super().setUp()

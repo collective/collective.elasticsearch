@@ -1,16 +1,10 @@
-from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
-from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.tests import DIRECT_AND_REDIS_LAYERS
 from parameterized import parameterized_class
 from plone import api
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestElasticsearchRebuild(BaseFunctionalTest):
     def setUp(self):
         super().setUp()

@@ -18,6 +18,11 @@ import unittest
 
 MAX_CONNECTION_RETRIES = 20
 
+DIRECT_AND_REDIS_LAYERS = [
+    {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+    {"layer": ElasticSearch_REDIS_TESTING},
+]
+
 
 class BaseTest(unittest.TestCase):
     layer = ElasticSearch_INTEGRATION_TESTING
