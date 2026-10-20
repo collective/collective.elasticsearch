@@ -387,29 +387,6 @@ class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
         {"layer": ElasticSearch_REDIS_TESTING},
     ]
 )
-class TestUncatalogRemoveOnES(BaseFunctionalTest):
-    def setUp(self):
-        super().setUp()
-        self.event = api.content.create(
-            self.portal, "Event", "event-test", title="Gone Event"
-        )
-        self.commit(wait=1)
-        path = "/".join(self.event.getPhysicalPath())
-        catalog = self.catalog
-        catalog.uncatalog_object(path)
-        self.commit(wait=1)
-
-    def test_search_results(self):
-        el_results = self.search({"portal_type": "Event", "Title": "Gone Event"})
-        self.assertEqual(len(el_results), 0)
-
-
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
 class TestSearchOnRemovedIndex(BaseFunctionalTest):
     def setUp(self):
         super().setUp()

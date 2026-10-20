@@ -2,6 +2,8 @@ from collective.elasticsearch.manager import ElasticSearchManager
 from collective.elasticsearch.utils import get_brain_from_path
 from Products.CMFCore.interfaces import IContentish
 
+import transaction
+
 
 def unrestrictedSearchResults(self, REQUEST=None, **kw):
     manager = ElasticSearchManager()
@@ -17,20 +19,21 @@ def safeSearchResults(self, REQUEST=None, **kw):
     return method(REQUEST, check_perms=True, **kw)
 
 
-def uncatalog_object(self, *args, **kwargs):
+def delete_from_elasticsearch(status, data):
+    if status:
+        ElasticSearchManager().bulk(data=data)
+
+
+def manage_uncatalogObject(self, REQUEST, RESPONSE, URL1, urls=None):
+    """Remove the entries from the catalog and from elasticsearch."""
     manager = ElasticSearchManager()
-    if manager.active:
-        # If ES is active, we also remove the record from there
-        zcatalog = self._catalog
-        data = []
-        for path in args:
-            brain = get_brain_from_path(zcatalog, path)
-            if not brain:
-                # Path not in the catalog
-                continue
-            data.append(("delete", brain.UID, {}))
-        manager.bulk(data=data)
-    return self._old_uncatalog_object(*args, **kwargs)
+    if manager.active and urls:
+        urls = (urls,) if isinstance(urls, str) else urls
+        brains = [get_brain_from_path(self._catalog, path) for path in urls]
+        data = [("delete", brain.UID, {}) for brain in brains if brain]
+        if data:
+            transaction.get().addAfterCommitHook(delete_from_elasticsearch, (data,))
+    return self._old_manage_uncatalogObject(REQUEST, RESPONSE, URL1, urls=urls)
 
 
 def get_ordered_ids(ordering) -> dict:

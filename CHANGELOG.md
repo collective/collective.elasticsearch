@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- BREAKING: Replace the `uncatalog_object` patch with a ZMI `manage_uncatalogObject` patch. The elasticsearch delete was sent before the transaction committed, and in redis mode it bypassed the aborted-transaction guard, so an aborted removal (e.g. a ConflictError retry) could still delete the live document. The ZMI "Remove" now deletes the documents from elasticsearch in an after-commit hook. Direct `uncatalog_object` calls and `refreshCatalog` no longer reach elasticsearch, run the control panel "Synchronize" action (`@@elastic-synchronize`) to clean up stale documents @maethu
+
 - BREAKING: Remove the `manage_catalogClear` patch. Clearing the catalog in the ZMI no longer prepares an empty elasticsearch index, use the control panel "Convert Catalog" action instead @maethu
 
 - BREAKING: Rebuilding no longer goes through the ZCatalog. `ElasticSearchManager.rebuild_from_catalog` recreates the elasticsearch index from the objects in the catalog and leaves the ZCatalog untouched; the control panel "Rebuild Elasticsearch Index" action and the `@elasticsearch` rebuild action use it. The ZMI "Clear and Rebuild" (`manage_catalogRebuild`) is not patched anymore and only rebuilds the ZCatalog @maethu

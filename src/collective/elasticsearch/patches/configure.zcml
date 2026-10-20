@@ -29,10 +29,10 @@
       preserveOriginal="True"
       />
   <monkey:patch
-      original="uncatalog_object"
-      replacement=".uncatalog_object"
+      original="manage_uncatalogObject"
+      replacement=".manage_uncatalogObject"
       class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="uncatalog_object"
+      description="manage_uncatalogObject"
       preserveOriginal="True"
       />
   <!-- Reordering support -->

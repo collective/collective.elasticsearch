@@ -23,8 +23,8 @@ class TestElasticSearchBrain(BaseFunctionalTest):
 
         This is what content indexed straight into elasticsearch, without a
         counterpart in the ZODB catalog, looks like. The inner catalog is used
-        on purpose, uncatalog_object on the tool would drop the elasticsearch
-        document as well.
+        on purpose, the ZMI remove (manage_uncatalogObject) would drop the
+        elasticsearch document as well.
         """
         self.catalog._catalog.uncatalogObject("/".join(obj.getPhysicalPath()))
         transaction.commit()
