@@ -155,7 +155,7 @@ class ElasticResult:
             - self[352]: 350 bucket: 2 item
             - self[-1]: 500 bucket: 24 item
             - self[-2]: 500 bucket: 23 item
-            - self[-55]: 450 bucket: 19 item
+            - self[-55]: 450 bucket: 20 item
         """
         bulk_size = self.bulk_size
         count = self.count
@@ -165,20 +165,12 @@ class ElasticResult:
             raise IndexError
         if key < 0 and abs(key) > count:
             raise IndexError
-        if key >= 0:
-            result_key = int(key / bulk_size) * bulk_size
-            start = result_key
-            result_index = key % bulk_size
-        elif key < 0:
-            last_key = int(count / bulk_size) * bulk_size
-            last_key = last_key if last_key else count
-            start = result_key = int(last_key - ((abs(key) / bulk_size) * bulk_size))
-            if last_key == result_key:
-                result_index = key
-            else:
-                result_index = (key % bulk_size) - (bulk_size - (count % last_key))
+        if key < 0:
+            key = count + key
+        result_key = (key // bulk_size) * bulk_size
+        result_index = key % bulk_size
         if result_key not in self.results:
             self.results[result_key] = self.manager._search(
-                self.query, sort=self.sort, start=start, **self.query_params
+                self.query, sort=self.sort, start=result_key, **self.query_params
             )["hits"]["hits"]
         return self.results[result_key][result_index]

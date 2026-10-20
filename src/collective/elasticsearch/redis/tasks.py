@@ -1,8 +1,6 @@
 from .fetch import fetch_blob_data
 from .fetch import fetch_data
 from collective.elasticsearch import local
-from collective.elasticsearch.compat import es_bulk
-from collective.elasticsearch.compat import es_update
 from collective.elasticsearch.manager import ElasticSearchManager
 from elasticsearch import Elasticsearch
 from rq import Queue
@@ -12,7 +10,6 @@ from rq.decorators import job
 import cbor2
 import os
 import redis
-
 
 REDIS_CONNECTION_KEY = "redis_connection"
 
@@ -79,7 +76,7 @@ def bulk_update(hosts, params, index_name, body, plone_url):
             item[1]["doc"] = data
 
     es_data = [item for sublist in body for item in sublist]
-    es_bulk(connection, index_name, es_data)
+    connection.bulk(index=index_name, operations=es_data)
     return "Done"
 
 
@@ -104,11 +101,12 @@ def update_file_data(hosts, params, index_name, body, plone_url):
             }
         )
 
-    es_update(
-        connection,
-        index_name,
-        uuid,
-        cbor2.dumps({"doc": attachments}),
+    # The client can't send CBOR bodies, so talk to a transport node directly
+    node = connection.transport.node_pool.get()
+    node.perform_request(
+        "POST",
+        f"/{index_name}/_update/{uuid}",
+        body=cbor2.dumps({"doc": attachments}),
         headers={"content-type": "application/cbor"},
     )
     return "Done"

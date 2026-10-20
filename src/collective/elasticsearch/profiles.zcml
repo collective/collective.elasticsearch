@@ -79,4 +79,18 @@
 
   </genericsetup:upgradeSteps>
 
+  <genericsetup:upgradeSteps
+      profile="collective.elasticsearch:default"
+      source="4"
+      destination="5"
+      >
+
+    <genericsetup:upgradeStep
+        title="Remove the raise_search_exception registry record."
+        description=""
+        handler=".upgrades.remove_raise_search_exception_record"
+        />
+
+  </genericsetup:upgradeSteps>
+
 </configure>

@@ -15,8 +15,12 @@ import time
 import transaction
 import unittest
 
-
 MAX_CONNECTION_RETRIES = 20
+
+DIRECT_AND_REDIS_LAYERS = [
+    {"layer": ElasticSearch_FUNCTIONAL_TESTING},
+    {"layer": ElasticSearch_REDIS_TESTING},
+]
 
 
 class BaseTest(unittest.TestCase):
@@ -40,16 +44,13 @@ class BaseTest(unittest.TestCase):
         settings.enabled = True
         settings.sniffer_timeout = 0.0
 
-        # Raise elastic search exceptions
-        settings.raise_search_exception = True
-
         self._wait_for_es_service()
 
         self.catalog = api.portal.get_tool("portal_catalog")
         self.catalog._elasticcustomindex = "plone-test-index"
         self.es = ElasticSearchManager()
 
-        self.catalog.manage_catalogRebuild()
+        self.es.rebuild_from_catalog()
         # need to commit here so all tests start with a baseline
         # of elastic enabled
         time.sleep(0.1)
@@ -61,6 +62,17 @@ class BaseTest(unittest.TestCase):
         self.es.flush_indices()
         if wait:
             time.sleep(wait)
+
+    def search(self, query: dict):
+        return self.es.secure_search(query)
+
+    def total_results(self, query: dict):
+        return len(self.search(query))
+
+    def delete_es_only_indexes_from_catalog(self):
+        for idx in utils.getESOnlyIndexes():
+            self.catalog._catalog.delIndex(idx)
+        self.commit()
 
     def tearDown(self):
         super().tearDown()
@@ -85,13 +97,6 @@ class BaseTest(unittest.TestCase):
 
 class BaseFunctionalTest(BaseTest):
     layer = ElasticSearch_FUNCTIONAL_TESTING
-
-    def search(self, query: dict):
-        return self.catalog(**query)
-
-    def total_results(self, query: dict):
-        results = self.search(query)
-        return len(results)
 
 
 class BaseAPITest(BaseTest):

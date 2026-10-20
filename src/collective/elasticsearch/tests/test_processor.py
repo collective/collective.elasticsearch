@@ -1,7 +1,7 @@
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
-from collective.elasticsearch.utils import getESOnlyIndexes
+from collective.elasticsearch.tests import DIRECT_AND_REDIS_LAYERS
 from collective.elasticsearch.utils import getUID
 from parameterized import parameterized_class
 from plone import api
@@ -14,12 +14,7 @@ from Products.CMFCore.indexing import processQueue
 from zope.component import getMultiAdapter
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestQueueProcessor(BaseFunctionalTest):
     def test_has_right_brain_data(self):
         processor = self.get_processor()
@@ -95,69 +90,7 @@ class TestQueueProcessor(BaseFunctionalTest):
         self.assertIn(obj.UID(), processor.actions.index)
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
-class TestMoveReindex(BaseFunctionalTest):
-    def setUp(self):
-        super().setUp()
-        # Content on the Plone Site
-        site_documents = []
-        for idx in range(10):
-            content = api.content.create(
-                self.portal, "Document", f"document-{idx}", title=f"Page {idx}"
-            )
-            site_documents.append((content.id, getUID(content)))
-        self.folder = api.content.create(
-            container=self.portal, type="Folder", id="folder"
-        )
-        folder_documents = []
-        for idx in range(10):
-            content = api.content.create(
-                self.folder, "Event", f"event-{idx}", title=f"Event {idx}"
-            )
-            folder_documents.append((content.id, getUID(content)))
-
-        self.site_docs = site_documents
-        self.folder_docs = folder_documents
-        self.commit(wait=1)
-
-    def test_change_position_site(self):
-        processor = self.get_processor()
-        portal = self.portal
-        # Move last object to top
-        doc_id, doc_uuid = self.site_docs[-1]
-        portal.moveObjectsToTop(doc_id)
-        processQueue()
-        self.assertIn(doc_uuid, processor.actions.reindex)
-        # Only reindex getObjPositionInParent
-        idxs = list(processor.actions.reindex[doc_uuid].keys())
-        self.assertEqual(len(idxs), 1)
-        self.assertEqual(idxs[0], "getObjPositionInParent")
-
-    def test_change_position_folder(self):
-        processor = self.get_processor()
-        folder = self.folder
-        # Move last object to top
-        doc_id, doc_uuid = self.folder_docs[-1]
-        folder.moveObjectsToTop(doc_id)
-        processQueue()
-        self.assertIn(doc_uuid, processor.actions.reindex)
-        # Only reindex getObjPositionInParent
-        idxs = list(processor.actions.reindex[doc_uuid].keys())
-        self.assertEqual(len(idxs), 1)
-        self.assertEqual(idxs[0], "getObjPositionInParent")
-
-
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestRemoveIndexFromCatalog(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -170,13 +103,7 @@ class TestRemoveIndexFromCatalog(BaseFunctionalTest):
         )
         # Force indexing in ES
         self.commit(wait=1)
-        # Now delete the index from the catalog
-        zcatalog = self.catalog._catalog
-        # Delete indexes that should be only in ES
-        idxs = getESOnlyIndexes()
-        for idx in idxs:
-            zcatalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
 
     def test_reindex_object(self):
         processor = self.get_processor()

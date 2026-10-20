@@ -16,7 +16,6 @@ import random
 import requests
 import transaction
 
-
 SITE_ID = "Plone"
 
 

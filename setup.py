@@ -1,8 +1,8 @@
 """Installer for the collective.elasticsearch package."""
+
 from pathlib import Path
 from setuptools import find_namespace_packages
 from setuptools import setup
-
 
 long_description = f"""
 {Path("README.md").read_text()}\n
@@ -20,20 +20,17 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
-        "Framework :: Plone :: 5.2",
         "Framework :: Plone :: 6.0",
+        "Framework :: Plone :: 6.1",
+        "Framework :: Plone :: 6.2",
         "Framework :: Plone :: Addon",
         "Framework :: Plone",
-        "Framework :: Zope :: 4",
         "Framework :: Zope :: 5",
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: GNU General Public License (GPL)",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python",
@@ -58,10 +55,10 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     zip_safe=False,
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     install_requires=[
-        "setuptools",
-        "elasticsearch>=7.17.7,<9.0.0",
+        "collective.monkeypatcher",
+        "elasticsearch>=8.0.0,<9.0.0",
         "plone.app.registry",
         "plone.api",
         "setuptools",

@@ -36,7 +36,6 @@ class ElasticControlPanelFormWrapper(ControlPanelFormWrapper):
     @property
     def connection_status(self):
         try:
-            # Use cluster.health() which works in both ES 7 and ES 8
             health_status = self.es.connection.cluster.health()["status"]
             return health_status in ("green", "yellow")
         except (

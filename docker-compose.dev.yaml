@@ -10,15 +10,14 @@ services:
       - redis_data:/data
 
   elasticsearch:
-    build:
-      context: .
-      dockerfile: docker/elasticsearch.Dockerfile
+    image: elasticsearch:8.17.0
     ports:
       - 9200:9200
       - 9300:9300
     environment:
       - discovery.type=single-node
       - cluster.name=docker-cluster
+      - xpack.security.enabled=false
       - http.cors.enabled=true
       - http.cors.allow-origin=*
       - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization

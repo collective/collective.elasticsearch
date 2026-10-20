@@ -31,8 +31,7 @@ class Maintenance(ElasticSearchService):
         if action == "convert":
             self.es._convert_catalog_to_elastic()
         elif action == "rebuild":
-            catalog = api.portal.get_tool("portal_catalog")
-            catalog.manage_catalogRebuild()
+            self.es.rebuild_from_catalog()
         else:
             return self.reply_no_content(status=400)
         return self.reply_no_content()

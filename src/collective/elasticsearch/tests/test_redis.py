@@ -1,6 +1,5 @@
 from collective.elasticsearch import local
 from collective.elasticsearch import utils
-from collective.elasticsearch.compat import indices_put_settings
 from collective.elasticsearch.tests import BaseFunctionalTest
 from collective.elasticsearch.tests import BaseRedisTest
 from plone import api
@@ -20,7 +19,6 @@ import json
 import os
 import transaction
 import unittest
-
 
 ENV_FOR_REDIS = {
     "PLONE_REDIS_DSN": "redis://localhost:6379/0",
@@ -89,9 +87,9 @@ class TestPloneBackendHost(BaseRedisTest):
         super().setUp()
         self.original_plone_backend = os.environ["PLONE_BACKEND"]
         del os.environ["PLONE_BACKEND"]
-        os.environ[
-            "PLONE_BACKEND_HOST"
-        ] = f'http://{self.layer["host"]}:{self.layer["port"]}'
+        os.environ["PLONE_BACKEND_HOST"] = (
+            f'http://{self.layer["host"]}:{self.layer["port"]}'
+        )
         self._transforms = api.portal.get_tool("portal_transforms")
         for transform_name in list(self._transforms.objectIds()):
             if "pdf" in transform_name.lower():
@@ -115,15 +113,15 @@ class TestPloneBackendHost(BaseRedisTest):
         self.commit(wait=1)
 
         query = {"SearchableText": "text"}
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(0, len(cat_results), "Expect no result")
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
         query = {"SearchableText": "demo"}
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(1, len(cat_results), "Expect 1 item")
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
 
@@ -244,9 +242,9 @@ class TestIndexBlobs(BaseRedisTest):
     def test_index_data_from_file(self):
         self._setup_sample_file()
         query = {"SearchableText": "text"}
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(0, len(cat_results), "Expect no result")
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
     def test_update_and_delete_file(self):
@@ -258,14 +256,14 @@ class TestIndexBlobs(BaseRedisTest):
         self.commit(wait=1)
 
         query = {"SearchableText": "Lorem"}
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
         self.portal.manage_delObjects(ids=[file_.getId()])
         self.commit(wait=1)
 
         query = {"SearchableText": "lorem"}
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(0, len(es_results), "Expect no item")
 
     def test_make_sure_binary_data_are_removed_from_es(self):
@@ -289,11 +287,11 @@ class TestIndexBlobs(BaseRedisTest):
         self.commit(wait=1)
 
         query = {"SearchableText": "lorem"}
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
         query = {"SearchableText": "text"}
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
         es_data = self.es.connection.get(index=self.es.index_name, id=file_.UID())
@@ -305,7 +303,7 @@ class TestIndexBlobs(BaseRedisTest):
         self.commit(wait=1)
 
         query = {"SearchableText": "lorem"}
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(0, len(es_results), "Expect 0 item")
 
         self._set_model_file(fti, "plone.app.contenttypes.schema:file.xml")
@@ -321,7 +319,7 @@ class TestIndexBlobs(BaseRedisTest):
                 .get("default_pipeline")
             )
             if dp == "cbor-attachments":
-                indices_put_settings(conn, idx_name, settings)
+                conn.indices.put_settings(index=idx_name, settings=settings)
         conn.ingest.delete_pipeline(id="cbor-attachments")
         file_path = os.path.join(os.path.dirname(__file__), "assets/test2.docx")
         with io.FileIO(file_path, "rb") as pdf:
@@ -334,7 +332,7 @@ class TestIndexBlobs(BaseRedisTest):
         self.commit(wait=1)
 
         query = {"SearchableText": "lorem"}
-        es_results = self.catalog(**query)
+        es_results = self.search(query)
         self.assertEqual(0, len(es_results), "Expect 0 item")
 
     def test_do_not_index_data_from_images(self):

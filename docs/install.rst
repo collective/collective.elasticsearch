@@ -57,29 +57,18 @@ from another package's configure.zcml file.
 elasticsearch
 -------------
 
-Less than 5 minutes:
-    - Download & install Java
-    - Download & install Elastic Search
-    - bin/elasticsearch
+collective.elasticsearch requires Elasticsearch 8.x. See the `Elasticsearch
+installation guide`_ for all options. A quick start, using Docker::
 
-Step by Step for Ubuntu:
-    - add-apt-repository ppa:webupd8team/java
-    - apt-get update
-    - apt-get install git curl oracle-java7-installer
-    - wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.6.0-linux-x86_64.tar.gz
-    - wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.6.0-linux-x86_64.tar.gz.sha512
-    - shasum -a 512 -c elasticsearch-7.6.0-linux-x86_64.tar.gz.sha512 
-    - tar -xzf elasticsearch-7.6.0-linux-x86_64.tar.gz
-    - cd elasticsearch
-    - bin/elasticsearch
+    docker run \
+        -e "discovery.type=single-node" \
+        -e "cluster.name=docker-cluster" \
+        -e "xpack.security.enabled=false" \
+        -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+        -p 9200:9200 \
+        elasticsearch:8.17.0
 
-Step by Step for CentOS/RedHat:
-    - yum -y install java-1.8.0-openjdk.x86_64
-    - alternatives --auto java
-    - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.6.0.tar.gz
-    - tar xfvz elasticsearch-7.6.0.tar.gz
-    - cd elasticsearch
-    - bin/elasticsearch
+.. _Elasticsearch installation guide: https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
 
 Does it work?
     - curl http://localhost:9200/

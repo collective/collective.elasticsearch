@@ -15,21 +15,17 @@ GREEN=`tput setaf 2`
 RESET=`tput sgr0`
 YELLOW=`tput setaf 3`
 
-PLONE5=5.2-latest
 PLONE6=6.2-latest
 
 INSTANCE_YAML=instance.yaml
 
 # Elasticsearch configuration
-ELASTIC_SEARCH_7_IMAGE=elasticsearch:7.17.7
 ELASTIC_SEARCH_8_IMAGE=elasticsearch:8.17.0
-ELASTIC_SEARCH_7_CONTAINER=elastictest_7
 ELASTIC_SEARCH_8_CONTAINER=elastictest_8
 
 REDIS_IMAGE=redis:7.0.5
 REDIS_CONTAINER=redistest
 
-ELASTIC_SEARCH_7_CONTAINERS=$$(docker ps -q -a -f "name=^${ELASTIC_SEARCH_7_CONTAINER}$$" | wc -l | tr -d ' ')
 ELASTIC_SEARCH_8_CONTAINERS=$$(docker ps -q -a -f "name=^${ELASTIC_SEARCH_8_CONTAINER}$$" | wc -l | tr -d ' ')
 REDIS_CONTAINERS=$$(docker ps -q -a -f "name=${REDIS_CONTAINER}" | wc -l)
 
@@ -43,7 +39,7 @@ ifndef LOG_LEVEL
 	LOG_LEVEL=INFO
 endif
 
-CODE_QUALITY_VERSION=2.0.0
+CODE_QUALITY_VERSION=2.1.3
 CURRENT_USER=$$(whoami)
 USER_INFO=$$(id -u ${CURRENT_USER}):$$(getent group ${CURRENT_USER}|cut -d: -f3)
 BASE_FOLDER=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -73,14 +69,6 @@ instance: cookiecutter ## create configuration for an zope (plone) instance
 	@echo "$(GREEN)Create Plone/Zope configuration$(RESET)"
 	rm -fr ./etc
 	bin/cookiecutter -f --no-input --config-file ${INSTANCE_YAML} https://github.com/bluedynamics/cookiecutter-zope-instance
-
-.PHONY: build-plone-5
-build-plone-5: bin/pip ## Build Plone 5.2
-	@echo "$(GREEN)==> Build with Plone 5.2$(RESET)"
-	bin/pip install Paste Plone -c https://dist.plone.org/release/$(PLONE5)/constraints.txt
-	bin/pip install "zest.releaser[recommended]"
-	bin/pip install -e ".[test, redis]"
-	make instance
 
 .PHONY: build-plone-6
 build-plone-6: bin/pip ## Build Plone 6.2
@@ -142,28 +130,6 @@ lint-pyroma: ## validate using pyroma
 lint-zpretty: ## validate ZCML/XML using zpretty
 	$(LINT) zpretty ${CODEPATH}
 
-# Elasticsearch 7 container management
-.PHONY: elastic-7
-elastic-7: ## Create Elasticsearch 7 container
-	@if [ $(ELASTIC_SEARCH_7_CONTAINERS) -eq 0 ]; then \
-		echo "$(GREEN)==> Creating Elasticsearch 7 container$(RESET)"; \
-		docker container create --name $(ELASTIC_SEARCH_7_CONTAINER) \
-		-e "discovery.type=single-node" \
-		-e "cluster.name=docker-cluster" \
-		-e "http.cors.enabled=true" \
-		-e "http.cors.allow-origin=*" \
-		-e "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
-		-e "http.cors.allow-credentials=true" \
-		-e "xpack.security.enabled=false" \
-		-e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
-		-p 9200:9200 \
-		-p 9300:9300 \
-		$(ELASTIC_SEARCH_7_IMAGE); \
-		docker start $(ELASTIC_SEARCH_7_CONTAINER); \
-		docker exec $(ELASTIC_SEARCH_7_CONTAINER) /bin/sh -c "bin/elasticsearch-plugin install ingest-attachment -b"; \
-		docker stop $(ELASTIC_SEARCH_7_CONTAINER); \
-	fi
-
 # Elasticsearch 8 container management
 .PHONY: elastic-8
 elastic-8: ## Create Elasticsearch 8 container
@@ -181,17 +147,6 @@ elastic-8: ## Create Elasticsearch 8 container
 		docker stop $(ELASTIC_SEARCH_8_CONTAINER); \
 	fi
 
-.PHONY: start-elastic-7
-start-elastic-7: elastic-7 ## Start Elasticsearch 7
-	@echo "$(GREEN)==> Start Elasticsearch 7$(RESET)"
-	@docker start $(ELASTIC_SEARCH_7_CONTAINER)
-	@sleep 10
-
-.PHONY: stop-elastic-7
-stop-elastic-7: ## Stop Elasticsearch 7
-	@echo "$(GREEN)==> Stop Elasticsearch 7$(RESET)"
-	@docker stop $(ELASTIC_SEARCH_7_CONTAINER) 2>/dev/null || true
-
 .PHONY: start-elastic-8
 start-elastic-8: elastic-8 ## Start Elasticsearch 8
 	@echo "$(GREEN)==> Start Elasticsearch 8$(RESET)"
@@ -202,10 +157,6 @@ start-elastic-8: elastic-8 ## Start Elasticsearch 8
 stop-elastic-8: ## Stop Elasticsearch 8
 	@echo "$(GREEN)==> Stop Elasticsearch 8$(RESET)"
 	@docker stop $(ELASTIC_SEARCH_8_CONTAINER) 2>/dev/null || true
-
-.PHONY: remove-elastic-7
-remove-elastic-7: ## Remove Elasticsearch 7 container
-	@docker rm -f $(ELASTIC_SEARCH_7_CONTAINER) 2>/dev/null || true
 
 .PHONY: remove-elastic-8
 remove-elastic-8: ## Remove Elasticsearch 8 container
@@ -230,26 +181,13 @@ stop-redis: ## Stop redis
 
 # Test targets
 .PHONY: test
-test: test-es7 test-es8 ## Run tests against ES 7 and ES 8
-
-.PHONY: test-es7
-test-es7: ## Run tests with Elasticsearch 7
-	@echo "$(GREEN)==> Running tests with Elasticsearch 7$(RESET)"
-	@make stop-elastic-8 2>/dev/null || true
-	@make start-elastic-7
-	@make start-redis
-	./bin/pip install "elasticsearch>=7.17.0,<8.0.0" --quiet
-	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
-	@make stop-elastic-7
-	@make stop-redis
+test: test-es8 ## Run tests against ES 8
 
 .PHONY: test-es8
 test-es8: ## Run tests with Elasticsearch 8
 	@echo "$(GREEN)==> Running tests with Elasticsearch 8$(RESET)"
-	@make stop-elastic-7 2>/dev/null || true
 	@make start-elastic-8
 	@make start-redis
-	./bin/pip install "elasticsearch>=8.0.0,<9.0.0" --quiet
 	PYTHONWARNINGS=ignore ./bin/zope-testrunner --auto-color --auto-progress --test-path src/
 	@make stop-elastic-8
 	@make stop-redis

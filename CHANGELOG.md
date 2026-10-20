@@ -2,6 +2,30 @@
 
 ## 6.0.0 (unreleased)
 
+- Remove the unused `browser.search.Search` view class. It was not registered anywhere @maethu
+
+- Remove the `raise_search_exception` setting. Without the catalog patches there is no fallback search anymore, elasticsearch errors are always raised. An upgrade step removes the stale registry record @maethu
+
+- BREAKING: Remove the portal_catalog search patches (`searchResults`, `__call__`, `unrestrictedSearchResults`) and `ElasticSearchManager.search_results`. Catalog queries are never routed to elasticsearch anymore, search elasticsearch explicitly with `ElasticSearchManager().secure_search(query)` (restricted) or `.search(query)` (unrestricted). The `_old_searchResults` and `_old_unrestrictedSearchResults` aliases are gone. Note that if the elasticsearch only indexes were deleted from portal_catalog, catalog queries silently ignore those keys and match everything else @maethu
+
+- BREAKING: Remove the `moveObjectsByDelta` patch. Reordering content no longer updates `getObjPositionInParent` in elasticsearch, the indexed value is the position at indexing time @maethu
+
+- BREAKING: Replace the `uncatalog_object` patch with a ZMI `manage_uncatalogObject` patch. The elasticsearch delete was sent before the transaction committed, and in redis mode it bypassed the aborted-transaction guard, so an aborted removal (e.g. a ConflictError retry) could still delete the live document. The ZMI "Remove" now deletes the documents from elasticsearch in an after-commit hook. Direct `uncatalog_object` calls and `refreshCatalog` no longer reach elasticsearch, run the control panel "Synchronize" action (`@@elastic-synchronize`) to clean up stale documents @maethu
+
+- BREAKING: Remove the `manage_catalogClear` patch. Clearing the catalog in the ZMI no longer prepares an empty elasticsearch index, use the control panel "Convert Catalog" action instead @maethu
+
+- BREAKING: Rebuilding no longer goes through the ZCatalog. `ElasticSearchManager.rebuild_from_catalog` recreates the elasticsearch index from the objects in the catalog and leaves the ZCatalog untouched; the control panel "Rebuild Elasticsearch Index" action and the `@elasticsearch` rebuild action use it. The ZMI "Clear and Rebuild" (`manage_catalogRebuild`) is not patched anymore and only rebuilds the ZCatalog @maethu
+
+- Fix negative index lookups on elasticsearch results. The bucket arithmetic was off, so e.g. `results[-1]` could return the second to last record and lookups past the first batch could return a record a few positions away @maethu
+
+- Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu
+
+- Add `ElasticSearchManager.secure_search(query)`. It searches elasticsearch with the same restrictions as the catalog's `searchResults` (allowed roles and users, inactive content) and never falls back to the catalog, so dedicated search endpoints can use it. Restricted searches sent to elasticsearch now handle `show_inactive` like Plone's catalog: an explicit `show_inactive=False` also hides inactive content from managers, and a local "Access inactive portal content" permission on the queried paths is respected @maethu
+
+- BREAKING: Drop support for Elasticsearch 7. The `collective.elasticsearch.compat` module is removed, the ES 8 client is called directly @maethu
+
+- BREAKING: Drop support for Plone 5.2 and Python < 3.10. Plone 6.0, 6.1 and 6.2 are supported @maethu
+
 - Apply search highlighting to records that only live in elasticsearch. The hit was shadowed by the fetched record, so the highlight was silently dropped for those brains, and `ElasticSearchBrain` did not support item assignment at all @maethu
 
 - Let `has_key` and `in` on an elasticsearch only brain report the metadata columns declared by the catalog, like a real catalog brain does, instead of only the keys stored in the elasticsearch document @maethu

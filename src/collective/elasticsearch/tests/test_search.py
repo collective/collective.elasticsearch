@@ -1,9 +1,6 @@
-from collective.elasticsearch.compat import IS_ES_8
-from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
-from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.elasticsearch.tests import DIRECT_AND_REDIS_LAYERS
 from collective.elasticsearch.utils import get_settings
-from collective.elasticsearch.utils import getESOnlyIndexes
 from DateTime import DateTime
 from parameterized import parameterized
 from parameterized import parameterized_class
@@ -11,17 +8,11 @@ from plone import api
 from plone.app.textfield.value import RichTextValue
 from Products.ZCatalog.interfaces import ICatalogBrain
 
-
 EVENT_KLASS = "plone.app.event.dx.interfaces.IDXEvent"
 DOCUMENT_KLASS = "plone.app.contenttypes.interfaces.IDocument"
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestSearch(BaseFunctionalTest):
 
     event_klass = EVENT_KLASS
@@ -70,7 +61,7 @@ class TestSearch(BaseFunctionalTest):
             },
             "portal_type": "Event",
         }
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(len(cat_results), self.total_results(query))
         self.assertEqual(len(cat_results), len(events))
 
@@ -78,7 +69,7 @@ class TestSearch(BaseFunctionalTest):
             "effective": {"query": DateTime().latestTime(), "range": "min"},
             "portal_type": "Event",
         }
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(len(cat_results), self.total_results(query))
         self.assertEqual(len(cat_results), 0)
 
@@ -86,7 +77,7 @@ class TestSearch(BaseFunctionalTest):
             "effective": {"query": DateTime().latestTime(), "range": "max"},
             "portal_type": "Event",
         }
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(len(cat_results), self.total_results(query))
         self.assertEqual(len(cat_results), 5)
 
@@ -185,9 +176,6 @@ class TestSearch(BaseFunctionalTest):
         self.assertEqual(results[0].Description, "page <em>Some</em> Page")
 
     def test_highlight_respects_max_analyzed_offset(self):
-        if not IS_ES_8:
-            self.skipTest("Only run on Elasticsearch 8")
-
         settings = get_settings()
         settings.highlight = True
         settings.highlight_pre_tags = "<em>"
@@ -224,12 +212,7 @@ class TestSearch(BaseFunctionalTest):
         self.assertEqual(self.total_results(query), 1)
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestBrains(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -280,12 +263,7 @@ class TestBrains(BaseFunctionalTest):
         self.assertEqual(brain.getId, "event2")
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestBrainsIndexing(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -318,12 +296,7 @@ class TestBrainsIndexing(BaseFunctionalTest):
         self.assertEqual(self.el_results[result_idx].getId, expected)
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestCatalogRecordDeleted(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -351,12 +324,7 @@ class TestCatalogRecordDeleted(BaseFunctionalTest):
         self.assertEqual(brain.getObject(), self.event)
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -386,35 +354,7 @@ class TestDeleteObjectNotReflectedOnES(BaseFunctionalTest):
             brain.getObject()
 
 
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
-class TestUncatalogRemoveOnES(BaseFunctionalTest):
-    def setUp(self):
-        super().setUp()
-        self.event = api.content.create(
-            self.portal, "Event", "event-test", title="Gone Event"
-        )
-        self.commit(wait=1)
-        path = "/".join(self.event.getPhysicalPath())
-        catalog = self.catalog
-        catalog.uncatalog_object(path)
-        self.commit(wait=1)
-
-    def test_search_results(self):
-        el_results = self.search({"portal_type": "Event", "Title": "Gone Event"})
-        self.assertEqual(len(el_results), 0)
-
-
-@parameterized_class(
-    [
-        {"layer": ElasticSearch_FUNCTIONAL_TESTING},
-        {"layer": ElasticSearch_REDIS_TESTING},
-    ]
-)
+@parameterized_class(DIRECT_AND_REDIS_LAYERS)
 class TestSearchOnRemovedIndex(BaseFunctionalTest):
     def setUp(self):
         super().setUp()
@@ -427,13 +367,7 @@ class TestSearchOnRemovedIndex(BaseFunctionalTest):
         )
         # Force indexing in ES
         self.commit(wait=1)
-        # Now delete the index from the catalog
-        zcatalog = self.catalog._catalog
-        # Delete indexes that should be only in ES
-        idxs = getESOnlyIndexes()
-        for idx in idxs:
-            zcatalog.delIndex(idx)
-        self.commit()
+        self.delete_es_only_indexes_from_catalog()
 
     def test_search_results(self):
         el_results = self.search({"portal_type": "Document", "SearchableText": "Fancy"})
