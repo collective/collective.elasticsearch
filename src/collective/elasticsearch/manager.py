@@ -459,27 +459,3 @@ class ElasticSearchManager:
         if not show_inactive:
             query["effectiveRange"] = DateTime()
         return self.search(query)
-
-    def search_results(self, request=None, check_perms=False, **kw):
-        # Make sure any pending index tasks have been processed
-        processQueue()
-        if not (self.active and utils.getESOnlyIndexes().intersection(kw.keys())):
-            method = (
-                self.catalog._old_searchResults
-                if check_perms
-                else self.catalog._old_unrestrictedSearchResults
-            )
-            return method(request, **kw)
-
-        query = request.copy() if isinstance(request, dict) else {}
-        query.update(kw)
-        logger.debug(f"Running query: {query}")
-        try:
-            if check_perms:
-                return self.secure_search(query)
-            return self.search(query)
-        except Exception:  # NOQA W0703
-            if self.raise_search_exception is True:
-                raise
-            logger.error(f"Error running Query: {query}", exc_info=True)
-            return self.catalog._old_searchResults(request, **kw)

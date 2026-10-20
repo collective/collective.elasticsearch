@@ -114,13 +114,13 @@ class TestPloneBackendHost(BaseRedisTest):
         self.commit(wait=1)
 
         query = {"SearchableText": "text"}
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(0, len(cat_results), "Expect no result")
         es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
 
         query = {"SearchableText": "demo"}
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(1, len(cat_results), "Expect 1 item")
         es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")
@@ -243,7 +243,7 @@ class TestIndexBlobs(BaseRedisTest):
     def test_index_data_from_file(self):
         self._setup_sample_file()
         query = {"SearchableText": "text"}
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(0, len(cat_results), "Expect no result")
         es_results = self.search(query)
         self.assertEqual(1, len(es_results), "Expect 1 item")

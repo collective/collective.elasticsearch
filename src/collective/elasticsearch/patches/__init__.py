@@ -4,20 +4,6 @@ from collective.elasticsearch.utils import get_brain_from_path
 import transaction
 
 
-def unrestrictedSearchResults(self, REQUEST=None, **kw):
-    manager = ElasticSearchManager()
-    active = manager.active
-    method = manager.search_results if active else self._old_unrestrictedSearchResults
-    return method(REQUEST, check_perms=False, **kw)
-
-
-def safeSearchResults(self, REQUEST=None, **kw):
-    manager = ElasticSearchManager()
-    active = manager.active
-    method = manager.search_results if active else self._old_searchResults
-    return method(REQUEST, check_perms=True, **kw)
-
-
 def delete_from_elasticsearch(status, data):
     if status:
         ElasticSearchManager().bulk(data=data)

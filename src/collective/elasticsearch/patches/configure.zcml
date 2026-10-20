@@ -8,27 +8,6 @@
 
   <!-- CMFPlone CatalogTool patches -->
   <monkey:patch
-      original="searchResults"
-      replacement=".safeSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="searchResults"
-      preserveOriginal="True"
-      />
-  <monkey:patch
-      original="__call__"
-      replacement=".safeSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="searchResults"
-      preserveOriginal="True"
-      />
-  <monkey:patch
-      original="unrestrictedSearchResults"
-      replacement=".unrestrictedSearchResults"
-      class="Products.CMFPlone.CatalogTool.CatalogTool"
-      description="unrestrictedSearchResults"
-      preserveOriginal="True"
-      />
-  <monkey:patch
       original="manage_uncatalogObject"
       replacement=".manage_uncatalogObject"
       class="Products.CMFPlone.CatalogTool.CatalogTool"

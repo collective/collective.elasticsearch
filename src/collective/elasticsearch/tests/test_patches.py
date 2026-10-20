@@ -1,10 +1,15 @@
 from collective.elasticsearch.testing import ElasticSearch_FUNCTIONAL_TESTING
 from collective.elasticsearch.testing import ElasticSearch_REDIS_TESTING
 from collective.elasticsearch.tests import BaseFunctionalTest
+from collective.monkeypatcher.meta import _do_patch
 from parameterized import parameterized_class
 from plone import api
+from zope.configuration import config
+from zope.configuration import xmlconfig
 
+import collective.elasticsearch.patches
 import transaction
+import unittest
 
 
 @parameterized_class(
@@ -63,6 +68,31 @@ class TestZmiRemoveSyncsElasticsearch(BaseFunctionalTest):
             self.total_results(self.query),
             0,
             "The ZMI remove of a stale entry must delete the elasticsearch document",
+        )
+
+
+class TestRemainingPatches(unittest.TestCase):
+    def registered_patches(self):
+        context = config.ConfigurationMachine()
+        xmlconfig.registerCommonDirectives(context)
+        xmlconfig.file(
+            "configure.zcml",
+            collective.elasticsearch.patches,
+            context=context,
+            execute=False,
+        )
+        return {
+            action["args"][2]
+            for action in context.actions
+            if action["callable"] is _do_patch
+        }
+
+    def test_only_the_zmi_remove_is_patched(self):
+        self.assertEqual(
+            self.registered_patches(),
+            {"manage_uncatalogObject"},
+            "The package must not monkeypatch anything else, in particular "
+            "no portal_catalog search method",
         )
 
 

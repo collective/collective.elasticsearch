@@ -68,7 +68,7 @@ class TestSearch(BaseFunctionalTest):
             },
             "portal_type": "Event",
         }
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(len(cat_results), self.total_results(query))
         self.assertEqual(len(cat_results), len(events))
 
@@ -76,7 +76,7 @@ class TestSearch(BaseFunctionalTest):
             "effective": {"query": DateTime().latestTime(), "range": "min"},
             "portal_type": "Event",
         }
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(len(cat_results), self.total_results(query))
         self.assertEqual(len(cat_results), 0)
 
@@ -84,7 +84,7 @@ class TestSearch(BaseFunctionalTest):
             "effective": {"query": DateTime().latestTime(), "range": "max"},
             "portal_type": "Event",
         }
-        cat_results = self.catalog._old_searchResults(**query)
+        cat_results = self.catalog.searchResults(**query)
         self.assertEqual(len(cat_results), self.total_results(query))
         self.assertEqual(len(cat_results), 5)
 
