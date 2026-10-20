@@ -30,7 +30,7 @@ class TestElasticSearchBrain(BaseFunctionalTest):
         transaction.commit()
 
     def get_brain(self):
-        results = self.catalog(SearchableText="some page")
+        results = self.search({"SearchableText": "some page"})
         self.assertEqual(len(results), 1, "Expected the elasticsearch only record")
         brain = results[0]
         self.assertIsInstance(

@@ -62,6 +62,12 @@ class BaseTest(unittest.TestCase):
         if wait:
             time.sleep(wait)
 
+    def search(self, query: dict):
+        return self.es.secure_search(query)
+
+    def total_results(self, query: dict):
+        return len(self.search(query))
+
     def delete_es_only_indexes_from_catalog(self):
         for idx in utils.getESOnlyIndexes():
             self.catalog._catalog.delIndex(idx)
@@ -90,13 +96,6 @@ class BaseTest(unittest.TestCase):
 
 class BaseFunctionalTest(BaseTest):
     layer = ElasticSearch_FUNCTIONAL_TESTING
-
-    def search(self, query: dict):
-        return self.catalog(**query)
-
-    def total_results(self, query: dict):
-        results = self.search(query)
-        return len(results)
 
 
 class BaseAPITest(BaseTest):

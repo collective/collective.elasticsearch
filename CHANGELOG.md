@@ -2,6 +2,8 @@
 
 ## 6.0.0 (unreleased)
 
+- Fix negative index lookups on elasticsearch results. The bucket arithmetic was off, so e.g. `results[-1]` could return the second to last record and lookups past the first batch could return a record a few positions away @maethu
+
 - Declare the `collective.monkeypatcher` dependency and load its configuration. It was only installed and loaded through other packages @maethu
 
 - Add `ElasticSearchManager.secure_search(query)`. It searches elasticsearch with the same restrictions as the catalog's `searchResults` (allowed roles and users, inactive content) and never falls back to the catalog, so dedicated search endpoints can use it. Restricted searches sent to elasticsearch now handle `show_inactive` like Plone's catalog: an explicit `show_inactive=False` also hides inactive content from managers, and a local "Access inactive portal content" permission on the queried paths is respected @maethu

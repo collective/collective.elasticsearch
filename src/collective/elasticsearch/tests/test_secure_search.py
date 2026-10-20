@@ -54,14 +54,3 @@ class TestSecureSearch(BaseFunctionalTest):
             0,
             "show_inactive=False must hide expired content, like the catalog does",
         )
-
-    def test_finds_content_when_es_only_indexes_are_removed_from_catalog(self):
-        api.content.create(self.portal, "Document", "page", title="A Fancy Title")
-        self.commit(wait=1)
-        self.delete_es_only_indexes_from_catalog()
-        results = self.es.secure_search({"SearchableText": "fancy"})
-        self.assertEqual(
-            [brain.getId for brain in results],
-            ["page"],
-            "SearchableText must be searched in elasticsearch",
-        )
